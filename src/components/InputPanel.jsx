@@ -58,13 +58,25 @@ export default function InputPanel({
 
   const handleManufacturerChange = (nextManufacturer) => {
     setManufacturer(nextManufacturer);
-    setLoadId("");
+    if (!nextManufacturer) { setLoadId(""); return; }
+    // Auto-apply here too, same as the caliber step: if this manufacturer
+    // only has one load for the chosen caliber, there's nothing left to
+    // narrow, so don't leave the fields stale waiting on a third click.
+    const loads = COMMERCIAL_AMMO.filter((a) => a.cartridge === caliber && a.manufacturer === nextManufacturer);
+    if (loads.length === 1) {
+      setLoadId(loads[0].id);
+      onSelectCommercial(loads[0].id);
+    } else {
+      setLoadId("");
+    }
   };
 
   const handleLoadChange = (nextLoadId) => {
     setLoadId(nextLoadId);
     if (nextLoadId) onSelectCommercial(nextLoadId);
   };
+
+  const selectedLoad = loadId ? loadsForSelection.find((a) => a.id === loadId) : null;
 
   const fillStandard = () => {
     const alt = parseFloat(v.altitudeFt);
@@ -171,12 +183,26 @@ export default function InputPanel({
         ))}
       </select>
 
-      <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        Fills the four fields below (G1 only — every manufacturer here publishes G1 in bulk, not G7). "Derived BC"
-        means the manufacturer doesn't publish a BC at all — it's back-solved from their own published velocity
-        table using this app's own physics (see the catalog source in code comments). Sight height, zero, and
-        conditions are yours to set separately.
-      </div>
+      {selectedLoad ? (
+        <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
+                      font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
+          Filled in: {selectedLoad.muzzleVelocity} fps · {selectedLoad.grains}gr · {selectedLoad.dragModel}{" "}
+          {selectedLoad.ballisticCoefficient}
+          {selectedLoad.bcSource !== "published" ? " (derived BC)" : ""}
+        </div>
+      ) : caliber && manufacturer ? (
+        <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.brass}`,
+                      font: "600 11px/1.4 'IBM Plex Sans',sans-serif", color: C.brass }}>
+          Pick a load above — the fields below haven't changed yet.
+        </div>
+      ) : (
+        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+          Fills the four fields below (G1 only — every manufacturer here publishes G1 in bulk, not G7). "Derived BC"
+          means the manufacturer doesn't publish a BC at all — it's back-solved from their own published velocity
+          table using this app's own physics (see the catalog source in code comments). Sight height, zero, and
+          conditions are yours to set separately.
+        </div>
+      )}
 
       <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
       <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />

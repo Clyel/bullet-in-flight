@@ -1,0 +1,17 @@
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { background: #B7BBAD; }
+
+table { border-collapse: collapse; width: 100%; }
+
+.bif-wrap { max-width: 1120px; margin: 0 auto; }
+.bif-grid { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .bif-grid { grid-template-columns: 1fr; } }
+
+button:focus-visible,
+input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

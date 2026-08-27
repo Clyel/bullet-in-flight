@@ -91,7 +91,7 @@ export default function Compare() {
           </Notice>
         ) : (
           <>
-            <CompareChart results={results} />
+            <CompareChart results={results} atYd={atYdNum} />
             {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
           </>
         )}

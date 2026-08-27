@@ -13,8 +13,8 @@ const PALETTE = [C.steel, C.ox, C.brass, "#5B6B41", "#5B4B6E", "#A45A2A"];
 const SAMPLES = 250;
 const VITALS_RADIUS_IN = 3; // canonical — converted to the display unit below
 
-/** results: [{ id, name, solution }]. */
-export default function CompareChart({ results }) {
+/** results: [{ id, name, solution }]. atYd: the "Compare at" distance (canonical yards) driving the chart's scale. */
+export default function CompareChart({ results, atYd }) {
   const { system } = useUnits();
   const [showVitals, setShowVitals] = useState(false);
   const dist = (yd) => toDisplay(yd, "distance", system);
@@ -22,7 +22,13 @@ export default function CompareChart({ results }) {
   const dSuf = unitSuffix("distance", system);
   const lSuf = unitSuffix("length", system);
 
-  const maxRangeCanonical = Math.max(...results.map((r) => r.solution.last.range));
+  // The chart zooms to whatever "Compare at" is set to, so typing a closer
+  // distance actually zooms in instead of always showing the full charted
+  // range. Falls back to the longest selected load's own range if "Compare
+  // at" is empty/invalid, so the chart never collapses to nothing.
+  const maxRangeCanonical = Number.isFinite(atYd) && atYd > 0
+    ? atYd
+    : Math.max(...results.map((r) => r.solution.last.range));
 
   // One shared x-grid so every line's series lives in a single recharts
   // `data` array (needed for the tooltip/crosshair to work across series) —
@@ -67,6 +73,13 @@ export default function CompareChart({ results }) {
           <LineChart data={data} margin={{ top: 8, right: 20, bottom: 24, left: 6 }}>
             <CartesianGrid stroke={C.rule} strokeDasharray="2 4" />
             <ReferenceLine y={0} stroke={C.ink} strokeWidth={1.4} strokeDasharray="6 3" />
+
+            {Number.isFinite(atYd) && atYd > 0 && atYd <= maxRangeCanonical && (
+              <ReferenceLine x={+dist(atYd).toFixed(2)} stroke={C.brass} strokeWidth={1.4} strokeDasharray="3 3"
+                             label={{ value: "COMPARE AT", position: "insideTopRight",
+                                      fill: C.brass, fontSize: 10, letterSpacing: "0.1em",
+                                      fontFamily: "'Oswald',sans-serif" }} />
+            )}
 
             {showVitals && (
               <>

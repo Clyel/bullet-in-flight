@@ -28,7 +28,13 @@ export default function Compare() {
     for (const l of savedLoads) {
       if (!selectedIds.has(l.id)) continue;
       try {
-        results.push({ id: l.id, name: l.name, grains: num(l.grains), solution: solveFromForm(l) });
+        // vitalsRadiusIn may be missing on datasets saved before this field
+        // existed — num(undefined) is NaN, which CompareChart treats as
+        // "this load has no vitals radius" rather than crashing on it.
+        results.push({
+          id: l.id, name: l.name, grains: num(l.grains), vitalsRadiusIn: num(l.vitalsRadiusIn),
+          solution: solveFromForm(l),
+        });
       } catch (e) {
         failed.push({ id: l.id, name: l.name, message: e.message });
       }

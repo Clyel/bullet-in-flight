@@ -235,6 +235,15 @@ export default function InputPanel({
       />
       <UnitField label="Zero range" category="distance" value={v.zeroRangeYd} onChange={set.zeroRangeYd} />
 
+      <div style={head}>The target</div>
+      <UnitField
+        label="Vitals radius"
+        hint="Half-width of the vital zone you're aiming to stay within — smaller for varmints, larger for elk or moose. Drives the Vitals Zero chart lines and the vitals-window figures below."
+        category="length"
+        value={v.vitalsRadiusIn}
+        onChange={set.vitalsRadiusIn}
+      />
+
       <div style={head}>The shot</div>
       <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
       <div style={{ marginBottom: 16 }}>

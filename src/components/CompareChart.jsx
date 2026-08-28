@@ -11,9 +11,8 @@ import { toDisplay, unitSuffix } from "../units.js";
 // Cycled by index when comparing more loads than named theme colors.
 const PALETTE = [C.steel, C.ox, C.brass, "#5B6B41", "#5B4B6E", "#A45A2A"];
 const SAMPLES = 250;
-const VITALS_RADIUS_IN = 3; // canonical — converted to the display unit below
 
-/** results: [{ id, name, solution }]. atYd: the "Compare at" distance (canonical yards) driving the chart's scale. */
+/** results: [{ id, name, vitalsRadiusIn, solution }]. atYd: the "Compare at" distance (canonical yards) driving the chart's scale. */
 export default function CompareChart({ results, atYd }) {
   const { system } = useUnits();
   const [showVitals, setShowVitals] = useState(false);
@@ -21,6 +20,15 @@ export default function CompareChart({ results, atYd }) {
   const len = (inches) => toDisplay(inches, "length", system);
   const dSuf = unitSuffix("distance", system);
   const lSuf = unitSuffix("length", system);
+
+  // Compared loads carry their own vitals radius (a deer load and a moose
+  // load saved separately can genuinely differ) — draw one band per
+  // distinct value present rather than assuming they all match. Loads
+  // saved before this field existed have no radius and just don't get a
+  // band, instead of breaking the chart for everyone else in the overlay.
+  const distinctRadii = [...new Set(
+    results.map((r) => r.vitalsRadiusIn).filter((r) => Number.isFinite(r) && r > 0)
+  )].sort((a, b) => a - b);
 
   // The chart zooms to whatever "Compare at" is set to, so typing a closer
   // distance actually zooms in instead of always showing the full charted
@@ -81,15 +89,15 @@ export default function CompareChart({ results, atYd }) {
                                       fontFamily: "'Oswald',sans-serif" }} />
             )}
 
-            {showVitals && (
-              <>
-                <ReferenceLine y={len(VITALS_RADIUS_IN)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3"
-                               label={{ value: "VITALS ZERO", position: "insideBottomRight",
+            {showVitals && distinctRadii.map((radiusIn) => (
+              <React.Fragment key={radiusIn}>
+                <ReferenceLine y={len(radiusIn)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3"
+                               label={{ value: `${radiusIn}${lSuf.toUpperCase()} VITALS`, position: "insideBottomRight",
                                         fill: C.vitals, fontSize: 10, letterSpacing: "0.1em",
                                         fontFamily: "'Oswald',sans-serif" }} />
-                <ReferenceLine y={len(-VITALS_RADIUS_IN)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3" />
-              </>
-            )}
+                <ReferenceLine y={len(-radiusIn)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3" />
+              </React.Fragment>
+            ))}
 
             <XAxis dataKey="d" type="number" domain={[0, dist(maxRangeCanonical)]}
               tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}

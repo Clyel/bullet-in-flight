@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { solveTrajectory } from "../src/ballistics/solver.js";
+import { solveTrajectory, solveZeroAngle, integrate } from "../src/ballistics/solver.js";
+import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -59,6 +60,47 @@ const nearZero = s.crossings[0], farZero = s.crossings[1];
 const zeroOk = Math.abs(farZero - 200) < 0.6 && nearZero > 0 && nearZero < 60;
 if (!zeroOk) failures++;
 console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFixed(1)}yd  far ${farZero?.toFixed(1)}yd  apex ${s.apex.height.toFixed(2)}in @ ${s.apex.range.toFixed(0)}yd`);
+
+// Vitals window / optimal sight-in: not new trajectory physics (built on
+// solveZeroAngle/integrate unchanged), so no independent fixture — but the
+// optimizer is new logic with its own way to be subtly wrong, so check it
+// against itself: the apex at the found zero should sit right at the target
+// radius, and nearby zeros should give a *smaller* window (a real max, not
+// a stray root).
+{
+  const base = {
+    muzzleVelocity: 2825, ballisticCoefficient: 0.265, dragModel: "G7",
+    sightHeight: 1.5, tempF: 59, pressInHg: 29.92,
+    windSpeedMph: undefined, windClock: undefined,
+  };
+
+  for (const radiusIn of [1.5, 3, 6]) {
+    const opt = optimalSightIn(base, radiusIn);
+
+    const angle = solveZeroAngle({ ...base, zeroRangeYd: opt.zeroRangeYd });
+    const path = integrate({ ...base, zeroRangeYd: opt.zeroRangeYd, launchAngleRad: angle, maxRangeYd: 2000 });
+    const apex = path.reduce((best, p) => (p.y > best ? p.y : best), path[0].y);
+    const apexOk = Math.abs(apex - radiusIn) < 0.01;
+
+    let widerNearby = false;
+    for (const dz of [-10, -5, 5, 10]) {
+      const z = opt.zeroRangeYd + dz;
+      if (z <= 0) continue;
+      const a = solveZeroAngle({ ...base, zeroRangeYd: z });
+      const p = integrate({ ...base, zeroRangeYd: z, launchAngleRad: a, maxRangeYd: 2000 });
+      const w = vitalsWindow(p, radiusIn);
+      if (w && w.spanYd > opt.spanYd + 0.05) widerNearby = true;
+    }
+
+    const ok = apexOk && !widerNearby;
+    if (!ok) failures++;
+    console.log(
+      `${ok ? "pass" : "FAIL"}  vitals optimum ${radiusIn}in   zero ${opt.zeroRangeYd.toFixed(1)}yd  ` +
+      `apex ${apex.toFixed(3)}in  window ${opt.spanYd.toFixed(1)}yd (${opt.entryYd.toFixed(0)}-${opt.exitYd.toFixed(0)})` +
+      (widerNearby ? "  [a nearby zero found a WIDER window]" : "")
+    );
+  }
+}
 
 console.log(failures ? `\n${failures} FAILING` : "\nAll checks passed.");
 process.exit(failures ? 1 : 0);

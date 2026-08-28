@@ -16,20 +16,31 @@ export function isWindActive(v) {
   return Number.isFinite(windSpeedNum) && windSpeedNum > 0 && Number.isFinite(windClockNum);
 }
 
-export function solveFromForm(v) {
+/**
+ * The ballistic inputs shared by every solve (ammo + sight height + air),
+ * minus zeroRangeYd — callers that need to vary the zero themselves (the
+ * vitals-window optimizer) supply that separately per trial.
+ */
+export function baseBallisticParams(v) {
   const windActive = isWindActive(v);
-  return solveTrajectory({
+  return {
     muzzleVelocity: num(v.muzzleVelocity),
     ballisticCoefficient: num(v.ballisticCoefficient),
     dragModel: v.dragModel,
-    grains: num(v.grains),
     sightHeight: num(v.sightHeight),
-    zeroRangeYd: num(v.zeroRangeYd),
-    maxRangeYd: Math.max(num(v.maxRangeYd), num(v.zeroRangeYd)),
-    tableStepYd: num(v.tableStepYd),
     tempF: num(v.tempF),
     pressInHg: num(v.pressInHg),
     windSpeedMph: windActive ? num(v.windSpeedMph) : undefined,
     windClock: windActive ? num(v.windClock) : undefined,
+  };
+}
+
+export function solveFromForm(v) {
+  return solveTrajectory({
+    ...baseBallisticParams(v),
+    grains: num(v.grains),
+    zeroRangeYd: num(v.zeroRangeYd),
+    maxRangeYd: Math.max(num(v.maxRangeYd), num(v.zeroRangeYd)),
+    tableStepYd: num(v.tableStepYd),
   });
 }

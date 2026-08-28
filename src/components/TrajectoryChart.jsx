@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceArea, ReferenceLine, ReferenceDot,
@@ -6,13 +6,36 @@ import {
 import { C, label } from "./theme.js";
 import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
+import { vitalsWindow, optimalSightIn } from "../ballistics/vitalsWindow.js";
 
-const VITALS_RADIUS_IN = 3; // canonical — converted to the display unit below, same as every other length
-
-export default function TrajectoryChart({ solution, maxRangeYd }) {
+export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, baseBallisticParams }) {
   const { system } = useUnits();
   const { path, transonicYd, subsonicYd, apex, crossings } = solution;
   const [showVitals, setShowVitals] = useState(false);
+  const [showOptimal, setShowOptimal] = useState(false);
+
+  const hasVitalsRadius = Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0;
+
+  // Cheap — a single scan of the already-computed path. Live, no toggle needed.
+  const currentWindow = useMemo(
+    () => (hasVitalsRadius ? vitalsWindow(path, vitalsRadiusIn) : null),
+    [path, vitalsRadiusIn, hasVitalsRadius]
+  );
+
+  // Not cheap (an outer search wrapping the solver) — only computed while
+  // the toggle is actually on, and only recomputed when the ammo/sights/air
+  // or radius actually change (JSON.stringify keeps this from re-running on
+  // every unrelated re-render, matching the pattern already used for the
+  // main solve in Calculator.jsx).
+  const optimal = useMemo(() => {
+    if (!showOptimal || !hasVitalsRadius) return { result: null, error: null };
+    try {
+      return { result: optimalSightIn(baseBallisticParams, vitalsRadiusIn), error: null };
+    } catch (e) {
+      return { result: null, error: e.message };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showOptimal, hasVitalsRadius, vitalsRadiusIn, JSON.stringify(baseBallisticParams)]);
 
   const dist = (yd) => toDisplay(yd, "distance", system);
   const len = (inches) => toDisplay(inches, "length", system);
@@ -54,12 +77,21 @@ export default function TrajectoryChart({ solution, maxRangeYd }) {
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`,
                   padding: "14px 10px 6px", marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingLeft: 6, marginBottom: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap",
+                    gap: 10, paddingLeft: 6, marginBottom: 8 }}>
         <div style={{ ...label, color: C.ink }}>Flight path relative to line of sight</div>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-          <input type="checkbox" checked={showVitals} onChange={(e) => setShowVitals(e.target.checked)} />
-          <span style={{ ...label, color: C.ink }}>Vitals zero</span>
-        </label>
+        <div style={{ display: "flex", gap: 14 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="checkbox" checked={showVitals} onChange={(e) => setShowVitals(e.target.checked)} />
+            <span style={{ ...label, color: C.ink }}>Vitals zero</span>
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 6,
+                          cursor: hasVitalsRadius ? "pointer" : "default", opacity: hasVitalsRadius ? 1 : 0.4 }}>
+            <input type="checkbox" checked={showOptimal} disabled={!hasVitalsRadius}
+                   onChange={(e) => setShowOptimal(e.target.checked)} />
+            <span style={{ ...label, color: C.ink }}>Optimal sight-in</span>
+          </label>
+        </div>
       </div>
 
       <div style={{ width: "100%", height: 310 }}>
@@ -77,14 +109,14 @@ export default function TrajectoryChart({ solution, maxRangeYd }) {
 
             <ReferenceLine yAxisId="height" y={0} stroke={C.ink} strokeWidth={1.4} strokeDasharray="6 3" />
 
-            {showVitals && (
+            {showVitals && hasVitalsRadius && (
               <>
-                <ReferenceLine yAxisId="height" y={len(VITALS_RADIUS_IN)} stroke={C.vitals}
+                <ReferenceLine yAxisId="height" y={len(vitalsRadiusIn)} stroke={C.vitals}
                                strokeWidth={1.4} strokeDasharray="3 3"
                                label={{ value: "VITALS ZERO", position: "insideBottomRight",
                                         fill: C.vitals, fontSize: 10, letterSpacing: "0.1em",
                                         fontFamily: "'Oswald',sans-serif" }} />
-                <ReferenceLine yAxisId="height" y={len(-VITALS_RADIUS_IN)} stroke={C.vitals}
+                <ReferenceLine yAxisId="height" y={len(-vitalsRadiusIn)} stroke={C.vitals}
                                strokeWidth={1.4} strokeDasharray="3 3" />
               </>
             )}
@@ -135,10 +167,34 @@ export default function TrajectoryChart({ solution, maxRangeYd }) {
                     font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
         <span><i style={swatch(C.brass)} />Transonic (Mach 1.2 to 1.0)</span>
         <span><i style={swatch(C.ox)} />Subsonic</span>
-        {showVitals && <span><i style={swatch(C.vitals)} />Vitals zero: &plusmn;{len(VITALS_RADIUS_IN).toFixed(1)} {lSuf}</span>}
+        {showVitals && hasVitalsRadius && (
+          <span><i style={swatch(C.vitals)} />Vitals zero: &plusmn;{len(vitalsRadiusIn).toFixed(1)} {lSuf}</span>
+        )}
         <span>Dashed line = line of sight</span>
         <span>Open dots = zeros, filled dot = max ordinate</span>
       </div>
+
+      {hasVitalsRadius && currentWindow && (
+        <div style={{ padding: "0 6px 10px", font: "400 11.5px/1.5 'IBM Plex Mono',monospace", color: C.ink }}>
+          Vitals window at your current zero: {dist(currentWindow.spanYd).toFixed(0)} {dSuf}{" "}
+          ({dist(currentWindow.entryYd).toFixed(0)}&ndash;{dist(currentWindow.exitYd).toFixed(0)} {dSuf})
+          {currentWindow.exitReason === "high" && " — cut short by poking above the vitals radius, not by falling below it"}
+        </div>
+      )}
+
+      {showOptimal && hasVitalsRadius && (
+        <div style={{ padding: "0 6px 10px", font: "400 11.5px/1.5 'IBM Plex Mono',monospace", color: C.vitals }}>
+          {optimal.error
+            ? `Optimal sight-in: ${optimal.error}`
+            : optimal.result && (
+                <>
+                  Optimal sight-in: {dist(optimal.result.zeroRangeYd).toFixed(0)} {dSuf} zero &rarr; vitals window{" "}
+                  {dist(optimal.result.spanYd).toFixed(0)} {dSuf}{" "}
+                  ({dist(optimal.result.entryYd).toFixed(0)}&ndash;{dist(optimal.result.exitYd).toFixed(0)} {dSuf})
+                </>
+              )}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import SummaryStrip from "./components/SummaryStrip.jsx";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import { listSavedLoads, saveLoad, deleteLoad } from "./storage/savedLoads.js";
-import { num, isWindActive, solveFromForm } from "./solveFromForm.js";
+import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 
 // 30-06 Springfield, Remington Premier Long Range 172gr (Speer Impact).
@@ -25,6 +25,7 @@ const DEFAULTS = {
   altitudeFt: "0",
   windSpeedMph: "",
   windClock: "",
+  vitalsRadiusIn: "3",
 };
 
 const REQUIRED = [
@@ -127,7 +128,11 @@ export default function Calculator() {
         {solution && (
           <>
             <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
-            <TrajectoryChart solution={solution} maxRangeYd={maxRangeYd} />
+            <TrajectoryChart
+              solution={solution} maxRangeYd={maxRangeYd}
+              vitalsRadiusIn={num(v.vitalsRadiusIn)}
+              baseBallisticParams={baseBallisticParams(v)}
+            />
 
             <div style={{ display: "flex", gap: 18, marginBottom: 8 }}>
               <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>

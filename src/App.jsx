@@ -4,6 +4,7 @@ import { Segmented } from "./components/ui.jsx";
 import { UnitsProvider, useUnits } from "./UnitsContext.jsx";
 import Calculator from "./Calculator.jsx";
 import Compare from "./Compare.jsx";
+import OptimalZero from "./OptimalZero.jsx";
 
 export default function App() {
   return (
@@ -31,8 +32,8 @@ function AppShell() {
         </header>
 
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-          <div style={{ maxWidth: 280, flex: 1, minWidth: 200 }}>
-            <Segmented options={["Calculator", "Compare"]} value={tab} onChange={setTab} />
+          <div style={{ maxWidth: 380, flex: 1, minWidth: 260 }}>
+            <Segmented options={["Calculator", "Compare", "Optimal Zero"]} value={tab} onChange={setTab} />
           </div>
           <div style={{ maxWidth: 200 }}>
             <Segmented
@@ -43,7 +44,7 @@ function AppShell() {
           </div>
         </div>
 
-        {tab === "Calculator" ? <Calculator /> : <Compare />}
+        {tab === "Calculator" ? <Calculator /> : tab === "Compare" ? <Compare /> : <OptimalZero />}
       </div>
     </div>
   );

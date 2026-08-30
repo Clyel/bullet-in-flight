@@ -78,7 +78,7 @@ export default function CompareChart({ results, atYd }) {
 
       <div style={{ width: "100%", height: 340 }}>
         <ResponsiveContainer>
-          <LineChart data={data} margin={{ top: 8, right: 20, bottom: 24, left: 6 }}>
+          <LineChart data={data} margin={{ top: 8, right: 20, bottom: 30, left: 6 }}>
             <CartesianGrid stroke={C.rule} strokeDasharray="2 4" />
             <ReferenceLine y={0} stroke={C.ink} strokeWidth={1.4} strokeDasharray="6 3" />
 
@@ -102,7 +102,7 @@ export default function CompareChart({ results, atYd }) {
             <XAxis dataKey="d" type="number" domain={[0, dist(maxRangeCanonical)]}
               tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}
               stroke={C.rule}
-              label={{ value: `DISTANCE (${dSuf.toUpperCase()})`, position: "insideBottom", offset: -14,
+              label={{ value: `DISTANCE (${dSuf.toUpperCase()})`, position: "bottom", offset: 8,
                        fill: C.muted, fontSize: 10, letterSpacing: "0.14em",
                        fontFamily: "'Oswald',sans-serif" }} />
             <YAxis width={54} domain={yDomain} allowDataOverflow
@@ -118,7 +118,8 @@ export default function CompareChart({ results, atYd }) {
                               borderRadius: 0, font: "400 12px 'IBM Plex Mono',monospace" }}
               labelFormatter={(d) => `${d} ${dSuf}`}
               formatter={(val) => (val == null ? null : [`${val} ${lSuf}`, undefined])} />
-            <Legend wrapperStyle={{ fontSize: 11, fontFamily: "'IBM Plex Sans',sans-serif", color: C.muted }} />
+            <Legend verticalAlign="top" height={42}
+                    wrapperStyle={{ fontSize: 11, fontFamily: "'IBM Plex Sans',sans-serif", color: C.muted }} />
 
             {results.map((r, i) => (
               <Line key={r.id} type="monotone" dataKey={r.id} name={r.name}

@@ -92,10 +92,19 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
       if (w && w.spanYd > opt.spanYd + 0.05) widerNearby = true;
     }
 
-    const ok = apexOk && !widerNearby;
+    // Near zero must be a real crossing strictly before the far/optimal
+    // one — that's the whole point of a two-stage sight-in (close, easy
+    // shot first; confirm at distance second). Height at 100yd should sit
+    // between the muzzle (below the line of sight) and the apex (at the
+    // target radius) for a zero this short-to-medium range.
+    const nearZeroOk = opt.nearZeroYd != null && opt.nearZeroYd > 0 && opt.nearZeroYd < opt.zeroRangeYd;
+    const height100Ok = opt.heightAt100Yd != null && opt.heightAt100Yd > -base.sightHeight && opt.heightAt100Yd <= radiusIn + 0.01;
+
+    const ok = apexOk && !widerNearby && nearZeroOk && height100Ok;
     if (!ok) failures++;
     console.log(
       `${ok ? "pass" : "FAIL"}  vitals optimum ${radiusIn}in   zero ${opt.zeroRangeYd.toFixed(1)}yd  ` +
+      `near ${opt.nearZeroYd?.toFixed(1)}yd  h@100 ${opt.heightAt100Yd?.toFixed(2)}in  ` +
       `apex ${apex.toFixed(3)}in  window ${opt.spanYd.toFixed(1)}yd (${opt.entryYd.toFixed(0)}-${opt.exitYd.toFixed(0)})` +
       (widerNearby ? "  [a nearby zero found a WIDER window]" : "")
     );

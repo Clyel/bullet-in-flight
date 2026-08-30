@@ -4,7 +4,7 @@
 // trajectory physics — it's a pure read-off of an already-integrated path,
 // plus (for the optimizer below) an outer search over zeroRangeYd using the
 // existing, already-validated solveZeroAngle/integrate unchanged.
-import { solveZeroAngle, integrate } from "./solver.js";
+import { solveZeroAngle, integrate, sightLineCrossings, sampleAt } from "./solver.js";
 
 /**
  * Scans a path for the vitals window. The bullet starts below the line of
@@ -141,5 +141,13 @@ export function optimalSightIn(base, radiusIn) {
   if (!window) {
     throw new Error("Could not resolve a vitals window at the optimal zero.");
   }
-  return { zeroRangeYd, ...window };
+
+  // Practical sight-in aids, read off the same path — no extra integration.
+  // The near zero is where a sight-in procedure starts (close, easy to get
+  // "on paper"), before dialing in at the far/optimal zero itself. Height
+  // at 100yd is the other classic reference distance shooters check by.
+  const nearZeroYd = sightLineCrossings(path)[0] ?? null;
+  const heightAt100Yd = sampleAt(path, 100)?.y ?? null;
+
+  return { zeroRangeYd, nearZeroYd, heightAt100Yd, ...window };
 }

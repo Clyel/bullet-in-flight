@@ -19,7 +19,7 @@ function AppShell() {
   const { system, setSystem } = useUnits();
 
   return (
-    <div style={{ minHeight: "100%", background: C.field, padding: "18px 14px 40px", color: C.ink }}>
+    <div className="app-shell" style={{ minHeight: "100%", background: C.field, padding: "18px 14px 40px", color: C.ink }}>
       <div className="bif-wrap">
         <header style={{ borderBottom: `2px solid ${C.ink}`, paddingBottom: 8, marginBottom: 16 }}>
           <h1 style={{ margin: 0, font: "700 30px/1 'Oswald',sans-serif", textTransform: "uppercase" }}>

@@ -16,6 +16,11 @@ import { num, isWindActive } from "../solveFromForm.js";
  * showMOA/showMIL toggle state, windage only if wind is active) via the
  * exact same COLUMN_DEFS/dopeColumnKeys RangeTable itself uses, so the
  * printed numbers can never drift from what's on screen.
+ *
+ * Deliberately tight — a lot of these end up taped to a stock, so the goal
+ * is a compact reference card, not a spacious report. No `width` on the
+ * table means columns size to their own content instead of stretching to
+ * fill the page.
  */
 export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
   const { system } = useUnits();
@@ -34,22 +39,22 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
 
   return createPortal(
     <div className="dope-print-root">
-      <h1 style={{ textAlign: "center", font: "700 22px 'Oswald',sans-serif", textTransform: "uppercase",
-                   letterSpacing: ".04em", margin: "0 0 4px" }}>
+      <h1 style={{ textAlign: "center", font: "700 16px 'Oswald',sans-serif", textTransform: "uppercase",
+                   letterSpacing: ".03em", margin: 0 }}>
         {title}
       </h1>
-      <p style={{ textAlign: "center", font: "400 11px 'IBM Plex Sans',sans-serif", color: "#444", margin: "0 0 18px" }}>
-        Bullet in Flight — point-mass trajectory, {v.dragModel} standard drag curve
+      <p style={{ textAlign: "center", font: "400 9px 'IBM Plex Sans',sans-serif", color: "#555", margin: "1px 0 8px" }}>
+        Bullet in Flight — point-mass, {v.dragModel} drag curve
       </p>
 
-      <table style={{ borderCollapse: "collapse", width: "100%", marginBottom: 6 }}>
+      <table style={{ borderCollapse: "collapse", margin: "0 auto" }}>
         <thead>
           <tr>
             {keys.map((key, i) => (
-              <th key={key} style={{ border: "1px solid #999", padding: "5px 8px",
+              <th key={key} style={{ border: "1px solid #999", padding: "2px 5px",
                                       textAlign: i === 0 ? "left" : "right",
-                                      font: "600 10px 'Oswald',sans-serif", textTransform: "uppercase",
-                                      letterSpacing: ".06em" }}>
+                                      font: "600 8.5px 'Oswald',sans-serif", textTransform: "uppercase",
+                                      letterSpacing: ".04em", whiteSpace: "nowrap" }}>
                 {COLUMN_DEFS[key].head(system)}
               </th>
             ))}
@@ -61,9 +66,9 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
             return (
               <tr key={r.range}>
                 {keys.map((key, i) => (
-                  <td key={key} style={{ border: "1px solid #ccc", padding: "4px 8px",
+                  <td key={key} style={{ border: "1px solid #ccc", padding: "1px 5px",
                                           textAlign: i === 0 ? "left" : "right",
-                                          font: "500 12px 'IBM Plex Mono',monospace" }}>
+                                          font: "500 10px 'IBM Plex Mono',monospace", whiteSpace: "nowrap" }}>
                     {COLUMN_DEFS[key].fmt(r, system)}{i === keys.length - 1 && soft ? " †" : ""}
                   </td>
                 ))}
@@ -73,13 +78,12 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         </tbody>
       </table>
       {hasSoftRows && (
-        <p style={{ font: "400 10px 'IBM Plex Sans',sans-serif", color: "#555", margin: "0 0 18px" }}>
-          † Transonic (Mach 1.2–1.0) or slower — standard drag curves diverge most from a real bullet's measured
-          drag in this band; treat these rows as soft.
+        <p style={{ font: "400 8px 'IBM Plex Sans',sans-serif", color: "#555", margin: "3px 0 0" }}>
+          † Transonic (Mach 1.2–1.0) or slower — treat as soft.
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 24, marginTop: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
         <Section title="The Load">
           <Row label="Muzzle velocity" value={field(v.muzzleVelocity, "velocity")} />
           <Row label="Bullet weight" value={Number.isFinite(num(v.grains)) ? `${v.grains} gr` : "—"} />
@@ -100,9 +104,8 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         </Section>
       </div>
 
-      <p style={{ font: "400 10px 'IBM Plex Sans',sans-serif", color: "#555", marginTop: 18 }}>
-        Barrel angle above the line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;. No spin drift or Coriolis
-        modeled in this version.
+      <p style={{ font: "400 8px 'IBM Plex Sans',sans-serif", color: "#555", margin: "6px 0 0" }}>
+        Barrel angle above line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;. No spin drift or Coriolis modeled.
       </p>
     </div>,
     document.body
@@ -111,9 +114,9 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
 
 function Section({ title, children }) {
   return (
-    <div style={{ minWidth: 160 }}>
-      <div style={{ font: "600 10px 'Oswald',sans-serif", textTransform: "uppercase", letterSpacing: ".08em",
-                    color: "#555", borderBottom: "1px solid #999", paddingBottom: 3, marginBottom: 5 }}>
+    <div style={{ minWidth: 128 }}>
+      <div style={{ font: "600 8.5px 'Oswald',sans-serif", textTransform: "uppercase", letterSpacing: ".06em",
+                    color: "#555", borderBottom: "1px solid #999", paddingBottom: 1, marginBottom: 2 }}>
         {title}
       </div>
       {children}
@@ -123,8 +126,8 @@ function Section({ title, children }) {
 
 function Row({ label, value }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12,
-                  font: "400 11px 'IBM Plex Mono',monospace", marginBottom: 3 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10,
+                  font: "400 9.5px 'IBM Plex Mono',monospace", lineHeight: 1.5 }}>
       <span style={{ color: "#555" }}>{label}</span>
       <span>{value}</span>
     </div>

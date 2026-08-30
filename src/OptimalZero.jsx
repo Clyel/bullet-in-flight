@@ -96,6 +96,8 @@ export default function OptimalZero() {
   const dSuf = unitSuffix("distance", system);
   const vel = (fps) => toDisplay(fps, "velocity", system);
   const vSuf = unitSuffix("velocity", system);
+  const len = (inches) => toDisplay(inches, "length", system);
+  const lSuf = unitSuffix("length", system);
 
   // One optimalSightIn call per row (~130-150ms each) — fine for the
   // "a dozen or so rounds" scale this is meant for. Recomputes the whole
@@ -196,9 +198,10 @@ export default function OptimalZero() {
             <table>
               <thead>
                 <tr style={{ background: C.ink }}>
-                  {["Round", "Muzzle Velocity", "Muzzle Energy", "Optimal Zero", "Vitals Window", ""].map((head, i) => (
+                  {["Round", "Muzzle Velocity", "Muzzle Energy", "Near Zero", "Optimal Zero", "Height @ 100",
+                    "Vitals Window", ""].map((head, i, arr) => (
                     <th key={head || i} scope="col"
-                        style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : i === 5 ? "center" : "right",
+                        style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : i === arr.length - 1 ? "center" : "right",
                                  font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
                                  textTransform: "uppercase", color: C.card, whiteSpace: "nowrap" }}>
                       {head}
@@ -224,13 +227,19 @@ export default function OptimalZero() {
                         : "—"}
                     </td>
                     {error ? (
-                      <td colSpan={2} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.ox }}>
+                      <td colSpan={4} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.ox }}>
                         {error}
                       </td>
                     ) : (
                       <>
                         <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
+                          {result.nearZeroYd != null ? `${dist(result.nearZeroYd).toFixed(0)} ${dSuf}` : "—"}
+                        </td>
+                        <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
                           {dist(result.zeroRangeYd).toFixed(0)} {dSuf}
+                        </td>
+                        <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
+                          {result.heightAt100Yd != null ? `${len(result.heightAt100Yd).toFixed(1)} ${lSuf}` : "—"}
                         </td>
                         <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
                           {dist(result.spanYd).toFixed(0)} {dSuf}

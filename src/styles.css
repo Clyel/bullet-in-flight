@@ -21,8 +21,8 @@ input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }
    hiding .bif-wrap for print must not also hide this. */
 .dope-print-root { display: none; }
 @media print {
-  @page { margin: 0.5in; }
+  @page { margin: 0.3in; }
   body { background: #fff; }
-  .bif-wrap { display: none !important; }
+  .app-shell { display: none !important; }
   .dope-print-root { display: block !important; color: #111; }
 }

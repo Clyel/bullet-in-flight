@@ -3,14 +3,16 @@ import { C, label, numeric } from "./components/theme.js";
 import { UnitField } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
+import { energyFtLb } from "./ballistics/solver.js";
 import { optimalSightIn } from "./ballistics/vitalsWindow.js";
+import { listSavedLoads } from "./storage/savedLoads.js";
 import { num } from "./solveFromForm.js";
 import { useUnits } from "./UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "./units.js";
 
-// The shared rig — everything a catalog round needs beyond its own ammo
-// data to compute an optimal zero. Deliberately smaller than Calculator's
-// full input set: no zero (that's the output), no shot distance, no wind
+// The shared rig — everything a round needs beyond its own ammo data to
+// compute an optimal zero. Deliberately smaller than Calculator's full
+// input set: no zero (that's the output), no shot distance, no wind
 // (barely touches apex height, not worth the complexity for a browsing
 // tool like this one).
 const DEFAULTS = {
@@ -21,18 +23,53 @@ const DEFAULTS = {
   altitudeFt: "0",
 };
 
+// Both a catalog round and a saved dataset get normalized to this same
+// ammo-only shape before anything downstream touches them — this page
+// applies ONE shared rig to every row, so a saved dataset's own sight
+// height/zero/conditions from whenever it was saved are deliberately left
+// behind. Using them instead would make some rows reflect "my current rig"
+// and others reflect "whatever I had dialed in weeks ago," which would
+// quietly break the whole point of a side-by-side comparison.
+const fromCatalog = (ammo) => ({
+  key: `catalog:${ammo.id}`,
+  label: ammo.cartridge,
+  sublabel: `${ammo.grains}gr ${ammo.bullet} — ${ammo.manufacturer}`,
+  muzzleVelocity: ammo.muzzleVelocity,
+  ballisticCoefficient: ammo.ballisticCoefficient,
+  dragModel: ammo.dragModel,
+  grains: ammo.grains,
+});
+
+const fromSaved = (load) => ({
+  key: `saved:${load.id}`,
+  label: load.name,
+  sublabel: "Saved dataset",
+  muzzleVelocity: num(load.muzzleVelocity),
+  ballisticCoefficient: num(load.ballisticCoefficient),
+  dragModel: load.dragModel,
+  grains: num(load.grains),
+});
+
 export default function OptimalZero() {
   const { system } = useUnits();
   const [rig, setRig] = useState(DEFAULTS);
   const set = Object.fromEntries(
     Object.keys(DEFAULTS).map((k) => [k, (val) => setRig((s) => ({ ...s, [k]: val }))])
   );
-  const [selected, setSelected] = useState([]); // COMMERCIAL_AMMO entries, in pick order
+  // Loaded once per mount — switching to this tab re-mounts it, which is
+  // when a load saved on the Calculator tab should show up here (same
+  // pattern as Compare.jsx).
+  const [savedLoads] = useState(() => listSavedLoads());
+  const [selected, setSelected] = useState([]); // normalized entries, in pick order
 
-  const addLoad = (ammo) => {
-    setSelected((s) => (s.some((a) => a.id === ammo.id) ? s : [...s, ammo]));
+  const addEntry = (entry) => {
+    setSelected((s) => (s.some((e) => e.key === entry.key) ? s : [...s, entry]));
   };
-  const removeLoad = (id) => setSelected((s) => s.filter((a) => a.id !== id));
+  const removeEntry = (key) => setSelected((s) => s.filter((e) => e.key !== key));
+  const toggleSaved = (load) => {
+    const key = `saved:${load.id}`;
+    setSelected((s) => (s.some((e) => e.key === key) ? s.filter((e) => e.key !== key) : [...s, fromSaved(load)]));
+  };
 
   const fillStandard = () => {
     const alt = parseFloat(rig.altitudeFt);
@@ -44,6 +81,8 @@ export default function OptimalZero() {
 
   const dist = (yd) => toDisplay(yd, "distance", system);
   const dSuf = unitSuffix("distance", system);
+  const vel = (fps) => toDisplay(fps, "velocity", system);
+  const vSuf = unitSuffix("velocity", system);
 
   // One optimalSightIn call per row (~130-150ms each) — fine for the
   // "a dozen or so rounds" scale this is meant for. Recomputes the whole
@@ -57,21 +96,26 @@ export default function OptimalZero() {
     const rigOk = Number.isFinite(sightHeight) && Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0 &&
       Number.isFinite(tempF) && Number.isFinite(pressInHg);
 
-    return selected.map((ammo) => {
-      if (!rigOk) return { ammo, error: "Fill in your rig above." };
+    return selected.map((entry) => {
+      if (!rigOk) return { entry, error: "Fill in your rig above." };
+      if (!Number.isFinite(entry.muzzleVelocity) || !Number.isFinite(entry.ballisticCoefficient)) {
+        return { entry, error: "This dataset is missing muzzle velocity or BC." };
+      }
       const base = {
-        muzzleVelocity: ammo.muzzleVelocity, ballisticCoefficient: ammo.ballisticCoefficient,
-        dragModel: ammo.dragModel, sightHeight, tempF, pressInHg,
+        muzzleVelocity: entry.muzzleVelocity, ballisticCoefficient: entry.ballisticCoefficient,
+        dragModel: entry.dragModel, sightHeight, tempF, pressInHg,
         windSpeedMph: undefined, windClock: undefined,
       };
       try {
-        return { ammo, result: optimalSightIn(base, vitalsRadiusIn) };
+        return { entry, result: optimalSightIn(base, vitalsRadiusIn) };
       } catch (e) {
-        return { ammo, error: e.message };
+        return { entry, error: e.message };
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, JSON.stringify(rig)]);
+
+  const selectedSavedKeys = new Set(selected.filter((e) => e.key.startsWith("saved:")).map((e) => e.key));
 
   return (
     <div className="bif-grid">
@@ -107,23 +151,39 @@ export default function OptimalZero() {
           Fill from standard atmosphere
         </button>
 
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Add a round to compare</div>
-        <CommercialLoadPicker onSelect={addLoad} resetLoadAfterSelect />
+        {savedLoads.length > 0 && (
+          <>
+            <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your saved datasets</div>
+            <div style={{ marginBottom: 20 }}>
+              {savedLoads.map((l) => (
+                <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
+                                            marginBottom: 8, cursor: "pointer" }}>
+                  <input type="checkbox" checked={selectedSavedKeys.has(`saved:${l.id}`)}
+                         onChange={() => toggleSaved(l)} />
+                  <span style={{ font: "500 13px 'IBM Plex Sans',sans-serif", color: C.ink }}>{l.name}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Add a round from the catalog</div>
+        <CommercialLoadPicker onSelect={(ammo) => addEntry(fromCatalog(ammo))} resetLoadAfterSelect />
       </div>
 
       <div>
         {selected.length === 0 ? (
           <Notice tone={C.brass} title="Nothing to compare yet">
-            Add a round above — pick as many as you want, they'll all use the same rig on the left.
+            Check off a saved dataset or add a round from the catalog — they'll all use the same rig on the left.
           </Notice>
         ) : (
           <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto" }}>
             <table>
               <thead>
                 <tr style={{ background: C.ink }}>
-                  {["Round", "Muzzle Velocity", "Optimal Zero", "Vitals Window", ""].map((head, i) => (
+                  {["Round", "Muzzle Velocity", "Muzzle Energy", "Optimal Zero", "Vitals Window", ""].map((head, i) => (
                     <th key={head || i} scope="col"
-                        style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : i === 4 ? "center" : "right",
+                        style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : i === 5 ? "center" : "right",
                                  font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
                                  textTransform: "uppercase", color: C.card, whiteSpace: "nowrap" }}>
                       {head}
@@ -132,15 +192,22 @@ export default function OptimalZero() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ ammo, result, error }, i) => (
-                  <tr key={ammo.id} style={{ background: i % 2 ? C.cardAlt : C.card }}>
+                {rows.map(({ entry, result, error }, i) => (
+                  <tr key={entry.key} style={{ background: i % 2 ? C.cardAlt : C.card }}>
                     <td style={{ ...numeric, padding: "7px 12px", fontWeight: 600 }}>
-                      {ammo.cartridge}
+                      {entry.label}
                       <div style={{ font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted, marginTop: 2 }}>
-                        {ammo.grains}gr {ammo.bullet} — {ammo.manufacturer}
+                        {entry.sublabel}
                       </div>
                     </td>
-                    <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{ammo.muzzleVelocity} fps</td>
+                    <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
+                      {Number.isFinite(entry.muzzleVelocity) ? `${Math.round(vel(entry.muzzleVelocity))} ${vSuf}` : "—"}
+                    </td>
+                    <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
+                      {Number.isFinite(entry.muzzleVelocity) && Number.isFinite(entry.grains)
+                        ? `${Math.round(energyFtLb(entry.grains, entry.muzzleVelocity)).toLocaleString("en-US")} ft·lb`
+                        : "—"}
+                    </td>
                     {error ? (
                       <td colSpan={2} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.ox }}>
                         {error}
@@ -160,8 +227,8 @@ export default function OptimalZero() {
                     )}
                     <td style={{ padding: "7px 8px", textAlign: "center" }}>
                       <button
-                        onClick={() => removeLoad(ammo.id)}
-                        aria-label={`Remove ${ammo.cartridge} ${ammo.bullet}`}
+                        onClick={() => removeEntry(entry.key)}
+                        aria-label={`Remove ${entry.label}`}
                         style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
                                  font: "600 14px 'IBM Plex Mono',monospace", padding: "0 4px" }}
                       >

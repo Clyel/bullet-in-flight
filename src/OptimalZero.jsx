@@ -120,7 +120,26 @@ export default function OptimalZero() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <div style={{ ...label, color: C.ink, marginTop: 0, marginBottom: 12 }}>Your rig</div>
+        {savedLoads.length > 0 && (
+          <>
+            <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your saved datasets</div>
+            <div style={{ marginBottom: 20 }}>
+              {savedLoads.map((l) => (
+                <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
+                                            marginBottom: 8, cursor: "pointer" }}>
+                  <input type="checkbox" checked={selectedSavedKeys.has(`saved:${l.id}`)}
+                         onChange={() => toggleSaved(l)} />
+                  <span style={{ font: "500 13px 'IBM Plex Sans',sans-serif", color: C.ink }}>{l.name}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Add a round from the catalog</div>
+        <CommercialLoadPicker onSelect={(ammo) => addEntry(fromCatalog(ammo))} resetLoadAfterSelect />
+
+        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your rig</div>
         <UnitField
           label="Sight height over bore"
           hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."
@@ -144,31 +163,12 @@ export default function OptimalZero() {
         />
         <button
           onClick={fillStandard}
-          style={{ width: "100%", padding: 9, marginBottom: 20, background: C.ink, color: C.card,
+          style={{ width: "100%", padding: 9, background: C.ink, color: C.card,
                    border: "none", cursor: "pointer",
                    font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
         >
           Fill from standard atmosphere
         </button>
-
-        {savedLoads.length > 0 && (
-          <>
-            <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your saved datasets</div>
-            <div style={{ marginBottom: 20 }}>
-              {savedLoads.map((l) => (
-                <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
-                                            marginBottom: 8, cursor: "pointer" }}>
-                  <input type="checkbox" checked={selectedSavedKeys.has(`saved:${l.id}`)}
-                         onChange={() => toggleSaved(l)} />
-                  <span style={{ font: "500 13px 'IBM Plex Sans',sans-serif", color: C.ink }}>{l.name}</span>
-                </label>
-              ))}
-            </div>
-          </>
-        )}
-
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Add a round from the catalog</div>
-        <CommercialLoadPicker onSelect={(ammo) => addEntry(fromCatalog(ammo))} resetLoadAfterSelect />
       </div>
 
       <div>

@@ -15,3 +15,14 @@ input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* DopeChart.jsx renders via a portal onto document.body specifically so it
+   can sit here, as a sibling of .bif-wrap rather than nested inside it —
+   hiding .bif-wrap for print must not also hide this. */
+.dope-print-root { display: none; }
+@media print {
+  @page { margin: 0.5in; }
+  body { background: #fff; }
+  .bif-wrap { display: none !important; }
+  .dope-print-root { display: block !important; color: #111; }
+}

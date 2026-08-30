@@ -5,19 +5,21 @@ import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
 
 /** Fixed-decimal formatting with a thousands separator, e.g. -432.0 -> "-432.0", 2626 -> "2,626". */
-const commas = (n, digits) => n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+export const commas = (n, digits) => n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 /** Signed value -> "3.1 L" / "3.1 R" / "0.0", matching the windage column's convention. */
 const lr = (value, digits) =>
   Math.abs(value) < 0.5 * 10 ** -digits ? (0).toFixed(digits) : `${commas(Math.abs(value), digits)} ${value < 0 ? "L" : "R"}`;
 
 /** Undefined at zero range (angular correction isn't meaningful at the muzzle). */
-const angular = (val, digits) => (val == null ? "—" : commas(val, digits));
+export const angular = (val, digits) => (val == null ? "—" : commas(val, digits));
 
 // MOA/MIL are unit-agnostic angles computed straight from canonical
 // inches/yards — they never need a metric variant, so those column defs
-// intentionally never touch `system`.
-const COLUMN_DEFS = {
+// intentionally never touch `system`. Exported so DopeChart.jsx (the
+// printable card) can build the exact same column set/formatting — no risk
+// of the printed numbers drifting from what's on screen.
+export const COLUMN_DEFS = {
   range:      { head: (sys) => `Range (${unitSuffix("distance", sys)})`,
                 fmt: (r, sys) => commas(toDisplay(r.range, "distance", sys), 0) },
   velocity:   { head: (sys) => `Velocity (${unitSuffix("velocity", sys)})`,
@@ -38,17 +40,26 @@ const COLUMN_DEFS = {
   mach:       { head: () => "Mach", fmt: (r) => r.mach.toFixed(2) },
 };
 
-export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
-  const { system } = useUnits();
-  const keys = [
+/**
+ * The column set DopeChart.jsx (the printable card) uses — range/velocity/
+ * energy/height plus the same conditional MOA/MIL/windage variants as the
+ * live table, but never time/mach as columns (mach still drives the
+ * transonic-flag footnote there, just isn't printed as its own column).
+ */
+export function dopeColumnKeys({ showWindage, showMOA, showMIL }) {
+  return [
     "range", "velocity", "energy", "height",
     ...(showMOA ? ["heightMOA"] : []),
     ...(showMIL ? ["heightMIL"] : []),
     ...(showWindage ? ["windage"] : []),
     ...(showWindage && showMOA ? ["windageMOA"] : []),
     ...(showWindage && showMIL ? ["windageMIL"] : []),
-    "time", "mach",
   ];
+}
+
+export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
+  const { system } = useUnits();
+  const keys = [...dopeColumnKeys({ showWindage, showMOA, showMIL }), "time", "mach"];
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto" }}>

@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
+import DopeChart from "./components/DopeChart.jsx";
 import { listSavedLoads, saveLoad, deleteLoad } from "./storage/savedLoads.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
@@ -48,6 +49,20 @@ export default function Calculator() {
   const [saveName, setSaveName] = useState("");
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
+  const [printing, setPrinting] = useState(false);
+
+  // DopeChart mounts via a portal (see its own comment for why), so it
+  // needs a render to actually land in the DOM before window.print() reads
+  // it — hence doing this in an effect rather than inline in the click
+  // handler. afterprint fires whether the user saves, cancels, or the
+  // dialog is dismissed any other way, so this always cleans back up.
+  useEffect(() => {
+    if (!printing) return;
+    const stopPrinting = () => setPrinting(false);
+    window.addEventListener("afterprint", stopPrinting);
+    window.print();
+    return () => window.removeEventListener("afterprint", stopPrinting);
+  }, [printing]);
 
   const handleSave = () => {
     const trimmed = saveName.trim();
@@ -146,7 +161,15 @@ export default function Calculator() {
             </div>
 
             <RangeTable rows={solution.rows} showWindage={windActive} showMOA={showMOA} showMIL={showMIL} />
-            <p style={{ marginTop: 10, font: "400 11px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+            <button
+              onClick={() => setPrinting(true)}
+              style={{ margin: "10px 0", padding: "6px 0", background: "none", border: "none",
+                       cursor: "pointer", color: C.steel, textDecoration: "underline",
+                       font: "500 12px 'IBM Plex Sans',sans-serif" }}
+            >
+              Print dope chart (PDF)
+            </button>
+            <p style={{ marginTop: 4, font: "400 11px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
               Barrel angle above the line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;.
               Drag uses the tabulated {v.dragModel} standard curve, integrated in 0.25 ms steps.
               {windActive
@@ -154,6 +177,9 @@ export default function Calculator() {
                 : " No wind entered."}
               {" "}No spin drift or Coriolis in this version.
             </p>
+            {printing && (
+              <DopeChart v={v} solution={solution} saveName={saveName} showMOA={showMOA} showMIL={showMIL} />
+            )}
           </>
         )}
       </div>

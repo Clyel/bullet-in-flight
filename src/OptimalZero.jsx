@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
 import { UnitField } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
@@ -79,6 +79,19 @@ export default function OptimalZero() {
     set.pressInHg(pressInHg.toFixed(2));
   };
 
+  // Every rig field feeds every selected row's optimalSightIn call (~130-
+  // 150ms each), run fully synchronously. With several rows selected, that
+  // adds up to a multi-second freeze — and without debouncing, it reruns on
+  // EVERY keystroke while typing, not just once you're done. Debounced here
+  // instead: the input itself stays driven by `rig` (so typing feels
+  // instant), but the expensive table recompute waits until 400ms after you
+  // stop.
+  const [debouncedRig, setDebouncedRig] = useState(rig);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedRig(rig), 400);
+    return () => clearTimeout(t);
+  }, [rig]);
+
   const dist = (yd) => toDisplay(yd, "distance", system);
   const dSuf = unitSuffix("distance", system);
   const vel = (fps) => toDisplay(fps, "velocity", system);
@@ -86,14 +99,16 @@ export default function OptimalZero() {
 
   // One optimalSightIn call per row (~130-150ms each) — fine for the
   // "a dozen or so rounds" scale this is meant for. Recomputes the whole
-  // table when the shared rig changes (it applies to every row), or when
-  // the selection itself changes.
+  // table when the (debounced) shared rig changes, or when the selection
+  // itself changes — adding/removing a round is already a discrete click,
+  // not a rapid keystroke stream, so that path stays undebounced.
   const rows = useMemo(() => {
-    const sightHeight = num(rig.sightHeight);
-    const vitalsRadiusIn = num(rig.vitalsRadiusIn);
-    const tempF = num(rig.tempF);
-    const pressInHg = num(rig.pressInHg);
-    const rigOk = Number.isFinite(sightHeight) && Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0 &&
+    const sightHeight = num(debouncedRig.sightHeight);
+    const vitalsRadiusIn = num(debouncedRig.vitalsRadiusIn);
+    const tempF = num(debouncedRig.tempF);
+    const pressInHg = num(debouncedRig.pressInHg);
+    const rigOk = Number.isFinite(sightHeight) && sightHeight >= 0 &&
+      Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0 &&
       Number.isFinite(tempF) && Number.isFinite(pressInHg);
 
     return selected.map((entry) => {
@@ -113,7 +128,7 @@ export default function OptimalZero() {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, JSON.stringify(rig)]);
+  }, [selected, JSON.stringify(debouncedRig)]);
 
   const selectedSavedKeys = new Set(selected.filter((e) => e.key.startsWith("saved:")).map((e) => e.key));
 

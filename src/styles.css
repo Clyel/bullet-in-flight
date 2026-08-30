@@ -22,6 +22,14 @@ input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }
 .dope-print-root { display: none; }
 @media print {
   @page { margin: 0.3in; }
+  /* html/body/#root's own height:100% (line 3) resolves against the print
+     page even with .app-shell hidden inside them — display:none on a
+     child doesn't collapse a parent that has its OWN explicit height, so
+     without this override #root still reserves a full blank page ahead of
+     the portaled card. This was the actual remaining cause of the "blank
+     first page" report after the first fix (which only hid .app-shell,
+     not this) — confirmed by checking #root's computed height directly. */
+  html, body, #root { height: auto !important; }
   body { background: #fff; }
   .app-shell { display: none !important; }
   .dope-print-root { display: block !important; color: #111; }

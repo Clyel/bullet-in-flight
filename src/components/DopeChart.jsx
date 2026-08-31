@@ -47,7 +47,14 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         Bullet in Flight — point-mass, {v.dragModel} drag curve
       </p>
 
-      <table style={{ borderCollapse: "collapse", margin: "0 auto" }}>
+      {/* width:"auto" is load-bearing, not decorative — styles.css has a
+          GLOBAL `table { width: 100% }` rule (for the app's other tables,
+          which do want full-width). Without an explicit override here this
+          table inherits that and stretches to fill the page, spreading
+          columns out with huge gaps. An earlier on-screen check missed this
+          because it used a shrink-to-fit container that masked the effect;
+          real print (a normal block filling the page) exposed it. */}
+      <table style={{ borderCollapse: "collapse", margin: "0 auto", width: "auto" }}>
         <thead>
           <tr>
             {keys.map((key, i) => (

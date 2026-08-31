@@ -39,11 +39,11 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
 
   return createPortal(
     <div className="dope-print-root">
-      <h1 style={{ textAlign: "center", font: "700 16px 'Oswald',sans-serif", textTransform: "uppercase",
+      <h1 style={{ textAlign: "center", font: "700 12px 'Oswald',sans-serif", textTransform: "uppercase",
                    letterSpacing: ".03em", margin: 0 }}>
         {title}
       </h1>
-      <p style={{ textAlign: "center", font: "400 9px 'IBM Plex Sans',sans-serif", color: "#555", margin: "1px 0 8px" }}>
+      <p style={{ textAlign: "center", font: "400 12px 'IBM Plex Sans',sans-serif", color: "#555", margin: "1px 0 8px" }}>
         Bullet in Flight — point-mass, {v.dragModel} drag curve
       </p>
 
@@ -60,7 +60,7 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
             {keys.map((key, i) => (
               <th key={key} style={{ border: "1px solid #999", padding: "2px 5px",
                                       textAlign: i === 0 ? "left" : "right",
-                                      font: "600 8.5px 'Oswald',sans-serif", textTransform: "uppercase",
+                                      font: "600 12px 'Oswald',sans-serif", textTransform: "uppercase",
                                       letterSpacing: ".04em", whiteSpace: "nowrap" }}>
                 {COLUMN_DEFS[key].head(system)}
               </th>
@@ -75,7 +75,7 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
                 {keys.map((key, i) => (
                   <td key={key} style={{ border: "1px solid #ccc", padding: "1px 5px",
                                           textAlign: i === 0 ? "left" : "right",
-                                          font: "500 10px 'IBM Plex Mono',monospace", whiteSpace: "nowrap" }}>
+                                          font: "500 12px 'IBM Plex Mono',monospace", whiteSpace: "nowrap" }}>
                     {COLUMN_DEFS[key].fmt(r, system)}{i === keys.length - 1 && soft ? " †" : ""}
                   </td>
                 ))}
@@ -85,12 +85,17 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         </tbody>
       </table>
       {hasSoftRows && (
-        <p style={{ font: "400 8px 'IBM Plex Sans',sans-serif", color: "#555", margin: "3px 0 0" }}>
+        <p style={{ font: "400 12px 'IBM Plex Sans',sans-serif", color: "#555", margin: "3px 0 0" }}>
           † Transonic (Mach 1.2–1.0) or slower — treat as soft.
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
+      {/* width:"fit-content" is what makes margin:auto actually center this
+          row instead of being a no-op — a flex container otherwise fills
+          the full available block width (same reason the table needed its
+          own explicit width override above), which would leave nothing
+          for auto margins to center within. */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", width: "fit-content", margin: "8px auto 0" }}>
         <Section title="The Load">
           <Row label="Muzzle velocity" value={field(v.muzzleVelocity, "velocity")} />
           <Row label="Bullet weight" value={Number.isFinite(num(v.grains)) ? `${v.grains} gr` : "—"} />
@@ -111,7 +116,7 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         </Section>
       </div>
 
-      <p style={{ font: "400 8px 'IBM Plex Sans',sans-serif", color: "#555", margin: "6px 0 0" }}>
+      <p style={{ font: "400 12px 'IBM Plex Sans',sans-serif", color: "#555", margin: "6px 0 0", textAlign: "center" }}>
         Barrel angle above line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;. No spin drift or Coriolis modeled.
       </p>
     </div>,
@@ -122,7 +127,7 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
 function Section({ title, children }) {
   return (
     <div style={{ minWidth: 128 }}>
-      <div style={{ font: "600 8.5px 'Oswald',sans-serif", textTransform: "uppercase", letterSpacing: ".06em",
+      <div style={{ font: "600 12px 'Oswald',sans-serif", textTransform: "uppercase", letterSpacing: ".06em",
                     color: "#555", borderBottom: "1px solid #999", paddingBottom: 1, marginBottom: 2 }}>
         {title}
       </div>
@@ -134,7 +139,7 @@ function Section({ title, children }) {
 function Row({ label, value }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 10,
-                  font: "400 9.5px 'IBM Plex Mono',monospace", lineHeight: 1.5 }}>
+                  font: "400 12px 'IBM Plex Mono',monospace", lineHeight: 1.5 }}>
       <span style={{ color: "#555" }}>{label}</span>
       <span>{value}</span>
     </div>

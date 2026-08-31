@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { solveTrajectory, solveZeroAngle, integrate } from "../src/ballistics/solver.js";
 import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js";
+import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -109,6 +110,32 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
       (widerNearby ? "  [a nearby zero found a WIDER window]" : "")
     );
   }
+}
+
+// Free recoil energy: exact physics (conservation of momentum + kinetic
+// energy), not an empirical curve fit, so this isn't validated against an
+// independent solver the way drag physics is -- instead it's checked
+// against SAAMI's own published worked example, straight from their "Gun
+// Recoil - Technical" standard.
+{
+  // 12ga shotgun, 7lb, shot+wads 589.9gr, powder charge 33.4gr, velocity
+  // 1275fps, f=1.50 (shotgun factor). SAAMI's stated answer: 30.22 ft-lb
+  // ("about 30 ft-lb due to the uncertainty of the exact shot charge weight
+  // and velocity" -- their own words, so a tight but non-zero tolerance).
+  const fre = freeRecoilEnergy(589.9, 1275, 33.4, 7, 1.50);
+  const freOk = Math.abs(fre - 30.22) < 0.1;
+  if (!freOk) failures++;
+  console.log(`${freOk ? "pass" : "FAIL"}  SAAMI recoil worked example   expected 30.22 ft-lb  got ${fre.toFixed(2)} ft-lb`);
+
+  // Sanity check the charge-weight estimator against a case with real data:
+  // the default 30-06/172gr load in a typical 8lb rifle should land in the
+  // commonly-cited ~18-25 ft-lb range for that cartridge/rifle-weight
+  // combination, not some wildly different number.
+  const charge = estimateChargeWeight("30-06 Springfield");
+  const rifleFre = freeRecoilEnergy(172, 2825, charge, 8);
+  const rifleOk = charge > 0 && rifleFre > 18 && rifleFre < 25;
+  if (!rifleOk) failures++;
+  console.log(`${rifleOk ? "pass" : "FAIL"}  recoil sanity (30-06/172gr, 8lb)   charge ${charge.toFixed(1)}gr (estimated)  FRE ${rifleFre.toFixed(2)} ft-lb`);
 }
 
 console.log(failures ? `\n${failures} FAILING` : "\nAll checks passed.");

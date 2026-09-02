@@ -5,6 +5,17 @@ import { UnitsProvider, useUnits } from "./UnitsContext.jsx";
 import Calculator from "./Calculator.jsx";
 import Compare from "./Compare.jsx";
 import OptimalZero from "./OptimalZero.jsx";
+import Recoil from "./Recoil.jsx";
+import Help from "./Help.jsx";
+
+// Maps the main tab switcher's value to the Help tab's matching section id,
+// for the contextual "How does this page work?" link below the switcher.
+const HELP_SECTION_BY_TAB = {
+  Calculator: "calculator",
+  Compare: "compare",
+  "Optimal Zero": "optimal-zero",
+  Recoil: "recoil",
+};
 
 export default function App() {
   return (
@@ -16,7 +27,16 @@ export default function App() {
 
 function AppShell() {
   const [tab, setTab] = useState("Calculator");
+  const [helpTarget, setHelpTarget] = useState(null);
   const { system, setSystem } = useUnits();
+
+  // `key` (not just `id`) so clicking the same help link twice in a row
+  // still re-scrolls — Help.jsx's effect keys off the whole object, and an
+  // unchanged id string wouldn't retrigger it on its own.
+  const goToHelp = (id) => {
+    setHelpTarget({ id, key: Date.now() });
+    setTab("Help");
+  };
 
   return (
     <div className="app-shell" style={{ minHeight: "100%", background: C.field, padding: "18px 14px 40px", color: C.ink }}>
@@ -31,9 +51,13 @@ function AppShell() {
           </p>
         </header>
 
-        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-          <div style={{ maxWidth: 380, flex: 1, minWidth: 260 }}>
-            <Segmented options={["Calculator", "Compare", "Optimal Zero"]} value={tab} onChange={setTab} />
+        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: tab === "Help" ? 16 : 8 }}>
+          <div style={{ maxWidth: 460, flex: 1, minWidth: 300 }}>
+            <Segmented
+              options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Help"]}
+              value={tab}
+              onChange={(v) => { if (v === "Help") setHelpTarget(null); setTab(v); }}
+            />
           </div>
           <div style={{ maxWidth: 200 }}>
             <Segmented
@@ -44,8 +68,33 @@ function AppShell() {
           </div>
         </div>
 
-        {tab === "Calculator" ? <Calculator /> : tab === "Compare" ? <Compare /> : <OptimalZero />}
+        {tab !== "Help" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 16 }}>
+            <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>How does {tab} work?</HelpLink>
+            <HelpLink onClick={() => goToHelp("faq")}>FAQ</HelpLink>
+            <HelpLink onClick={() => goToHelp("submit")}>Suggest an idea</HelpLink>
+          </div>
+        )}
+
+        {tab === "Calculator" ? <Calculator />
+          : tab === "Compare" ? <Compare />
+          : tab === "Optimal Zero" ? <OptimalZero />
+          : tab === "Recoil" ? <Recoil />
+          : <Help scrollTarget={helpTarget} />}
       </div>
     </div>
+  );
+}
+
+function HelpLink({ onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+               color: C.steel, textDecoration: "underline",
+               font: "500 11.5px 'IBM Plex Sans',sans-serif" }}
+    >
+      {children}
+    </button>
   );
 }

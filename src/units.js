@@ -19,6 +19,8 @@ export const fToC = (f) => ((f - 32) * 5) / 9;
 export const cToF = (c) => (c * 9) / 5 + 32;
 export const inHgToHPa = (inHg) => inHg * 33.8639;
 export const hPaToInHg = (hPa) => hPa / 33.8639;
+export const lbToKg = (lb) => lb * 0.45359237;
+export const kgToLb = (kg) => kg / 0.45359237;
 
 // Wind speed is its own category (mph/km/h), deliberately distinct from
 // muzzle velocity (fps/mps) — matches the convention already used for wind
@@ -34,6 +36,7 @@ export const CATEGORIES = {
   windSpeed:   { imperial: "mph", metric: "km/h", toMetric: mphToKmh, toImperial: kmhToMph, digits: 1 },
   temperature: { imperial: "°F", metric: "°C", toMetric: fToC, toImperial: cToF,             digits: 1 },
   pressure:    { imperial: "inHg", metric: "hPa", toMetric: inHgToHPa, toImperial: hPaToInHg, digits: 2 },
+  weight:      { imperial: "lb",  metric: "kg",   toMetric: lbToKg,    toImperial: kgToLb,   digits: 2 },
 };
 
 /** Canonical (always-imperial) value -> the number to show under `system`. */

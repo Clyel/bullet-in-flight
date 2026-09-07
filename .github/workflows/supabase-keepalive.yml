@@ -15,14 +15,20 @@ jobs:
     steps:
       - name: Ping Supabase REST endpoint
         run: |
+          # PostgREST wants both headers, not just apikey -- an apikey-only
+          # request against the new sb_publishable_* key format came back
+          # 401 when this was first tested live, not the clean 200 a real
+          # client (which sends both) gets. Targets cartridge_popularity
+          # specifically -- a real table read, not just the API root --
+          # since that's the exact anon-readable view schema.sql grants,
+          # so a regression in those grants would fail this too, not just
+          # silently report success while touching nothing real.
           status=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "apikey: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" \
-            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/")
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/cartridge_popularity?select=cartridge&limit=1")
           echo "Response status: $status"
-          # 000 means curl couldn't even reach the host -- a real failure,
-          # not just "the API replied with an error code" (which still
-          # counts as activity and is fine).
-          if [ "$status" = "000" ]; then
-            echo "Could not reach Supabase project at all."
-            exit 1
-          fi
+          case "$status" in
+            2??) ;;
+            *) echo "Expected a 2xx response, got $status."; exit 1 ;;
+          esac

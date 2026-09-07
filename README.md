@@ -1,4 +1,4 @@
-# Bullet in Flight
+# Ballistics Nerd
 
 A point-mass exterior ballistics calculator. Enter a load and a sight setup; get a
 range table (velocity, energy, height above/below the line of sight) and a chart of

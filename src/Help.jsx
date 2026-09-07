@@ -18,7 +18,7 @@ const TOC = [
 const CONTACT_EMAIL = "JakeBerryTukwila@gmail.com";
 const MAILTO =
   "mailto:" + CONTACT_EMAIL +
-  "?subject=" + encodeURIComponent("Bullet in Flight — feedback") +
+  "?subject=" + encodeURIComponent("Ballistics Nerd — feedback") +
   "&body=" + encodeURIComponent("Question, comment, bug, or an idea for a new tool — whatever's on your mind:\n\n");
 
 // Deliberately instant, not `behavior: "smooth"` — smooth scroll's

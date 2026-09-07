@@ -44,7 +44,7 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
         {title}
       </h1>
       <p style={{ textAlign: "center", font: "400 12px 'IBM Plex Sans',sans-serif", color: "#555", margin: "1px 0 8px" }}>
-        Bullet in Flight — point-mass, {v.dragModel} drag curve
+        Ballistics Nerd — point-mass, {v.dragModel} drag curve
       </p>
 
       {/* width:"auto" is load-bearing, not decorative — styles.css has a

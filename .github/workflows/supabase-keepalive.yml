@@ -1,0 +1,28 @@
+name: Keep Supabase project active
+
+# Supabase pauses a free-tier project after ~7 days with zero API activity
+# (docs: https://supabase.com/docs/guides/platform/free-project-pausing).
+# Any request counts, so a bare REST ping every 3 days is enough margin to
+# never hit that window, without needing anyone to remember to log in.
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST endpoint
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/")
+          echo "Response status: $status"
+          # 000 means curl couldn't even reach the host -- a real failure,
+          # not just "the API replied with an error code" (which still
+          # counts as activity and is fine).
+          if [ "$status" = "000" ]; then
+            echo "Could not reach Supabase project at all."
+            exit 1
+          fi

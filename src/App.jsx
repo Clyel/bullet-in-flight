@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { C } from "./components/theme.js";
 import { Segmented } from "./components/ui.jsx";
 import { UnitsProvider, useUnits } from "./UnitsContext.jsx";
+import { AuthProvider } from "./AuthContext.jsx";
+import AuthPanel from "./components/AuthPanel.jsx";
 import Calculator from "./Calculator.jsx";
 import Compare from "./Compare.jsx";
 import OptimalZero from "./OptimalZero.jsx";
@@ -20,7 +22,9 @@ const HELP_SECTION_BY_TAB = {
 export default function App() {
   return (
     <UnitsProvider>
-      <AppShell />
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </UnitsProvider>
   );
 }
@@ -41,14 +45,20 @@ function AppShell() {
   return (
     <div className="app-shell" style={{ minHeight: "100%", background: C.field, padding: "18px 14px 40px", color: C.ink }}>
       <div className="bif-wrap">
-        <header style={{ borderBottom: `2px solid ${C.ink}`, paddingBottom: 8, marginBottom: 16 }}>
-          <h1 style={{ margin: 0, font: "700 30px/1 'Oswald',sans-serif", textTransform: "uppercase" }}>
-            Bullet in Flight
-          </h1>
-          <p style={{ margin: "4px 0 0", font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
-            Point-mass trajectory. Heights are measured from the line of sight, so the bullet starts
-            one sight height low, rises through the near zero, and falls back through the far zero.
-          </p>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12,
+                         flexWrap: "wrap", borderBottom: `2px solid ${C.ink}`, paddingBottom: 8, marginBottom: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, font: "700 30px/1 'Oswald',sans-serif", textTransform: "uppercase" }}>
+              Ballistics Nerd
+            </h1>
+            <p style={{ margin: "4px 0 0", font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
+              Point-mass trajectory. Heights are measured from the line of sight, so the bullet starts
+              one sight height low, rises through the near zero, and falls back through the far zero.
+            </p>
+          </div>
+          <div style={{ paddingTop: 6 }}>
+            <AuthPanel />
+          </div>
         </header>
 
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: tab === "Help" ? 16 : 8 }}>

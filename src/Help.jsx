@@ -15,7 +15,7 @@ const TOC = [
   { id: "submit", label: "Suggest an idea" },
 ];
 
-const CONTACT_EMAIL = "theballisticnerd@gmail.com";
+const CONTACT_EMAIL = "admin@ballisticnerd.com";
 const MAILTO =
   "mailto:" + CONTACT_EMAIL +
   "?subject=" + encodeURIComponent("Ballistics Nerd — feedback") +

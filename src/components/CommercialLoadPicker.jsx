@@ -128,9 +128,10 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
         </div>
       ) : (
         <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-          G1 only — every manufacturer here publishes G1 in bulk, not G7. "Derived BC" means the manufacturer
-          doesn't publish a BC at all — it's back-solved from their own published velocity table using this app's
-          own physics (see the catalog source in code comments).
+          Mostly G1 — most manufacturers here only publish G1 in bulk, not G7 (one real exception: Hornady's own
+          ELD Match and ELD‑X loads use Hornady's own published G7, sourced from hornady.com/bc). "Derived BC" means
+          the manufacturer doesn't publish a BC at all — it's back-solved from their own published velocity table
+          using this app's own physics (see the catalog source in code comments).
         </div>
       )}
     </>

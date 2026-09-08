@@ -66,7 +66,7 @@ export default function Compare() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Datasets to compare</div>
+        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Step 1 — Datasets to compare</div>
         {savedLoads.map((l) => (
           <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
                                       marginBottom: 8, cursor: "pointer" }}>
@@ -75,7 +75,7 @@ export default function Compare() {
           </label>
         ))}
 
-        <div style={{ ...label, color: C.ink, margin: "20px 0 12px" }}>Compare at</div>
+        <div style={{ ...label, color: C.ink, margin: "20px 0 12px" }}>Step 2 — Compare at</div>
         <UnitField
           label="Distance"
           category="distance"

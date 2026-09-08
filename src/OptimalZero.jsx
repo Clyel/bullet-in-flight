@@ -137,9 +137,11 @@ export default function OptimalZero() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
+        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Step 1 — Add rounds</div>
+
         {savedLoads.length > 0 && (
           <>
-            <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your saved datasets</div>
+            <span style={{ ...label, display: "block", marginBottom: 5 }}>Your saved datasets</span>
             <div style={{ marginBottom: 20 }}>
               {savedLoads.map((l) => (
                 <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
@@ -153,10 +155,10 @@ export default function OptimalZero() {
           </>
         )}
 
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Add a round from the catalog</div>
+        <span style={{ ...label, display: "block", marginBottom: 5 }}>Add a round from the catalog</span>
         <CommercialLoadPicker onSelect={(ammo) => addEntry(fromCatalog(ammo))} resetLoadAfterSelect />
 
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Your rig</div>
+        <div style={{ ...label, color: C.ink, margin: "20px 0 12px" }}>Step 2 — Your rig</div>
         <UnitField
           label="Sight height over bore"
           hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."

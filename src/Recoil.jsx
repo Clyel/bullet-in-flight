@@ -100,30 +100,34 @@ export default function Recoil() {
   const vel = (fps) => toDisplay(fps, "velocity", system);
 
   const head = { ...label, color: C.ink, margin: "20px 0 12px" };
+  const sub = { ...label, display: "block", marginBottom: 5 };
 
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <div style={{ ...head, marginTop: 0 }}>Add a setup</div>
-        <Field label="Name this setup" hint="Optional — defaults to the cartridge." inputMode="text"
-               value={form.name} onChange={set("name")} />
+        {/* Round first, same as Calculator's "Step 1 — The load" -- what
+            you're evaluating comes before anything else, not naming or
+            weight, which only matter once there's actually a round here. */}
+        <div style={{ ...head, marginTop: 0 }}>Step 1 — The round</div>
+        <span style={sub}>Pick a commercial round</span>
+        <CommercialLoadPicker onSelect={handleSelectCommercial} resetLoadAfterSelect />
+        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+          Fills in bullet weight, muzzle velocity, and the powder-charge estimate.
+        </div>
+
+        <span style={sub}>Or enter your own</span>
+        <Field label="Bullet weight" value={form.grains} onChange={set("grains")} suffix="gr" />
+        <UnitField label="Muzzle velocity" category="velocity" value={form.muzzleVelocity} onChange={set("muzzleVelocity")} />
+
+        <div style={head}>Step 2 — The rifle</div>
         <UnitField
           label="Rifle + optics weight"
           hint="The whole assembled rig as fired — scope, rings, suppressor, sling, everything. Weigh it or add up spec-sheet numbers."
           category="weight" value={form.rifleWeightLb} onChange={set("rifleWeightLb")}
         />
 
-        <div style={head}>The round</div>
-        <span style={{ ...label, display: "block", marginBottom: 5 }}>Or pick a commercial round</span>
-        <CommercialLoadPicker onSelect={handleSelectCommercial} resetLoadAfterSelect />
-        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-          Fills bullet weight, muzzle velocity, and the powder-charge estimate below.
-        </div>
-
-        <Field label="Bullet weight" value={form.grains} onChange={set("grains")} suffix="gr" />
-        <UnitField label="Muzzle velocity" category="velocity" value={form.muzzleVelocity} onChange={set("muzzleVelocity")} />
-
-        <span style={{ ...label, display: "block", marginBottom: 5 }}>Cartridge (for charge estimate)</span>
+        <div style={head}>Step 3 — The charge estimate</div>
+        <span style={sub}>Cartridge (for charge estimate)</span>
         <select
           value={form.cartridge}
           onChange={(e) => handleCartridgeChange(e.target.value)}
@@ -149,6 +153,11 @@ export default function Recoil() {
           value={form.chargeGr} onChange={handleChargeChange} suffix="gr"
         />
 
+        {/* Naming/adding isn't its own numbered step, same reasoning as
+            Calculator's save block -- it's not a fourth thing to configure,
+            it only makes sense once Steps 1-3 above are actually filled in. */}
+        <Field label="Name this setup" hint="Optional — defaults to the cartridge." inputMode="text"
+               value={form.name} onChange={set("name")} />
         <button
           onClick={handleAdd}
           disabled={!canAdd}

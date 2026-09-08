@@ -19,7 +19,7 @@ const stepCanonicalValue = (presetLabel, system) =>
 
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onDeleteSaved,
-  onSelectCommercial,
+  onSelectCommercial, saveError, signedIn,
 }) {
   const { system } = useUnits();
 
@@ -106,6 +106,9 @@ export default function InputPanel({
           only makes sense once a load's actually put together above --
           keeping it inside Step 1 instead of its own numbered step. */}
       <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
+      <div style={{ marginTop: -10, marginBottom: 10, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        {signedIn ? "Signed in — saves sync to your account." : "Signed out — saves stay on this device only."}
+      </div>
       <button
         onClick={onSave}
         disabled={!saveName.trim()}
@@ -116,6 +119,11 @@ export default function InputPanel({
       >
         Save current load
       </button>
+      {saveError && (
+        <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
+          Couldn't save: {saveError}
+        </div>
+      )}
 
       <div style={step}>Step 2 — The sights</div>
       <UnitField

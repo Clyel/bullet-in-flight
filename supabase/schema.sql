@@ -40,13 +40,23 @@ grant select, insert, update, delete on public.user_settings to authenticated;
 -- ── saved_loads ───────────────────────────────────────────────────────
 -- Mirrors Calculator.jsx's DEFAULTS form-state shape field-for-field, so
 -- the sync layer is a straight read/write with no translation needed.
--- catalog_* columns are new: nullable, only set when the load came from
--- CommercialLoadPicker (never for a hand-typed load) — this is what makes
+-- catalog_* columns are nullable, only set when the load came from
+-- CommercialLoadPicker (never for a hand-typed load) -- this is what makes
 -- the cartridge-popularity stats possible from saved loads specifically,
 -- separate from the broader pick-tracking in catalog_selection_events below.
+-- catalog_bullet specifically holds the descriptive bullet string (e.g.
+-- "172gr Speer Impact (Premier Long Range)") that feeds Calculator.jsx's
+-- LoadIdentity label -- added after this table was first locked, when that
+-- feature landed, so a synced load doesn't lose its identity label and
+-- silently fall back to "Custom load" the way it would with this column missing.
 create table public.saved_loads (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  -- default auth.uid() so an insert that forgets to set user_id explicitly
+  -- (which savedLoadsCloud.js's first version did) fails safely instead of
+  -- silently trying to insert NULL, which RLS's `with check (auth.uid() =
+  -- user_id)` then rejects as "violates row-level security policy" -- a
+  -- real bug caught via live testing, not a hypothetical.
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   name text not null,
   muzzle_velocity numeric not null,
   ballistic_coefficient numeric not null,
@@ -64,6 +74,7 @@ create table public.saved_loads (
   vitals_radius_in numeric not null,
   catalog_cartridge text,
   catalog_manufacturer text,
+  catalog_bullet text,
   catalog_load_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -78,7 +89,11 @@ grant select, insert, update, delete on public.saved_loads to authenticated;
 -- today, gone on refresh. Mirrors that row shape (see src/Recoil.jsx).
 create table public.recoil_setups (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  -- Same default auth.uid() as saved_loads.user_id, applied proactively
+  -- here even before this table has any client insert code, since it's
+  -- the identical shape and would hit the identical bug the moment
+  -- Recoil-setups sync gets built.
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   name text not null,
   rifle_weight_lb numeric not null,
   grains numeric not null,

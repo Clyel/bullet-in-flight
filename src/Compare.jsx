@@ -3,13 +3,13 @@ import { C, label } from "./components/theme.js";
 import { UnitField } from "./components/ui.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
-import { listSavedLoads } from "./storage/savedLoads.js";
+import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, solveFromForm } from "./solveFromForm.js";
 
 export default function Compare() {
-  // Loaded once per mount — switching to this tab re-mounts it, which is
-  // when a load saved on the Calculator tab should show up here.
-  const [savedLoads] = useState(() => listSavedLoads());
+  // useSavedLoads re-fetches on mount, which is when a load saved on the
+  // Calculator tab (or synced from the cloud) should show up here.
+  const { savedLoads } = useSavedLoads();
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [atYd, setAtYd] = useState("500");
   const [atYdTouched, setAtYdTouched] = useState(false);

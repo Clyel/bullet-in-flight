@@ -5,7 +5,7 @@ import SummaryStrip from "./components/SummaryStrip.jsx";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
-import { listSavedLoads, saveLoad, deleteLoad } from "./storage/savedLoads.js";
+import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 
@@ -59,7 +59,7 @@ export default function Calculator() {
     set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "" }));
   }
 
-  const [savedLoads, setSavedLoads] = useState(() => listSavedLoads());
+  const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
   const [saveName, setSaveName] = useState("");
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
@@ -78,12 +78,11 @@ export default function Calculator() {
     return () => window.removeEventListener("afterprint", stopPrinting);
   }, [printing]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmed = saveName.trim();
     if (!trimmed) return;
-    saveLoad(trimmed, v);
-    setSavedLoads(listSavedLoads());
-    setSaveName("");
+    const ok = await save(trimmed, v);
+    if (ok) setSaveName("");
   };
   const handleLoadSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -99,8 +98,7 @@ export default function Calculator() {
   const handleDeleteSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
     if (entry && !window.confirm(`Delete "${entry.name}"?`)) return;
-    deleteLoad(id);
-    setSavedLoads(listSavedLoads());
+    remove(id);
   };
   const handleSelectCommercial = (id) => {
     const ammo = COMMERCIAL_AMMO.find((a) => a.id === id);
@@ -148,10 +146,16 @@ export default function Calculator() {
         v={v} set={set}
         savedLoads={savedLoads} saveName={saveName} onSaveNameChange={setSaveName}
         onSave={handleSave} onLoadSaved={handleLoadSaved} onDeleteSaved={handleDeleteSaved}
-        onSelectCommercial={handleSelectCommercial}
+        onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
       />
 
       <div>
+        {importCount > 0 && (
+          <Notice tone={C.brass} title="Saved loads found on this device">
+            {importCount} {importCount === 1 ? "load" : "loads"} saved locally, from before you signed in.
+            <ImportActions onImport={runImport} onDismiss={dismissImport} />
+          </Notice>
+        )}
         {missing.length > 0 && (
           <Notice tone={C.ox} title="Nothing to plot yet">
             Enter a value for {missing.join(", ")}.
@@ -231,6 +235,34 @@ function LoadIdentity({ v }) {
           ? `${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`
           : `${v.grains}gr @ ${v.muzzleVelocity} fps, ${v.dragModel} ${v.ballisticCoefficient}`}
       </div>
+    </div>
+  );
+}
+
+function ImportActions({ onImport, onDismiss }) {
+  const [busy, setBusy] = useState(false);
+  const handleImport = async () => {
+    setBusy(true);
+    await onImport();
+    setBusy(false);
+  };
+  return (
+    <div style={{ marginTop: 8, display: "flex", gap: 14 }}>
+      <button
+        onClick={handleImport}
+        disabled={busy}
+        style={{ background: "none", border: "none", padding: 0, cursor: busy ? "default" : "pointer",
+                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+      >
+        {busy ? "Adding…" : "Add them to my account"}
+      </button>
+      <button
+        onClick={onDismiss}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+      >
+        Not now
+      </button>
     </div>
   );
 }

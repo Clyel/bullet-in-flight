@@ -5,7 +5,7 @@ import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
 import { energyFtLb } from "./ballistics/solver.js";
 import { optimalSightIn } from "./ballistics/vitalsWindow.js";
-import { listSavedLoads } from "./storage/savedLoads.js";
+import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num } from "./solveFromForm.js";
 import { useUnits } from "./UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "./units.js";
@@ -56,10 +56,10 @@ export default function OptimalZero() {
   const set = Object.fromEntries(
     Object.keys(DEFAULTS).map((k) => [k, (val) => setRig((s) => ({ ...s, [k]: val }))])
   );
-  // Loaded once per mount — switching to this tab re-mounts it, which is
-  // when a load saved on the Calculator tab should show up here (same
+  // useSavedLoads re-fetches on mount, which is when a load saved on the
+  // Calculator tab (or synced from the cloud) should show up here (same
   // pattern as Compare.jsx).
-  const [savedLoads] = useState(() => listSavedLoads());
+  const { savedLoads } = useSavedLoads();
   const [selected, setSelected] = useState([]); // normalized entries, in pick order
 
   const addEntry = (entry) => {

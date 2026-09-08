@@ -31,25 +31,25 @@ export default function InputPanel({
     set.pressInHg(pressInHg.toFixed(2));
   };
 
-  const head = { ...label, color: C.ink, margin: "20px 0 12px" };
+  const step = { ...label, color: C.ink, margin: "20px 0 12px" };
+  const sub = { ...label, display: "block", marginBottom: 5 };
   const selectedStepLabel = STEP_PRESETS.find((p) => stepCanonicalValue(p, system) === v.tableStepYd) ?? "";
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-      <div style={{ ...head, marginTop: 0 }}>Saved datasets</div>
-      <Field label="Name this dataset" inputMode="text" value={saveName} onChange={onSaveNameChange} />
-      <button
-        onClick={onSave}
-        disabled={!saveName.trim()}
-        style={{ width: "100%", padding: 9, marginBottom: 16,
-                 background: saveName.trim() ? C.ink : C.rule, color: C.card,
-                 border: "none", cursor: saveName.trim() ? "pointer" : "default",
-                 font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
-      >
-        Save current dataset
-      </button>
+      {/* Numbered so the required, top-to-bottom flow reads as a sequence
+          rather than a wall of fields — everything genuinely optional
+          (wind) is unnumbered and pushed to the very end instead. */}
+      <div style={{ ...step, marginTop: 0 }}>Step 1 — The load</div>
 
-      <span style={{ ...label, display: "block", marginBottom: 5 }}>Load a saved dataset</span>
+      <span style={sub}>Pick a commercial round</span>
+      <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
+      <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        Fills in muzzle velocity, bullet weight, drag model, and BC below. Sight height, zero, and
+        conditions are yours to set separately.
+      </div>
+
+      <span style={sub}>Or load a saved dataset</span>
       <select
         value=""
         onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
@@ -82,19 +82,11 @@ export default function InputPanel({
         </div>
       )}
 
-      <div style={head}>The load</div>
-      <span style={{ ...label, display: "block", marginBottom: 5 }}>Or pick a commercial round</span>
-
-      <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
-      <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        Fills the four fields below. Sight height, zero, and conditions are yours to set separately.
-      </div>
-
+      <span style={sub}>Or enter your own</span>
       <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
       <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
-
       <div style={{ marginBottom: 12 }}>
-        <span style={{ ...label, display: "block", marginBottom: 5 }}>Drag model</span>
+        <span style={sub}>Drag model</span>
         <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={set.dragModel} />
         <div style={{ marginTop: 5, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
           {v.dragModel === "G1"
@@ -102,7 +94,6 @@ export default function InputPanel({
             : "Boat-tail reference. Use with a BC published as G7."}
         </div>
       </div>
-
       <Field
         label="Ballistic coefficient"
         hint={`Must be the ${v.dragModel} value. Mixing the two gives wrong answers.`}
@@ -111,7 +102,22 @@ export default function InputPanel({
         suffix={v.dragModel}
       />
 
-      <div style={head}>The sights</div>
+      {/* Saving is its own action, not a fourth way to get a load, but it
+          only makes sense once a load's actually put together above --
+          keeping it inside Step 1 instead of its own numbered step. */}
+      <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
+      <button
+        onClick={onSave}
+        disabled={!saveName.trim()}
+        style={{ width: "100%", padding: 9, marginBottom: 16,
+                 background: saveName.trim() ? C.ink : C.rule, color: C.card,
+                 border: "none", cursor: saveName.trim() ? "pointer" : "default",
+                 font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
+      >
+        Save current load
+      </button>
+
+      <div style={step}>Step 2 — The sights</div>
       <UnitField
         label="Sight height over bore"
         hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."
@@ -121,7 +127,7 @@ export default function InputPanel({
       />
       <UnitField label="Zero range" category="distance" value={v.zeroRangeYd} onChange={set.zeroRangeYd} />
 
-      <div style={head}>The target</div>
+      <div style={step}>Step 3 — The target</div>
       <UnitField
         label="Vitals radius"
         hint="Half-width of the vital zone you're aiming to stay within — smaller for varmints, larger for elk or moose. Drives the Vitals Zero chart lines and the vitals-window figures below."
@@ -130,12 +136,10 @@ export default function InputPanel({
         onChange={set.vitalsRadiusIn}
       />
 
-      <div style={head}>The shot</div>
+      <div style={step}>Step 4 — The shot</div>
       <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
       <div style={{ marginBottom: 16 }}>
-        <span style={{ ...label, display: "block", marginBottom: 5 }}>
-          Table every ({system === "metric" ? "m" : "yd"})
-        </span>
+        <span style={sub}>Table every ({system === "metric" ? "m" : "yd"})</span>
         <Segmented
           options={STEP_PRESETS}
           value={selectedStepLabel}
@@ -143,23 +147,7 @@ export default function InputPanel({
         />
       </div>
 
-      <div style={head}>The wind</div>
-      <UnitField
-        label="Wind speed"
-        hint="Leave blank for no wind."
-        category="windSpeed"
-        value={v.windSpeedMph}
-        onChange={set.windSpeedMph}
-      />
-      <Field
-        label="Wind direction"
-        hint="Clock face: 12 is straight into your face, 3 is your right cheek, 6 is at your back, 9 is your left cheek."
-        value={v.windClock}
-        onChange={set.windClock}
-        suffix="o'clock"
-      />
-
-      <div style={head}>The air</div>
+      <div style={step}>Step 5 — The air</div>
       <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
       <UnitField
         label="Station pressure"
@@ -177,12 +165,28 @@ export default function InputPanel({
       />
       <button
         onClick={fillStandard}
-        style={{ width: "100%", padding: 9, background: C.ink, color: C.card,
+        style={{ width: "100%", padding: 9, marginBottom: 16, background: C.ink, color: C.card,
                  border: "none", cursor: "pointer",
                  font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
       >
         Fill from standard atmosphere
       </button>
+
+      <div style={step}>Optional — The wind</div>
+      <UnitField
+        label="Wind speed"
+        hint="Leave blank for no wind."
+        category="windSpeed"
+        value={v.windSpeedMph}
+        onChange={set.windSpeedMph}
+      />
+      <Field
+        label="Wind direction"
+        hint="Clock face: 12 is straight into your face, 3 is your right cheek, 6 is at your back, 9 is your left cheek."
+        value={v.windClock}
+        onChange={set.windClock}
+        suffix="o'clock"
+      />
     </div>
   );
 }

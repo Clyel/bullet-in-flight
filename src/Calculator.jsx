@@ -13,6 +13,9 @@ import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 // MV/BC published directly by Remington: remington.com/rifle/premier-long-range/29-R21344.html
 // G7 = 0.265 is the accurate figure for this boat-tail bullet (G1 = 0.522).
 const DEFAULTS = {
+  cartridge: "30-06 Springfield",
+  bullet: "172gr Speer Impact (Premier Long Range)",
+  manufacturer: "Remington",
   muzzleVelocity: "2825",
   ballisticCoefficient: "0.265",
   grains: "172",
@@ -39,11 +42,22 @@ const REQUIRED = [
   ["pressInHg", "station pressure"],
 ];
 
+// Editing any of these by hand invalidates whatever catalog round was
+// picked (the whole point of the identity label above SummaryStrip is
+// trustworthy "this is what's being evaluated" — showing a stale
+// cartridge name after someone's typed over its numbers would undermine
+// exactly that), so these four setters also clear cartridge/bullet/
+// manufacturer instead of using the generic per-field setter below.
+const IDENTITY_FIELDS = ["muzzleVelocity", "ballisticCoefficient", "grains", "dragModel"];
+
 export default function Calculator() {
   const [v, setState] = useState(DEFAULTS);
   const set = Object.fromEntries(
     Object.keys(DEFAULTS).map((k) => [k, (val) => setState((s) => ({ ...s, [k]: val }))])
   );
+  for (const k of IDENTITY_FIELDS) {
+    set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "" }));
+  }
 
   const [savedLoads, setSavedLoads] = useState(() => listSavedLoads());
   const [saveName, setSaveName] = useState("");
@@ -75,7 +89,12 @@ export default function Calculator() {
     const entry = savedLoads.find((l) => l.id === id);
     if (!entry) return;
     const { id: _id, name: _name, savedAt: _savedAt, ...formState } = entry;
-    setState((s) => ({ ...s, ...formState }));
+    // Datasets saved before the identity label existed have no cartridge/
+    // bullet/manufacturer keys at all -- spreading formState over blanks
+    // (rather than over whatever's currently on screen) means loading one
+    // of those correctly shows "Custom load" instead of leaking behind a
+    // stale name from whatever was loaded before it.
+    setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", ...formState }));
   };
   const handleDeleteSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -87,12 +106,19 @@ export default function Calculator() {
     const ammo = COMMERCIAL_AMMO.find((a) => a.id === id);
     if (!ammo) return;
     // Ammo-only: fills the four ballistic fields, leaves rifle setup and conditions untouched.
+    // cartridge/bullet/manufacturer are display-only -- solveFromForm.js
+    // never reads them -- but are what the identity label above
+    // SummaryStrip actually shows, and ride along into Saved Datasets for
+    // free since saveLoad/handleLoadSaved already spread the whole form.
     setState((s) => ({
       ...s,
       muzzleVelocity: String(ammo.muzzleVelocity),
       ballisticCoefficient: String(ammo.ballisticCoefficient),
       dragModel: ammo.dragModel,
       grains: String(ammo.grains),
+      cartridge: ammo.cartridge,
+      bullet: `${ammo.grains}gr ${ammo.bullet}${ammo.bcSource !== "published" ? " (derived BC)" : ""}`,
+      manufacturer: ammo.manufacturer,
     }));
   };
 
@@ -142,6 +168,7 @@ export default function Calculator() {
 
         {solution && (
           <>
+            <LoadIdentity v={v} />
             <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
             <TrajectoryChart
               solution={solution} maxRangeYd={maxRangeYd}
@@ -182,6 +209,27 @@ export default function Calculator() {
             )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** What's actually being evaluated, shown above the summary strip so it's
+ *  never ambiguous which round the numbers below belong to. Falls back to
+ *  a plain numeric description for a hand-typed load with no catalog
+ *  cartridge attached — never blank, never a stale name left over from
+ *  before the load's numbers were edited (see IDENTITY_FIELDS above). */
+function LoadIdentity({ v }) {
+  const hasCartridge = v.cartridge.trim().length > 0;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ font: "700 15px 'Oswald',sans-serif", textTransform: "uppercase", letterSpacing: ".02em", color: C.ink }}>
+        {hasCartridge ? v.cartridge : "Custom load"}
+      </div>
+      <div style={{ font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted, marginTop: 2 }}>
+        {hasCartridge
+          ? `${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`
+          : `${v.grains}gr @ ${v.muzzleVelocity} fps, ${v.dragModel} ${v.ballisticCoefficient}`}
       </div>
     </div>
   );

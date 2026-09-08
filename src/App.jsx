@@ -49,7 +49,7 @@ function AppShell() {
                          flexWrap: "wrap", borderBottom: `2px solid ${C.ink}`, paddingBottom: 8, marginBottom: 16 }}>
           <div>
             <h1 style={{ margin: 0, font: "700 30px/1 'Oswald',sans-serif", textTransform: "uppercase" }}>
-              Ballistics Nerd
+              The Ballistic Nerd
             </h1>
             <p style={{ margin: "4px 0 0", font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
               Point-mass trajectory. Heights are measured from the line of sight, so the bullet starts

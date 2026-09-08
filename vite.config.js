@@ -1,12 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   plugins: [react()],
   server: { port: 5173, open: true },
-  // GitHub Pages serves project sites from a /<repo-name>/ subpath, not the
-  // domain root, so the production build's asset URLs need that prefix or
-  // they'll 404 once deployed. Scoped to `build` only — applying it in dev
-  // too makes the Vite dev server stop answering at plain localhost:5173.
-  base: command === "build" ? "/bullet-in-flight/" : "/",
-}));
+  // A bare GitHub Pages project site serves from a /<repo-name>/ subpath,
+  // not the domain root -- but a custom domain bound to Pages (see
+  // ballisticnerd.com in the repo's Pages settings) always serves from
+  // its own root regardless of the underlying repo name, so this must be
+  // "/" now, not "/bullet-in-flight/". If the custom domain is ever
+  // removed, this needs to flip back to a command-conditional "/bullet-
+  // in-flight/" for production or every asset 404s.
+  base: "/",
+});

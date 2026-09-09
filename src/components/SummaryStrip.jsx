@@ -11,13 +11,15 @@ export default function SummaryStrip({ solution, maxRangeYd }) {
   const dSuf = unitSuffix("distance", system);
   const vSuf = unitSuffix("velocity", system);
   const lSuf = unitSuffix("length", system);
+  const eSuf = unitSuffix("energy", system);
   const dist = (yd) => toDisplay(yd, "distance", system);
   const vel = (fps) => toDisplay(fps, "velocity", system);
   const len = (inches) => toDisplay(inches, "length", system);
+  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
 
   const cells = [
     [`At ${Math.round(dist(maxRangeYd))} ${dSuf}`, `${Math.round(vel(last.velocity))} ${vSuf}`],
-    ["Energy there", `${Math.round(last.energy)} ft·lb`],
+    ["Energy there", `${Math.round(energy(last.energy))} ${eSuf}`],
     ["Height there", `${len(last.height).toFixed(1)} ${lSuf}`],
     ["Max ordinate", `${len(apex.height).toFixed(1)} ${lSuf} @ ${Math.round(dist(apex.range))} ${dSuf}`],
     ["Near zero", near != null ? `${dist(near).toFixed(0)} ${dSuf}` : "—"],

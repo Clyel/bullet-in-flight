@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import { C, label } from "./theme.js";
 import { COMMERCIAL_AMMO } from "../data/commercialAmmo.js";
 
@@ -22,6 +22,14 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
   const [caliber, setCaliber] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [loadId, setLoadId] = useState("");
+  // Only meaningful when resetLoadAfterSelect is true: the Load select
+  // itself snaps back to blank right after a successful add (so the next
+  // pick starts clean), but caliber/manufacturer stay put -- without this,
+  // that reset was indistinguishable from "never picked anything," so the
+  // amber "Pick a load above" warning stuck around permanently after every
+  // single add on Optimal Zero/Recoil. Cleared the moment caliber or
+  // manufacturer changes, same as loadId itself.
+  const [lastApplied, setLastApplied] = useState(null);
 
   const calibers = useMemo(
     () => [...new Set(COMMERCIAL_AMMO.map((a) => a.cartridge))].sort((a, b) => a.localeCompare(b)),
@@ -40,14 +48,37 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
       .sort((a, b) => a.grains - b.grains || a.bullet.localeCompare(b.bullet));
   }, [caliber, manufacturer]);
 
+  // A manufacturer genuinely sells more than one real product with the same
+  // bullet+weight (e.g. Hornady's 6.5 Creedmoor 120gr CX exists at two
+  // different published muzzle velocities, presumably different product
+  // lines) -- deduping would throw away real, distinct data. Disambiguating
+  // the label with MV is the honest fix: whichever grains+bullet combo
+  // isn't unique within this caliber+manufacturer gets its velocity shown
+  // right in the option text instead of two identical-looking rows.
+  const duplicateLabelKeys = useMemo(() => {
+    const counts = new Map();
+    for (const a of loadsForSelection) {
+      const key = `${a.grains}|${a.bullet}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return new Set([...counts].filter(([, n]) => n > 1).map(([key]) => key));
+  }, [loadsForSelection]);
+
+  const loadOptionText = (a) =>
+    `${a.grains}gr ${a.bullet}` +
+    (duplicateLabelKeys.has(`${a.grains}|${a.bullet}`) ? ` @ ${a.muzzleVelocity}fps` : "") +
+    (a.bcSource !== "published" ? " (derived BC)" : "");
+
   const applyLoad = (ammo) => {
     setLoadId(resetLoadAfterSelect ? "" : ammo.id);
+    setLastApplied(resetLoadAfterSelect ? ammo : null);
     onSelect(ammo);
   };
 
   const handleCaliberChange = (nextCaliber) => {
     setCaliber(nextCaliber);
     setLoadId("");
+    setLastApplied(null);
     if (!nextCaliber) { setManufacturer(""); return; }
     const mfrs = [...new Set(COMMERCIAL_AMMO.filter((a) => a.cartridge === nextCaliber).map((a) => a.manufacturer))];
     setManufacturer(mfrs.length === 1 ? mfrs[0] : "");
@@ -55,6 +86,7 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
 
   const handleManufacturerChange = (nextManufacturer) => {
     setManufacturer(nextManufacturer);
+    setLastApplied(null);
     if (!nextManufacturer) { setLoadId(""); return; }
     const loads = COMMERCIAL_AMMO.filter((a) => a.cartridge === caliber && a.manufacturer === nextManufacturer);
     if (loads.length === 1) applyLoad(loads[0]);
@@ -71,48 +103,31 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
 
   return (
     <>
-      <select
+      <FilterableSelect
         value={caliber}
-        onChange={(e) => handleCaliberChange(e.target.value)}
-        style={{ width: "100%", padding: "7px 8px", marginBottom: 5,
-                 border: `1.5px solid ${C.rule}`, background: C.card, color: C.ink,
-                 font: "500 13px 'IBM Plex Mono',monospace" }}
-      >
-        <option value="">Caliber…</option>
-        {calibers.map((c) => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
+        onChange={handleCaliberChange}
+        options={calibers.map((c) => ({ value: c, text: c }))}
+        placeholder="Caliber…"
+        ariaLabel="Caliber"
+      />
 
-      <select
+      <FilterableSelect
         value={manufacturer}
-        onChange={(e) => handleManufacturerChange(e.target.value)}
+        onChange={handleManufacturerChange}
+        options={manufacturersForCaliber.map((m) => ({ value: m, text: m }))}
+        placeholder="Manufacturer…"
+        ariaLabel="Manufacturer"
         disabled={!caliber}
-        style={{ width: "100%", padding: "7px 8px", marginBottom: 5,
-                 border: `1.5px solid ${C.rule}`, background: caliber ? C.card : C.rule, color: C.ink,
-                 font: "500 13px 'IBM Plex Mono',monospace" }}
-      >
-        <option value="">Manufacturer…</option>
-        {manufacturersForCaliber.map((m) => (
-          <option key={m} value={m}>{m}</option>
-        ))}
-      </select>
+      />
 
-      <select
+      <FilterableSelect
         value={loadId}
-        onChange={(e) => handleLoadChange(e.target.value)}
+        onChange={handleLoadChange}
+        options={loadsForSelection.map((a) => ({ value: a.id, text: loadOptionText(a) }))}
+        placeholder="Load…"
+        ariaLabel="Load"
         disabled={!manufacturer}
-        style={{ width: "100%", padding: "7px 8px", marginBottom: 5,
-                 border: `1.5px solid ${C.rule}`, background: manufacturer ? C.card : C.rule, color: C.ink,
-                 font: "500 13px 'IBM Plex Mono',monospace" }}
-      >
-        <option value="">Load…</option>
-        {loadsForSelection.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.grains}gr {a.bullet}{a.bcSource !== "published" ? " (derived BC)" : ""}
-          </option>
-        ))}
-      </select>
+      />
 
       {selectedLoad ? (
         <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
@@ -120,6 +135,14 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
           Filled in: {selectedLoad.muzzleVelocity} fps · {selectedLoad.grains}gr · {selectedLoad.dragModel}{" "}
           {selectedLoad.ballisticCoefficient}
           {selectedLoad.bcSource !== "published" ? " (derived BC)" : ""}
+        </div>
+      ) : lastApplied ? (
+        <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
+                      font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
+          Added: {lastApplied.muzzleVelocity} fps · {lastApplied.grains}gr · {lastApplied.dragModel}{" "}
+          {lastApplied.ballisticCoefficient}
+          {lastApplied.bcSource !== "published" ? " (derived BC)" : ""} — pick another load, or a different
+          caliber/manufacturer.
         </div>
       ) : caliber && manufacturer ? (
         <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.brass}`,
@@ -135,5 +158,127 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * A native <select> whose closed width is set by its widest <option> text —
+ * a long cartridge name ("300 Remington SA Ultra Mag") forces the box wide
+ * regardless of viewport, which is exactly what caused the mobile overflow
+ * bug. A text input has no such intrinsic-width trap, so this renders as an
+ * input with a filterable dropdown instead: closed, it shows the selected
+ * option's text (or `placeholder`); focused, it opens showing every option,
+ * narrowing to substring matches as you type ("30-" -> every 30-cal).
+ * Selecting (click, or Enter on the highlighted row) calls onChange(value)
+ * and closes -- the caller's existing cascade logic (reset the next select
+ * down, auto-advance past a single-option step) is untouched, since this
+ * only replaces the picking UI, not what happens after a pick.
+ */
+function FilterableSelect({ value, onChange, options, placeholder, ariaLabel, disabled }) {
+  const id = useId();
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+
+  const selected = options.find((o) => o.value === value) ?? null;
+  const displayValue = open ? query : selected ? selected.text : "";
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (q ? options.filter((o) => o.text.toLowerCase().includes(q)) : options).slice(0, 200);
+  }, [options, query]);
+
+  const commit = (opt) => {
+    onChange(opt.value);
+    setQuery("");
+    setOpen(false);
+  };
+
+  // A native <select> reopens on every click regardless of whether it
+  // already had focus; an input only fires onFocus on the transition into
+  // focus. Selecting an option leaves the input focused but closed, so a
+  // second click needs its own handler -- relying on onFocus alone means
+  // that second click does nothing.
+  const openDropdown = () => {
+    if (!open) setQuery("");
+    setOpen(true);
+    setHighlight(0);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!open) {
+      if (e.key === "ArrowDown" || e.key === "Enter") { setOpen(true); setHighlight(0); }
+      return;
+    }
+    if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(h + 1, filtered.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)); }
+    else if (e.key === "Enter") { e.preventDefault(); if (filtered[highlight]) commit(filtered[highlight]); }
+    else if (e.key === "Escape") { setOpen(false); setQuery(""); }
+  };
+
+  const listboxId = `${id}-listbox`;
+
+  return (
+    <div style={{ position: "relative", marginBottom: 5 }}>
+      <input
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={open && filtered[highlight] ? `${id}-opt-${highlight}` : undefined}
+        aria-label={ariaLabel}
+        value={displayValue}
+        disabled={disabled}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={openDropdown}
+        onClick={openDropdown}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlight(0); }}
+        onKeyDown={handleKeyDown}
+        onBlur={() => setOpen(false)}
+        style={{ width: "100%", padding: "7px 24px 7px 8px",
+                 border: `1.5px solid ${C.rule}`, background: disabled ? C.rule : C.card, color: C.ink,
+                 font: "500 13px 'IBM Plex Mono',monospace" }}
+      />
+      <span aria-hidden="true" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                                         pointerEvents: "none", color: C.muted, font: "400 11px sans-serif" }}>
+        ▾
+      </span>
+      {open && !disabled && (
+        <div role="listbox" id={listboxId}
+             // Without this, dragging the scrollbar thumb itself (not an
+             // option row) is a mousedown outside any row's own
+             // preventDefault, so it blurs the input and closes the list
+             // mid-drag.
+             onMouseDown={(e) => e.preventDefault()}
+             style={{ position: "absolute", zIndex: 10, top: "100%", left: 0, right: 0,
+                      maxHeight: 260, overflowY: "auto", background: C.card,
+                      border: `1.5px solid ${C.rule}` }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "7px 8px", font: "400 12px 'IBM Plex Sans',sans-serif", color: C.muted }}>
+              No matches
+            </div>
+          ) : (
+            filtered.map((o, i) => (
+              <div
+                key={o.value}
+                id={`${id}-opt-${i}`}
+                role="option"
+                aria-selected={o.value === value}
+                // preventDefault keeps this mousedown from blurring the input
+                // before the click registers -- the standard combobox trick.
+                onMouseDown={(e) => { e.preventDefault(); commit(o); }}
+                onMouseEnter={() => setHighlight(i)}
+                style={{ padding: "6px 8px", cursor: "pointer",
+                         background: i === highlight ? C.field : C.card,
+                         font: "500 13px 'IBM Plex Mono',monospace", color: C.ink }}
+              >
+                {o.text}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }

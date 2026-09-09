@@ -105,6 +105,8 @@ export default function Recoil() {
   const weight = (lb) => toDisplay(lb, "weight", system);
   const vSuf = unitSuffix("velocity", system);
   const vel = (fps) => toDisplay(fps, "velocity", system);
+  const eSuf = unitSuffix("energy", system);
+  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
 
   const head = { ...label, color: C.ink, margin: "20px 0 12px" };
   const sub = { ...label, display: "block", marginBottom: 5 };
@@ -201,7 +203,7 @@ export default function Recoil() {
                 <thead>
                   <tr style={{ background: C.ink }}>
                     {["Setup", `Weight (${wSuf})`, "Bullet", `Velocity (${vSuf})`, "Charge",
-                      `Recoil Velocity (${vSuf})`, "Free Recoil Energy", ""].map((head_, i, arr) => (
+                      `Recoil Velocity (${vSuf})`, `Free Recoil Energy (${eSuf})`, ""].map((head_, i, arr) => (
                       <th key={head_ || i} scope="col"
                           style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : i === arr.length - 1 ? "center" : "right",
                                    font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
@@ -230,7 +232,7 @@ export default function Recoil() {
                       </td>
                       <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{vel(r.velocity).toFixed(1)}</td>
                       <td style={{ ...numeric, padding: "7px 12px", textAlign: "right", fontWeight: 600 }}>
-                        {r.energy.toFixed(1)} ft&middot;lb
+                        {energy(r.energy).toFixed(1)} {eSuf}
                       </td>
                       <td style={{ padding: "7px 8px", textAlign: "center" }}>
                         <button
@@ -269,6 +271,12 @@ export default function Recoil() {
 // read. Plain SVG, no charting library: the app already reserves recharts
 // for the trajectory line charts, and a handful of static bars don't need it.
 function RecoilBars({ results }) {
+  const { system } = useUnits();
+  const eSuf = unitSuffix("energy", system);
+  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
+  // Bar width is a ratio (r.energy / max) -- unit-invariant, since both
+  // sides scale by the same factor, so this stays in raw canonical ft-lb
+  // regardless of display unit. Only the printed number needs conversion.
   const max = Math.max(...results.map((r) => r.energy), 1);
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: "14px 16px" }}>
@@ -278,7 +286,7 @@ function RecoilBars({ results }) {
           <div style={{ display: "flex", justifyContent: "space-between",
                         font: "500 11px 'IBM Plex Sans',sans-serif", color: C.ink, marginBottom: 2 }}>
             <span>{r.name}</span>
-            <span style={{ ...numeric }}>{r.energy.toFixed(1)} ft&middot;lb</span>
+            <span style={{ ...numeric }}>{energy(r.energy).toFixed(1)} {eSuf}</span>
           </div>
           <div style={{ height: 10, background: C.field }}>
             <div style={{ height: "100%", width: `${(r.energy / max) * 100}%`, background: C.ox,

@@ -17,6 +17,7 @@ const DEFAULTS = {
   cartridge: "30-06 Springfield",
   bullet: "172gr Speer Impact (Premier Long Range)",
   manufacturer: "Remington",
+  bcSource: "published",
   muzzleVelocity: "2825",
   ballisticCoefficient: "0.265",
   grains: "172",
@@ -48,7 +49,7 @@ const REQUIRED = [
 // trustworthy "this is what's being evaluated" — showing a stale
 // cartridge name after someone's typed over its numbers would undermine
 // exactly that), so these four setters also clear cartridge/bullet/
-// manufacturer instead of using the generic per-field setter below.
+// manufacturer/bcSource instead of using the generic per-field setter below.
 const IDENTITY_FIELDS = ["muzzleVelocity", "ballisticCoefficient", "grains", "dragModel"];
 
 export default function Calculator() {
@@ -57,7 +58,7 @@ export default function Calculator() {
     Object.keys(DEFAULTS).map((k) => [k, (val) => setState((s) => ({ ...s, [k]: val }))])
   );
   for (const k of IDENTITY_FIELDS) {
-    set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "" }));
+    set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
   }
 
   const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
@@ -65,6 +66,14 @@ export default function Calculator() {
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
   const [printing, setPrinting] = useState(false);
+  // Whether the BC/drag-model guard is unlocked for the *current* catalog
+  // load. Lives here (not as an effect keyed on v.cartridge in InputPanel)
+  // because a cartridge string alone can't tell "still the same pick" from
+  // "a fresh pick that happens to share a cartridge" -- picking a different
+  // load within the same cartridge left the guard stuck unlocked. Resetting
+  // it directly in the two handlers that actually change which load is
+  // active (below) fixes that for both cases at once.
+  const [bcOverridden, setBcOverridden] = useState(false);
 
   // DopeChart mounts via a portal (see its own comment for why), so it
   // needs a render to actually land in the DOM before window.print() reads
@@ -94,7 +103,8 @@ export default function Calculator() {
     // (rather than over whatever's currently on screen) means loading one
     // of those correctly shows "Custom load" instead of leaking behind a
     // stale name from whatever was loaded before it.
-    setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", ...formState }));
+    setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", bcSource: "", ...formState }));
+    setBcOverridden(false);
   };
   const handleDeleteSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -118,7 +128,9 @@ export default function Calculator() {
       cartridge: ammo.cartridge,
       bullet: `${ammo.grains}gr ${ammo.bullet}${ammo.bcSource !== "published" ? " (derived BC)" : ""}`,
       manufacturer: ammo.manufacturer,
+      bcSource: ammo.bcSource,
     }));
+    setBcOverridden(false);
   };
 
   const missing = REQUIRED.filter(([k]) => {
@@ -148,6 +160,7 @@ export default function Calculator() {
         savedLoads={savedLoads} saveName={saveName} onSaveNameChange={setSaveName}
         onSave={handleSave} onLoadSaved={handleLoadSaved} onDeleteSaved={handleDeleteSaved}
         onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
+        bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
       />
 
       <div>

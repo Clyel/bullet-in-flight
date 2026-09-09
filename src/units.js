@@ -21,6 +21,8 @@ export const inHgToHPa = (inHg) => inHg * 33.8639;
 export const hPaToInHg = (hPa) => hPa / 33.8639;
 export const lbToKg = (lb) => lb * 0.45359237;
 export const kgToLb = (kg) => kg / 0.45359237;
+export const ftLbToJ = (ftLb) => ftLb * 1.3558179483314004;
+export const jToFtLb = (j) => j / 1.3558179483314004;
 
 // Wind speed is its own category (mph/km/h), deliberately distinct from
 // muzzle velocity (fps/mps) — matches the convention already used for wind
@@ -37,6 +39,13 @@ export const CATEGORIES = {
   temperature: { imperial: "°F", metric: "°C", toMetric: fToC, toImperial: cToF,             digits: 1 },
   pressure:    { imperial: "inHg", metric: "hPa", toMetric: inHgToHPa, toImperial: hPaToInHg, digits: 2 },
   weight:      { imperial: "lb",  metric: "kg",   toMetric: lbToKg,    toImperial: kgToLb,   digits: 2 },
+  // Energy is always a read-only computed output (never an editable Field),
+  // but goes through the same category system for consistency and to get
+  // toDisplay/unitSuffix/formatDisplay for free -- this was a real gap
+  // before: every energy display in the app hardcoded "ft·lb" regardless
+  // of the Imperial/Metric toggle, the one place the "toggle applies
+  // everywhere" claim in the FAQ wasn't actually true.
+  energy:      { imperial: "ft·lb", metric: "J",  toMetric: ftLbToJ,   toImperial: jToFtLb,  digits: 0 },
 };
 
 /** Canonical (always-imperial) value -> the number to show under `system`. */

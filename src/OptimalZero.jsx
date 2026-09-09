@@ -98,6 +98,8 @@ export default function OptimalZero() {
   const vSuf = unitSuffix("velocity", system);
   const len = (inches) => toDisplay(inches, "length", system);
   const lSuf = unitSuffix("length", system);
+  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
+  const eSuf = unitSuffix("energy", system);
 
   // One optimalSightIn call per row (~130-150ms each) — fine for the
   // "a dozen or so rounds" scale this is meant for. Recomputes the whole
@@ -225,7 +227,7 @@ export default function OptimalZero() {
                     </td>
                     <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>
                       {Number.isFinite(entry.muzzleVelocity) && Number.isFinite(entry.grains)
-                        ? `${Math.round(energyFtLb(entry.grains, entry.muzzleVelocity)).toLocaleString("en-US")} ft·lb`
+                        ? `${Math.round(energy(energyFtLb(entry.grains, entry.muzzleVelocity))).toLocaleString("en-US")} ${eSuf}`
                         : "—"}
                     </td>
                     {error ? (

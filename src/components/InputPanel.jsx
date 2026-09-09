@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { C, label } from "./theme.js";
 import { Field, UnitField, Segmented, SyncStatusHint } from "./ui.jsx";
 import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
@@ -19,9 +19,45 @@ const stepCanonicalValue = (presetLabel, system) =>
 
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onDeleteSaved,
-  onSelectCommercial, saveError, signedIn,
+  onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
 }) {
   const { system } = useUnits();
+
+  // A catalog pick's BC and drag model are a manufacturer-vetted pair --
+  // editing either invalidates the pairing (see IDENTITY_FIELDS in
+  // Calculator.jsx), so they start locked to a read-only summary whenever
+  // a catalog load is active. "Override" reveals the editable controls for
+  // *this* catalog load; picking a new one re-locks -- bcOverridden lives in
+  // Calculator and is reset directly by the handlers that actually change
+  // which load is active, not inferred from v.cartridge changing (which
+  // missed re-picking a different load within the same cartridge).
+  const hasCartridge = v.cartridge.trim().length > 0;
+  const showEditableBc = !hasCartridge || bcOverridden;
+
+  // The BC field can't tell on its own whether its value still matches the
+  // drag model -- G1 and G7 BCs are both just decimals -- so the guard sits
+  // on the toggle itself, the one action that actually breaks the pairing.
+  // window.confirm looked right in testing but silently no-ops if the
+  // browser (or an in-app webview) has dialogs suppressed -- confirm()
+  // returns false and the guard just eats the click with no feedback, which
+  // is worse than no guard on the one control that yields wrong-not-error
+  // output. An inline confirm strip can't silently fail that way.
+  const [pendingModel, setPendingModel] = useState(null);
+  useEffect(() => setPendingModel(null), [v.cartridge, bcOverridden]);
+
+  const handleDragModelChange = (nextModel) => {
+    if (nextModel === v.dragModel) { setPendingModel(null); return; }
+    if (v.ballisticCoefficient.trim() === "") { set.dragModel(nextModel); return; }
+    setPendingModel(nextModel);
+  };
+  const confirmDragModelSwitch = () => {
+    set.dragModel(pendingModel);
+    setPendingModel(null);
+  };
+  const handleBcChange = (val) => {
+    setPendingModel(null);
+    set.ballisticCoefficient(val);
+  };
 
   const fillStandard = () => {
     const alt = parseFloat(v.altitudeFt);
@@ -49,58 +85,107 @@ export default function InputPanel({
         conditions are yours to set separately.
       </div>
 
-      <span style={sub}>Or load a saved dataset</span>
-      <select
-        value=""
-        onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
-        style={{ width: "100%", padding: "7px 8px", marginBottom: 6,
-                 border: `1.5px solid ${C.rule}`, background: C.card, color: C.ink,
-                 font: "500 13px 'IBM Plex Mono',monospace" }}
-      >
-        <option value="">{savedLoads.length ? "Choose…" : "No saved datasets yet"}</option>
-        {savedLoads.map((l) => (
-          <option key={l.id} value={l.id}>{l.name}</option>
-        ))}
-      </select>
+      {/* Hidden until there's actually something to load -- a disabled-
+          looking "No saved datasets yet" option read as broken/dead UI for
+          every first-time visitor, not a real third path. */}
       {savedLoads.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          {savedLoads.map((l) => (
-            <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-                                      padding: "2px 1px", font: "400 11px 'IBM Plex Sans',sans-serif",
-                                      color: C.muted }}>
-              <span>{l.name}</span>
-              <button
-                onClick={() => onDeleteSaved(l.id)}
-                aria-label={`Delete ${l.name}`}
-                style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
-                         font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
+        <>
+          <span style={sub}>Or load a saved dataset</span>
+          <select
+            value=""
+            onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
+            style={{ width: "100%", padding: "7px 8px", marginBottom: 6,
+                     border: `1.5px solid ${C.rule}`, background: C.card, color: C.ink,
+                     font: "500 13px 'IBM Plex Mono',monospace" }}
+          >
+            <option value="">Choose…</option>
+            {savedLoads.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+          <div style={{ marginBottom: 16 }}>
+            {savedLoads.map((l) => (
+              <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                                        padding: "2px 1px", font: "400 11px 'IBM Plex Sans',sans-serif",
+                                        color: C.muted }}>
+                <span>{l.name}</span>
+                <button
+                  onClick={() => onDeleteSaved(l.id)}
+                  aria-label={`Delete ${l.name}`}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
+                           font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       <span style={sub}>Or enter your own</span>
       <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
       <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
-      <div style={{ marginBottom: 12 }}>
-        <span style={sub}>Drag model</span>
-        <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={set.dragModel} />
-        <div style={{ marginTop: 5, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-          {v.dragModel === "G1"
-            ? "Flat-base reference. Use with a BC published as G1."
-            : "Boat-tail reference. Use with a BC published as G7."}
+      <span style={sub}>Ballistic coefficient</span>
+      {showEditableBc ? (
+        <div style={{ marginBottom: 14, padding: 10, border: `1.5px solid ${C.rule}` }}>
+          <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={handleDragModelChange} />
+          <div style={{ margin: "5px 0 12px", font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+            {v.dragModel === "G1"
+              ? "Flat-base reference. Use with a BC published as G1."
+              : "Boat-tail reference. Use with a BC published as G7."}
+          </div>
+          {pendingModel && (
+            <div role="alert" style={{ marginBottom: 12, padding: "7px 9px", background: C.card, border: `1px solid ${C.brass}` }}>
+              <div style={{ marginBottom: 6, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+                That BC must be a {pendingModel} value — {v.dragModel} and {pendingModel} aren't interchangeable.
+              </div>
+              <div style={{ display: "flex", gap: 14 }}>
+                <button
+                  onClick={confirmDragModelSwitch}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                           color: C.ox, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
+                >
+                  Switch to {pendingModel} anyway
+                </button>
+                <button
+                  onClick={() => setPendingModel(null)}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                           color: C.steel, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
+                >
+                  Keep {v.dragModel}
+                </button>
+              </div>
+            </div>
+          )}
+          <div style={{ marginBottom: 0 }}>
+            <Field
+              label="BC value"
+              hint={`Must be the ${v.dragModel} value. Mixing the two gives wrong answers.`}
+              value={v.ballisticCoefficient}
+              onChange={handleBcChange}
+              suffix={v.dragModel}
+            />
+          </div>
         </div>
-      </div>
-      <Field
-        label="Ballistic coefficient"
-        hint={`Must be the ${v.dragModel} value. Mixing the two gives wrong answers.`}
-        value={v.ballisticCoefficient}
-        onChange={set.ballisticCoefficient}
-        suffix={v.dragModel}
-      />
+      ) : (
+        <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
+                      display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <span style={{ font: "500 12px 'IBM Plex Mono',monospace", color: C.ink }}>
+            {v.dragModel} {v.ballisticCoefficient}
+            <span style={{ marginLeft: 6, font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
+              {" "}— {v.bcSource === "published" ? `${v.manufacturer}'s published data` : `derived from ${v.manufacturer}'s data`}
+            </span>
+          </span>
+          <button
+            onClick={onBcOverride}
+            style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer",
+                     color: C.steel, textDecoration: "underline", font: "500 11px 'IBM Plex Sans',sans-serif" }}
+          >
+            Override
+          </button>
+        </div>
+      )}
 
       {/* Saving is its own action, not a fourth way to get a load, but it
           only makes sense once a load's actually put together above --

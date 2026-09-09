@@ -12,17 +12,19 @@ export default function CompareTable({ results, atYd }) {
   const dist = (yd) => toDisplay(yd, "distance", system);
   const vel = (fps) => toDisplay(fps, "velocity", system);
   const len = (inches) => toDisplay(inches, "length", system);
+  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
   const dSuf = unitSuffix("distance", system);
   const vSuf = unitSuffix("velocity", system);
   const lSuf = unitSuffix("length", system);
+  const eSuf = unitSuffix("energy", system);
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto" }}>
       <table>
         <thead>
           <tr style={{ background: C.ink }}>
-            {["Load", `Muzzle Velocity (${vSuf})`, "Muzzle Energy (ft·lb)",
-              `Velocity at Range (${vSuf})`, "Energy at Range (ft·lb)", `Height (${lSuf})`].map((head, i) => (
+            {["Load", `Muzzle Velocity (${vSuf})`, `Muzzle Energy (${eSuf})`,
+              `Velocity at Range (${vSuf})`, `Energy at Range (${eSuf})`, `Height (${lSuf})`].map((head, i) => (
               <th key={head} scope="col"
                   style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : "right",
                            font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
@@ -45,7 +47,7 @@ export default function CompareTable({ results, atYd }) {
               <tr key={r.id} style={{ background: bg }}>
                 <td style={{ ...numeric, padding: "7px 12px", fontWeight: 600 }}>{r.name}</td>
                 <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(vel(muzzle.v), 0)}</td>
-                <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(energyFtLb(r.grains, muzzle.v), 0)}</td>
+                <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(energy(energyFtLb(r.grains, muzzle.v)), 0)}</td>
                 {beyond ? (
                   <td colSpan={3} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.muted }}>
                     beyond this load&rsquo;s charted distance ({dist(r.solution.last.range).toFixed(0)} {dSuf})
@@ -53,7 +55,7 @@ export default function CompareTable({ results, atYd }) {
                 ) : (
                   <>
                     <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(vel(p.v), 0)}</td>
-                    <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(energyFtLb(r.grains, p.v), 0)}</td>
+                    <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(energy(energyFtLb(r.grains, p.v)), 0)}</td>
                     <td style={{ ...numeric, padding: "7px 12px", textAlign: "right",
                                  color: p.y >= 0 ? C.ink : C.steel }}>{commas(len(p.y), 1)}</td>
                   </>

@@ -8,6 +8,13 @@ table { border-collapse: collapse; width: 100%; }
 .bif-wrap { max-width: 1120px; margin: 0 auto; }
 .bif-grid { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
 @media (max-width: 860px) { .bif-grid { grid-template-columns: 1fr; } }
+/* Grid children default to min-width:auto, so a long native <select> option
+   ("300 Remington SA Ultra Mag") sets a content-driven floor no narrower
+   than ~507px regardless of viewport -- silently overflowing any phone.
+   min-width:0 lets the child actually shrink to the column/viewport width;
+   the select's own text still truncates/scrolls internally, it just stops
+   forcing the whole page wider than the screen. */
+.bif-grid > * { min-width: 0; }
 
 button:focus-visible,
 input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }

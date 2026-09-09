@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { C, label } from "./theme.js";
-import { Field, UnitField, Segmented, SyncStatusHint } from "./ui.jsx";
+import { Field, UnitField, Segmented, SyncStatusHint, StepHead } from "./ui.jsx";
 import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
@@ -67,7 +67,6 @@ export default function InputPanel({
     set.pressInHg(pressInHg.toFixed(2));
   };
 
-  const step = { ...label, color: C.ink, margin: "20px 0 12px" };
   const sub = { ...label, display: "block", marginBottom: 5 };
   const selectedStepLabel = STEP_PRESETS.find((p) => stepCanonicalValue(p, system) === v.tableStepYd) ?? "";
 
@@ -76,7 +75,7 @@ export default function InputPanel({
       {/* Numbered so the required, top-to-bottom flow reads as a sequence
           rather than a wall of fields — everything genuinely optional
           (wind) is unnumbered and pushed to the very end instead. */}
-      <div style={{ ...step, marginTop: 0 }}>Step 1 — The load</div>
+      <StepHead n={1} name="The load" first />
 
       <span style={sub}>Pick a commercial round</span>
       <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
@@ -208,7 +207,7 @@ export default function InputPanel({
         </div>
       )}
 
-      <div style={step}>Step 2 — The sights</div>
+      <StepHead n={2} name="The sights" />
       <UnitField
         label="Sight height over bore"
         hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."
@@ -218,7 +217,7 @@ export default function InputPanel({
       />
       <UnitField label="Zero range" category="distance" value={v.zeroRangeYd} onChange={set.zeroRangeYd} />
 
-      <div style={step}>Step 3 — The target</div>
+      <StepHead n={3} name="The target" />
       <UnitField
         label="Vitals radius"
         hint="Half-width of the vital zone you're aiming to stay within — smaller for varmints, larger for elk or moose. Drives the Vitals Zero chart lines and the vitals-window figures below."
@@ -227,7 +226,7 @@ export default function InputPanel({
         onChange={set.vitalsRadiusIn}
       />
 
-      <div style={step}>Step 4 — The shot</div>
+      <StepHead n={4} name="The shot" />
       <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
       <div style={{ marginBottom: 16 }}>
         <span style={sub}>Table every ({system === "metric" ? "m" : "yd"})</span>
@@ -238,7 +237,7 @@ export default function InputPanel({
         />
       </div>
 
-      <div style={step}>Step 5 — The air</div>
+      <StepHead n={5} name="The air" />
       <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
       <UnitField
         label="Station pressure"
@@ -263,7 +262,7 @@ export default function InputPanel({
         Fill from standard atmosphere
       </button>
 
-      <div style={step}>Optional — The wind</div>
+      <StepHead eyebrow="Optional" name="The wind" />
       <UnitField
         label="Wind speed"
         hint="Leave blank for no wind."

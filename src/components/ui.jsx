@@ -135,6 +135,52 @@ export function ImportActions({ onImport, onDismiss }) {
   );
 }
 
+/**
+ * Section heading for the numbered-step panels (Calculator, Compare,
+ * Optimal Zero, Recoil) -- previously 4 separate inline copies of the same
+ * tiny-caps `label` token, indistinguishable from the field-group
+ * sub-labels underneath them except by color. A left badge now carries the
+ * ordinal at a size/weight that actually reads as a heading; the section
+ * name is mixed-case Oswald, the one deliberate exception to every other
+ * label in the app being uppercase, because the case change itself is
+ * doing hierarchy work that size alone wasn't.
+ *
+ * These are labeled narrative sections, not a wizard -- fields recompute
+ * live in any order and every one has a working default -- so the badge is
+ * a muted square (a reference number), not a filled/checked progress
+ * token, and there's no connector line between one badge and the next.
+ *
+ * `n` renders the numbered badge. Pass `eyebrow` instead for a section
+ * that isn't part of the numbered sequence (InputPanel's "Optional — The
+ * wind" section) but still wants the same size/divider treatment. `first`
+ * drops the divider and top margin for whichever section sits at the very
+ * top of its panel.
+ */
+export function StepHead({ n, eyebrow, name, first }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10,
+                  borderTop: first ? "none" : `1px solid ${C.rule}`,
+                  paddingTop: first ? 0 : 14,
+                  margin: first ? "0 0 14px" : "32px 0 14px" }}>
+      {n != null ? (
+        <span style={{ flexShrink: 0, width: 22, height: 22, display: "flex",
+                       alignItems: "center", justifyContent: "center",
+                       background: C.rule, color: C.ink, font: "600 11px 'Oswald',sans-serif" }}>
+          {n}
+        </span>
+      ) : eyebrow ? (
+        <span style={{ flexShrink: 0, font: "600 10px 'Oswald',sans-serif", letterSpacing: ".14em",
+                       textTransform: "uppercase", color: C.muted }}>
+          {eyebrow}
+        </span>
+      ) : null}
+      <span style={{ font: "600 15px 'Oswald',sans-serif", letterSpacing: ".01em", color: C.ink }}>
+        {name}
+      </span>
+    </div>
+  );
+}
+
 export function Panel({ title, children, style }) {
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, ...style }}>

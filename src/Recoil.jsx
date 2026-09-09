@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { Field, UnitField, SyncStatusHint, ImportActions } from "./components/ui.jsx";
+import { Field, UnitField, SyncStatusHint, ImportActions, StepHead } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { freeRecoilVelocity, freeRecoilEnergy, estimateChargeWeight, DEFAULT_LOAD_DENSITY } from "./ballistics/recoil.js";
 import { CASE_CAPACITY } from "./data/caseCapacity.js";
@@ -108,7 +108,6 @@ export default function Recoil() {
   const eSuf = unitSuffix("energy", system);
   const energy = (ftLb) => toDisplay(ftLb, "energy", system);
 
-  const head = { ...label, color: C.ink, margin: "20px 0 12px" };
   const sub = { ...label, display: "block", marginBottom: 5 };
 
   return (
@@ -117,7 +116,7 @@ export default function Recoil() {
         {/* Round first, same as Calculator's "Step 1 — The load" -- what
             you're evaluating comes before anything else, not naming or
             weight, which only matter once there's actually a round here. */}
-        <div style={{ ...head, marginTop: 0 }}>Step 1 — The round</div>
+        <StepHead n={1} name="The round" first />
         <span style={sub}>Pick a commercial round</span>
         <CommercialLoadPicker onSelect={handleSelectCommercial} resetLoadAfterSelect />
         <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
@@ -128,14 +127,14 @@ export default function Recoil() {
         <Field label="Bullet weight" value={form.grains} onChange={set("grains")} suffix="gr" />
         <UnitField label="Muzzle velocity" category="velocity" value={form.muzzleVelocity} onChange={set("muzzleVelocity")} />
 
-        <div style={head}>Step 2 — The rifle</div>
+        <StepHead n={2} name="The rifle" />
         <UnitField
           label="Rifle + optics weight"
           hint="The whole assembled rig as fired — scope, rings, suppressor, sling, everything. Weigh it or add up spec-sheet numbers."
           category="weight" value={form.rifleWeightLb} onChange={set("rifleWeightLb")}
         />
 
-        <div style={head}>Step 3 — The charge estimate</div>
+        <StepHead n={3} name="The charge estimate" />
         <span style={sub}>Cartridge (for charge estimate)</span>
         <select
           value={form.cartridge}

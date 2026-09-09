@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { C, label } from "./components/theme.js";
-import { UnitField } from "./components/ui.jsx";
+import { C } from "./components/theme.js";
+import { UnitField, StepHead } from "./components/ui.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
@@ -66,7 +66,7 @@ export default function Compare() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Step 1 — Datasets to compare</div>
+        <StepHead n={1} name="Datasets to compare" first />
         {savedLoads.map((l) => (
           <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
                                       marginBottom: 8, cursor: "pointer" }}>
@@ -75,7 +75,7 @@ export default function Compare() {
           </label>
         ))}
 
-        <div style={{ ...label, color: C.ink, margin: "20px 0 12px" }}>Step 2 — Compare at</div>
+        <StepHead n={2} name="Compare at" />
         <UnitField
           label="Distance"
           category="distance"

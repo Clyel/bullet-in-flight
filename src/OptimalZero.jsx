@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { UnitField } from "./components/ui.jsx";
+import { UnitField, StepHead } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
 import { energyFtLb } from "./ballistics/solver.js";
@@ -139,7 +139,7 @@ export default function OptimalZero() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <div style={{ ...label, color: C.ink, marginBottom: 12 }}>Step 1 — Add rounds</div>
+        <StepHead n={1} name="Add rounds" first />
 
         {savedLoads.length > 0 && (
           <>
@@ -160,7 +160,7 @@ export default function OptimalZero() {
         <span style={{ ...label, display: "block", marginBottom: 5 }}>Add a round from the catalog</span>
         <CommercialLoadPicker onSelect={(ammo) => addEntry(fromCatalog(ammo))} resetLoadAfterSelect />
 
-        <div style={{ ...label, color: C.ink, margin: "20px 0 12px" }}>Step 2 — Your rig</div>
+        <StepHead n={2} name="Your rig" />
         <UnitField
           label="Sight height over bore"
           hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."

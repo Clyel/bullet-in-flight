@@ -2,6 +2,12 @@ import React, { useId, useMemo, useState } from "react";
 import { C, label } from "./theme.js";
 import { COMMERCIAL_AMMO } from "../data/commercialAmmo.js";
 
+// The full explanation (why it's approximated, how) lives once in Help's
+// FAQ -- this is the terse, just-in-time version: shown only on a load
+// that's actually derived, right where its number appears, not as a
+// standing paragraph everyone reads whether or not it applies to them.
+const DERIVED_BC_NOTE = " (derived BC — approximated from published velocity data, not a manufacturer figure)";
+
 /**
  * Caliber -> Manufacturer -> Load: each choice narrows the next select's
  * options, so picking one of 855 loads never means scanning a single huge
@@ -134,14 +140,14 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
                       font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
           Filled in: {selectedLoad.muzzleVelocity} fps · {selectedLoad.grains}gr · {selectedLoad.dragModel}{" "}
           {selectedLoad.ballisticCoefficient}
-          {selectedLoad.bcSource !== "published" ? " (derived BC)" : ""}
+          {selectedLoad.bcSource !== "published" ? DERIVED_BC_NOTE : ""}
         </div>
       ) : lastApplied ? (
         <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
                       font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
           Added: {lastApplied.muzzleVelocity} fps · {lastApplied.grains}gr · {lastApplied.dragModel}{" "}
           {lastApplied.ballisticCoefficient}
-          {lastApplied.bcSource !== "published" ? " (derived BC)" : ""} — pick another load, or a different
+          {lastApplied.bcSource !== "published" ? DERIVED_BC_NOTE : ""} — pick another load, or a different
           caliber/manufacturer.
         </div>
       ) : caliber && manufacturer ? (
@@ -149,14 +155,11 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
                       font: "600 11px/1.4 'IBM Plex Sans',sans-serif", color: C.brass }}>
           Pick a load above — the fields below haven't changed yet.
         </div>
-      ) : (
-        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-          Mostly G1 — most manufacturers here only publish G1 in bulk, not G7 (one real exception: Hornady's own
-          ELD Match and ELD‑X loads use Hornady's own published G7, sourced from hornady.com/bc). "Derived BC" means
-          the manufacturer doesn't publish a BC at all — it's back-solved from their own published velocity table
-          using this app's own physics (see the catalog source in code comments).
-        </div>
-      )}
+      ) : null /* Catalog-wide facts (mostly-G1, what "derived BC" means) belong in
+                   Help, read once, not reprinted here on every idle load -- see
+                   Help.jsx's Calculator section and FAQ. The derived-BC case
+                   itself still gets a note, but only once it's actually true,
+                   in the confirmation lines above. */}
     </>
   );
 }

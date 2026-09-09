@@ -21,7 +21,8 @@ export default function CompareTable({ results, atYd }) {
       <table>
         <thead>
           <tr style={{ background: C.ink }}>
-            {["Load", `Velocity (${vSuf})`, "Energy (ft·lb)", `Height (${lSuf})`].map((head, i) => (
+            {["Load", `Muzzle Velocity (${vSuf})`, "Muzzle Energy (ft·lb)",
+              `Velocity at Range (${vSuf})`, "Energy at Range (ft·lb)", `Height (${lSuf})`].map((head, i) => (
               <th key={head} scope="col"
                   style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : "right",
                            font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
@@ -35,10 +36,16 @@ export default function CompareTable({ results, atYd }) {
           {results.map((r, i) => {
             const beyond = atYd > r.solution.last.range;
             const p = beyond ? null : sampleAt(r.solution.path, atYd);
+            // Muzzle is range 0 -- always within any load's charted distance,
+            // so this stays populated even for a row whose "at range" columns
+            // fall back to the "beyond charted distance" message below.
+            const muzzle = sampleAt(r.solution.path, 0);
             const bg = i % 2 ? C.cardAlt : C.card;
             return (
               <tr key={r.id} style={{ background: bg }}>
                 <td style={{ ...numeric, padding: "7px 12px", fontWeight: 600 }}>{r.name}</td>
+                <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(vel(muzzle.v), 0)}</td>
+                <td style={{ ...numeric, padding: "7px 12px", textAlign: "right" }}>{commas(energyFtLb(r.grains, muzzle.v), 0)}</td>
                 {beyond ? (
                   <td colSpan={3} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.muted }}>
                     beyond this load&rsquo;s charted distance ({dist(r.solution.last.range).toFixed(0)} {dSuf})

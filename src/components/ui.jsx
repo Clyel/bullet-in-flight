@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { C, label } from "./theme.js";
 import { useUnits } from "../UnitsContext.jsx";
+import { useAuth } from "../AuthContext.jsx";
 import { fieldDisplayValue, fieldCanonicalValue, unitSuffix } from "../units.js";
 
 export function Field({ label: text, hint, value, onChange, suffix, inputMode = "decimal" }) {
@@ -67,6 +68,69 @@ export function Segmented({ options, value, onChange }) {
           {o}
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The "where does this actually get saved" line shown next to a
+ * save/add button — signed in, it's a plain status line; signed out, it's
+ * also a nudge with a real link that opens the sign-up modal (via
+ * AuthContext, so it works from any page, not just the header). `noun`
+ * lets each page's wording match what it's actually saving ("saves" on
+ * Calculator, "setups" on Recoil).
+ */
+export function SyncStatusHint({ signedIn, noun = "saves" }) {
+  const { openAuthModal } = useAuth();
+  const style = { marginTop: -10, marginBottom: 10, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted };
+  if (signedIn) {
+    return <div style={style}>Signed in — {noun} sync to your account.</div>;
+  }
+  return (
+    <div style={style}>
+      Signed out — {noun} stay on this device only.{" "}
+      <button
+        onClick={() => openAuthModal("Sign up")}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                 color: C.steel, textDecoration: "underline", font: "inherit" }}
+      >
+        Create a free account
+      </button>{" "}
+      to keep them everywhere.
+    </div>
+  );
+}
+
+/**
+ * The "add them to my account" / "not now" pair shown under a device-local-
+ * data-found notice — used identically by Calculator's saved-loads import
+ * offer and Recoil's recoil-setups import offer, so it lives here instead
+ * of being defined twice.
+ */
+export function ImportActions({ onImport, onDismiss }) {
+  const [busy, setBusy] = useState(false);
+  const handleImport = async () => {
+    setBusy(true);
+    await onImport();
+    setBusy(false);
+  };
+  return (
+    <div style={{ marginTop: 8, display: "flex", gap: 14 }}>
+      <button
+        onClick={handleImport}
+        disabled={busy}
+        style={{ background: "none", border: "none", padding: 0, cursor: busy ? "default" : "pointer",
+                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+      >
+        {busy ? "Adding…" : "Add them to my account"}
+      </button>
+      <button
+        onClick={onDismiss}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+      >
+        Not now
+      </button>
     </div>
   );
 }

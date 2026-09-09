@@ -14,8 +14,7 @@ const linkButtonStyle = {
  *  yet — see the sign-up flow's own comment) plus a Sign out link. Lives in
  *  App.jsx's header, next to the Imperial/Metric toggle. */
 export default function AuthPanel() {
-  const { user, signUp, signIn, signOut } = useAuth();
-  const [open, setOpen] = useState(false);
+  const { user, signUp, signIn, signOut, authModalMode, openAuthModal, closeAuthModal } = useAuth();
 
   if (user) {
     return (
@@ -30,14 +29,16 @@ export default function AuthPanel() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={linkButtonStyle}>Sign in</button>
-      {open && <AuthModal onClose={() => setOpen(false)} signUp={signUp} signIn={signIn} />}
+      <button onClick={() => openAuthModal("Sign in")} style={linkButtonStyle}>Sign in</button>
+      {authModalMode && (
+        <AuthModal initialMode={authModalMode} onClose={closeAuthModal} signUp={signUp} signIn={signIn} />
+      )}
     </>
   );
 }
 
-function AuthModal({ onClose, signUp, signIn }) {
-  const [mode, setMode] = useState("Sign in");
+function AuthModal({ initialMode, onClose, signUp, signIn }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");

@@ -1,6 +1,6 @@
 import React from "react";
 import { C, label } from "./theme.js";
-import { Field, UnitField, Segmented } from "./ui.jsx";
+import { Field, UnitField, Segmented, SyncStatusHint } from "./ui.jsx";
 import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
@@ -106,9 +106,7 @@ export default function InputPanel({
           only makes sense once a load's actually put together above --
           keeping it inside Step 1 instead of its own numbered step. */}
       <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
-      <div style={{ marginTop: -10, marginBottom: 10, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        {signedIn ? "Signed in — saves sync to your account." : "Signed out — saves stay on this device only."}
-      </div>
+      <SyncStatusHint signedIn={signedIn} noun="saves" />
       <button
         onClick={onSave}
         disabled={!saveName.trim()}

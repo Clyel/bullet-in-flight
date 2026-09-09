@@ -10,6 +10,10 @@ export function AuthProvider({ children }) {
   // Starts true so nothing renders a flash of "signed out" before the
   // initial getSession() call (below) has actually had a chance to answer.
   const [loading, setLoading] = useState(true);
+  // Lives here (not local state inside AuthPanel) so any page can open the
+  // sign-up modal directly -- e.g. a "create a free account" nudge next to
+  // a guest's Save button, not just the header's own "Sign in" link.
+  const [authModalMode, setAuthModalMode] = useState(null); // null | "Sign in" | "Sign up"
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -33,6 +37,9 @@ export function AuthProvider({ children }) {
       supabase.auth.signUp({ email, password, options: { data: { username } } }),
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signOut: () => supabase.auth.signOut(),
+    authModalMode,
+    openAuthModal: (mode = "Sign in") => setAuthModalMode(mode),
+    closeAuthModal: () => setAuthModalMode(null),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

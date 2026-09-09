@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { Field, UnitField } from "./components/ui.jsx";
+import { Field, UnitField, SyncStatusHint, ImportActions } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { freeRecoilVelocity, freeRecoilEnergy, estimateChargeWeight, DEFAULT_LOAD_DENSITY } from "./ballistics/recoil.js";
 import { CASE_CAPACITY } from "./data/caseCapacity.js";
+import { useRecoilSetups } from "./storage/useRecoilSetups.js";
 import { num } from "./solveFromForm.js";
 import { useUnits } from "./UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "./units.js";
@@ -30,7 +31,7 @@ export default function Recoil() {
   const { system } = useUnits();
   const [form, setForm] = useState(FORM_DEFAULTS);
   const [chargeTouched, setChargeTouched] = useState(false);
-  const [rows, setRows] = useState([]);
+  const { setups, addError, add, remove, importCount, runImport, dismissImport, signedIn } = useRecoilSetups();
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -71,28 +72,34 @@ export default function Recoil() {
   const canAdd = rifleWeightLb > 0 && grains > 0 && muzzleVelocity > 0 && chargeGr > 0;
   const chargeIsEstimate = chargeTouched === false && form.cartridge && estimateChargeWeight(form.cartridge) != null;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!canAdd) return;
-    setRows((r) => [...r, {
-      key: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    const ok = await add({
       name: form.name.trim() || form.cartridge || "Custom setup",
       cartridge: form.cartridge,
-      rifleWeightLb, grains, muzzleVelocity, chargeGr,
+      rifleWeightLb: String(rifleWeightLb), grains: String(grains),
+      muzzleVelocity: String(muzzleVelocity), chargeGr: String(chargeGr),
       chargeIsEstimate: Boolean(chargeIsEstimate),
-    }]);
+    });
+    if (!ok) return;
     // Rifle weight stays put — the common next step is trying another load
     // through the same gun. Everything setup-specific resets.
     setForm((f) => ({ ...FORM_DEFAULTS, rifleWeightLb: f.rifleWeightLb }));
     setChargeTouched(false);
   };
 
-  const removeRow = (key) => setRows((r) => r.filter((row) => row.key !== key));
-
-  const results = useMemo(() => rows.map((row) => ({
-    ...row,
-    velocity: freeRecoilVelocity(row.grains, row.muzzleVelocity, row.chargeGr, row.rifleWeightLb),
-    energy: freeRecoilEnergy(row.grains, row.muzzleVelocity, row.chargeGr, row.rifleWeightLb),
-  })), [rows]);
+  // Numeric fields round-trip through storage as strings (both localStorage
+  // and the DB read path stringify them — see recoilSetups.js/recoilSetupsCloud.js),
+  // so num() here matches how every other page in this app treats form state.
+  const results = useMemo(() => setups.map((setup) => {
+    const g = num(setup.grains), mv = num(setup.muzzleVelocity),
+          w = num(setup.rifleWeightLb), c = num(setup.chargeGr);
+    return {
+      ...setup, grains: g, muzzleVelocity: mv, rifleWeightLb: w, chargeGr: c,
+      velocity: freeRecoilVelocity(g, mv, c, w),
+      energy: freeRecoilEnergy(g, mv, c, w),
+    };
+  }), [setups]);
 
   const wSuf = unitSuffix("weight", system);
   const weight = (lb) => toDisplay(lb, "weight", system);
@@ -158,6 +165,7 @@ export default function Recoil() {
             it only makes sense once Steps 1-3 above are actually filled in. */}
         <Field label="Name this setup" hint="Optional — defaults to the cartridge." inputMode="text"
                value={form.name} onChange={set("name")} />
+        <SyncStatusHint signedIn={signedIn} noun="setups" />
         <button
           onClick={handleAdd}
           disabled={!canAdd}
@@ -167,9 +175,20 @@ export default function Recoil() {
         >
           Add setup to comparison
         </button>
+        {addError && (
+          <div style={{ marginTop: 8, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
+            Couldn't add: {addError}
+          </div>
+        )}
       </div>
 
       <div>
+        {importCount > 0 && (
+          <Notice tone={C.brass} title="Recoil setups found on this device">
+            {importCount} {importCount === 1 ? "setup" : "setups"} saved locally, from before you signed in.
+            <ImportActions onImport={runImport} onDismiss={dismissImport} />
+          </Notice>
+        )}
         {results.length === 0 ? (
           <Notice tone={C.brass} title="Nothing to compare yet">
             Add a setup on the left. Add a second (a different cartridge, or the same load in a lighter or
@@ -194,7 +213,7 @@ export default function Recoil() {
                 </thead>
                 <tbody>
                   {results.map((r, i) => (
-                    <tr key={r.key} style={{ background: i % 2 ? C.cardAlt : C.card }}>
+                    <tr key={r.id} style={{ background: i % 2 ? C.cardAlt : C.card }}>
                       <td style={{ ...numeric, padding: "7px 12px", fontWeight: 600 }}>
                         {r.name}
                         {r.cartridge && r.name !== r.cartridge && (
@@ -215,7 +234,7 @@ export default function Recoil() {
                       </td>
                       <td style={{ padding: "7px 8px", textAlign: "center" }}>
                         <button
-                          onClick={() => removeRow(r.key)}
+                          onClick={() => remove(r.id)}
                           aria-label={`Remove ${r.name}`}
                           style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
                                    font: "600 14px 'IBM Plex Mono',monospace", padding: "0 4px" }}
@@ -255,7 +274,7 @@ function RecoilBars({ results }) {
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: "14px 16px" }}>
       <div style={{ ...label, color: C.ink, marginBottom: 10 }}>Free recoil energy, compared</div>
       {results.map((r) => (
-        <div key={r.key} style={{ marginBottom: 8 }}>
+        <div key={r.id} style={{ marginBottom: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between",
                         font: "500 11px 'IBM Plex Sans',sans-serif", color: C.ink, marginBottom: 2 }}>
             <span>{r.name}</span>

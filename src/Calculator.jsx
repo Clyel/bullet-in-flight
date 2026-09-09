@@ -5,6 +5,7 @@ import SummaryStrip from "./components/SummaryStrip.jsx";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
+import { ImportActions } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
@@ -235,34 +236,6 @@ function LoadIdentity({ v }) {
           ? `${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`
           : `${v.grains}gr @ ${v.muzzleVelocity} fps, ${v.dragModel} ${v.ballisticCoefficient}`}
       </div>
-    </div>
-  );
-}
-
-function ImportActions({ onImport, onDismiss }) {
-  const [busy, setBusy] = useState(false);
-  const handleImport = async () => {
-    setBusy(true);
-    await onImport();
-    setBusy(false);
-  };
-  return (
-    <div style={{ marginTop: 8, display: "flex", gap: 14 }}>
-      <button
-        onClick={handleImport}
-        disabled={busy}
-        style={{ background: "none", border: "none", padding: 0, cursor: busy ? "default" : "pointer",
-                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
-      >
-        {busy ? "Adding…" : "Add them to my account"}
-      </button>
-      <button
-        onClick={onDismiss}
-        style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
-                 color: C.ox, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
-      >
-        Not now
-      </button>
     </div>
   );
 }

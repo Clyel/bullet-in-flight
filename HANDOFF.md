@@ -81,14 +81,33 @@ boundary — see `CODE-REVIEW.md`).
    derive script, then the cartridge-name normalization pass before merge.
 2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
    — it is now. Needs independent fixtures like wind did.
-3. Deferred UX items (from the 2026-09-09 UX pass, agreed but not built): a
-   collapse-filled-sections pass on the input panel; a fully flattened/searchable
-   catalog picker (Jake chose to keep the 3 cascading dropdowns with typeahead for
-   now); "add a round to Compare" from the Compare empty state; cloud sync for the
-   shared "My rig" (currently localStorage-only, unlike saved loads / recoil setups).
+3. Deferred UX items (from the 2026-09-09 UX pass). **Shipped 2026-09-10:**
+   collapse-filled-sections pass (PR #15) and "add a round to Compare" from the
+   empty state (PR #14). **Still open:** cloud sync for the shared "My rig"
+   (localStorage-only, unlike saved loads / recoil setups) — plan below; and a
+   fully flattened/searchable catalog picker (Jake chose to keep the 3 cascading
+   dropdowns with typeahead for now).
 4. React 18 → 19.
 
+**"My rig" cloud sync — planned, migration is Jake's to run:**
+Add 5 nullable `text` columns to `user_settings` — `sight_height`,
+`vitals_radius_in`, `temp_f`, `press_in_hg`, `altitude_ft` (text to match how
+`myRig.js` stores canonical-imperial strings). Then `src/storage/myRigCloud.js`
++ a `useMyRig()` hook that swaps local ↔ cloud on auth state like
+`useSavedLoads`, pushes the local rig up on first sign-in when the cloud row is
+empty, and replaces the direct `getMyRig`/`setMyRig` calls in `Calculator.jsx`
+and `OptimalZero.jsx`. The client PR holds until the migration is confirmed — a
+`select` of columns that don't exist errors.
+
 **Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Compare: add a round from the catalog** (PR #14) — `CommercialLoadPicker` in
+  every Compare state including the empty one; the pick is saved as an ammo-only
+  dataset (your saved rig, 200 yd zero, 500 yd) and auto-selected into the overlay.
+- **Collapsible input sections** (PR #15) — every Calculator Step header folds its
+  section to a one-line value summary, persisted per section in `localStorage`;
+  "Expand all / Collapse all" at the panel top. `StepHead` gains `open`/`onToggle`;
+  new `useCollapsibleSteps` hook + `--c-hover` token. Also closes the sticky-column
+  dead-space item.
 - **Leupold BAS ballistic-group classification** (`src/ballistics/reticleGroups.js`)
   — classifies a load against the Boone & Crockett / LR Varmint Hunter / Creedmoor
   reticles by drop at 500 yd with a forced 200 yd zero. Off-by-default "Leupold BAS"

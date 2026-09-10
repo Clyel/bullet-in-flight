@@ -69,13 +69,14 @@ boundary — see `CODE-REVIEW.md`).
 ## What remains
 
 **Features, roughly in priority order:**
-1. **More ammo manufacturers — largely done.** Winchester (#7), Barnes (#8),
-   Berger (#9, G7), Nosler (#10, derived BC), Browning (#11) and Norma (#12)
-   all landed 2026-09-10 — ten manufacturers, ~1,730 loads. What's left is
-   small/niche: Lapua (~15 match loads), Sig Sauer (image-only PDF, needs
-   OCR), budget brands (PPU/Fiocchi/S&B) with thin BC data. CCI is rimfire-
-   only — out of scope without a rimfire section. Catalog chunk is ~340 KB
-   now; a more compact encoding or lazy-load is the move if it keeps growing.
+1. **More ammo manufacturers — essentially done.** PRs #7-13 (Winchester,
+   Barnes, Berger, Nosler, Browning, Norma, Lapua) all landed 2026-09-10 —
+   eleven manufacturers, ~1,800 loads, 127 of them G7. What's left is tiny or
+   hard: Sig Sauer (image-only PDF, needs OCR), budget brands (PPU/Fiocchi/
+   S&B) with thin BC data. Buffalo Bore was checked and skipped (publishes no
+   BC anywhere). CCI is rimfire-only — out of scope without a rimfire
+   section. Catalog chunk is ~354 KB / 33 KB gzip; a compact encoding or
+   lazy-load is the move if it keeps growing much.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
    derive script, then the cartridge-name normalization pass before merge.
 2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"

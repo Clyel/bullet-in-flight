@@ -1,39 +1,36 @@
-# Handoff prompt for Claude Code
+# bullet-in-flight — working notes
 
-Paste everything below the line into Claude Code from inside the project folder.
-
----
-
-I'm picking up a project from a previous session. The repo is in this folder. Read
-`README.md` first — it documents the physics, the architecture boundary, and what's
-built. Then read `src/ballistics/solver.js` and `src/ballistics/vitalsWindow.js`.
+Read `README.md` first — it documents the physics, the architecture boundary, and
+what's built. Then read `src/ballistics/solver.js` and `src/ballistics/vitalsWindow.js`.
+`CODE-REVIEW.md` and `UX-REVIEW.md` cover the two big review passes. Verify the baseline
+before changing anything: `npm install`, then `npm test` should print "All checks
+passed"; if it doesn't, something is wrong with the environment, not the code.
 
 ## What this is
 
 A point-mass exterior ballistics calculator, live at
-https://clyel.github.io/bullet-in-flight/. Three tabs: **Calculator** (single load,
+https://clyel.github.io/bullet-in-flight/. Five tabs: **Calculator** (single load,
 range table + trajectory chart), **Compare** (overlay saved loads), **Optimal Zero**
 (compare the optimal zero across many catalog rounds or saved loads against one
-shared rig). Auto-deploys to GitHub Pages on every push to `main`.
+shared rig), **Recoil** (free-recoil-energy comparison), **Help**. Auto-deploys to
+GitHub Pages on every push to `main`.
 
 ## What is already done and working
 
 Original v1 scope, all shipped: solver (forward Euler, 0.25ms steps, secant-iterated
 zeroing), wind deflection (3D relative-velocity), Imperial/Metric unit switching,
-MOA/MIL correction columns, Saved Datasets (localStorage, persists per-device across
-sessions, does not sync across devices), Compare tab.
+MOA/MIL correction columns, Saved Datasets (localStorage per device, plus Supabase
+cloud sync when signed in), Compare tab.
 
-Built since, not in the original scope: an 855-entry commercial ammo catalog across
-four manufacturers (BC back-calculated from the manufacturer's own published data
-where they don't state one — see `scripts/deriveBC.mjs`), a cascading
-Caliber -> Manufacturer -> Load picker, per-load vitals-zone radius + a "vitals
-window" readout (how far a trajectory stays within that radius) and an "Optimal
-Zero" solve for the zero that maximizes it, a whole Optimal Zero comparison tab, and
-GitHub Pages hosting.
-
-**Verify the baseline before changing anything:** run `npm install`, then `npm test`.
-It should print "All checks passed." If it doesn't, stop and say so — something is
-wrong with the environment, not the code.
+Built since: an 855-entry commercial ammo catalog across four manufacturers (BC
+back-calculated from the manufacturer's own published data where they don't state one
+— see `scripts/deriveBC.mjs`), a cascading Caliber -> Manufacturer -> Load picker,
+per-load vitals-zone radius + a "vitals window" readout and an "Optimal Zero" solve
+for the zero that maximizes it, the Optimal Zero comparison tab, the Recoil tab
+(SAAMI free recoil energy), a printable dope chart, a Compare comparison table, the
+Help/FAQ tab, Supabase-backed accounts, GitHub Pages hosting, and the code-review
+pass (dependency-free SVG charts, Optimal Zero Web Worker, bundle split, error
+boundary — see `CODE-REVIEW.md`).
 
 ## Ground rules for working with me
 
@@ -63,36 +60,13 @@ wrong with the environment, not the code.
 
 ## What remains
 
-**Known rough edges — both addressed in the 2026-09-10 code-review pass
-(PR #1); see `CODE-REVIEW.md`:**
-1. ~~`solveZeroAngle` re-integrates the whole trajectory on every secant pass.~~
-   Done — `integrate({ visit })` + `heightAtRange` make the zeroing loop
-   allocation-free; `optimalSightIn` also moved to a Web Worker.
-2. ~~Production bundle is ~745KB in a single chunk — recharts and the catalog
-   data are the main weight.~~ Done — recharts replaced by a ~220-line
-   hand-rolled SVG plot (`components/Plot.jsx`), supabase + catalog split
-   into their own chunks, tabs lazy-loaded. ~256 KB gzip single chunk →
-   ~160 KB gzip total, ~83 KB critical path.
-
 **Features, roughly in priority order:**
-3. **Leupold Boone & Crockett ballistic group classification** — fully scoped, not
+1. **Leupold Boone & Crockett ballistic group classification** — fully scoped, not
    yet built. Purely drop-based (inches of drop at 500yd with a 200yd zero), sourced
    from Leupold's own published BAS manual, no proprietary formula needed. Computable
    with the existing solver, no new physics.
-4. **Compare page ballistics comparison table** — a compact table alongside the
-   overlaid chart. Not yet designed; "elegant, doesn't crowd the page" is the only
-   constraint set so far.
-5. **Printable PDF "dope chart"** — a quick-reference trajectory/ballistics card for
-   a given load. Not yet scoped.
-6. **Felt recoil calculator** — a fourth tab, similar in spirit to Compare/Optimal
-   Zero. Not yet scoped — there are a lot of variables (rifle weight, powder charge,
-   stock design/fit, etc.) and "how exact do we want this" needs deciding before any
-   design work.
-7. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
+2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
    — it is now. Needs independent fixtures like wind did.
-8. Plain Leupold TBR (True Ballistic Range) angle-compensation — a much smaller,
-   separate idea from item 3 above (trivial cosine correction for inclined shots),
+3. Plain Leupold TBR (True Ballistic Range) angle-compensation — a much smaller,
+   separate idea from item 1 above (trivial cosine correction for inclined shots),
    mentioned in passing, not requested outright.
-
-Start by running the tests and confirming the baseline, then tell me what you'd
-tackle first and why. Don't write code yet.

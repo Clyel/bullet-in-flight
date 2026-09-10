@@ -6,7 +6,11 @@ import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
 // Tolerances vs. an independent reference solver (py-ballisticcalc, RK4).
-const TOL = { velocity: 1.0, energy: 3.0, height: 0.5, windage: 0.5, time: 0.002 };
+// Set just above the worst deviations README's Accuracy table documents
+// (dV 1.0 fps / dE 0.8 ft-lb / dH 0.15 in / dW 0.06 in / dT 0.0005 s), with
+// only enough headroom to absorb normal noise — a real 3x regression in any
+// of these trips a FAIL instead of passing silently under a 6x-loose bound.
+const TOL = { velocity: 1.0, energy: 1.5, height: 0.3, windage: 0.15, time: 0.001 };
 
 let failures = 0;
 for (const [name, fx] of Object.entries(ref)) {

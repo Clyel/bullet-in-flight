@@ -82,6 +82,12 @@ export default function Help({ scrollTarget }) {
           your right cheek, 6 is at your back, 9 is your left cheek. Fill temperature and pressure directly, or
           enter altitude and hit &ldquo;Fill from standard atmosphere&rdquo; for a quick estimate.
         </P>
+        <P>
+          Sight height, vitals radius, and the three air fields are your <strong>rig</strong> — shared with the
+          Optimal Zero tab so you set them once. If you change one, a bar appears offering &ldquo;Save as my
+          rig&rdquo; (make these the new shared values) or &ldquo;Reset to my rig&rdquo; (pull the saved ones
+          back). Loading a saved dataset brings that dataset's own conditions and doesn't touch your rig.
+        </P>
         <Sub>Saving, comparing, and printing</Sub>
         <P>
           Name and save the whole setup (ammo + sights + conditions) — it's kept in your browser only (nothing is
@@ -121,7 +127,9 @@ export default function Help({ scrollTarget }) {
           One shared &ldquo;rig&rdquo; on the left — sight height, vitals radius, temperature, pressure, altitude —
           applies to every round you add. That's deliberate: it's the same physical setup being compared across
           rounds, not each round's own saved sight height and zero (which could be from a completely different
-          session). Add rounds from your saved datasets or the catalog picker; each row shows muzzle velocity and
+          session). This is the same rig as the Calculator tab's, so setting it in either place carries to the
+          other; change it here and the same &ldquo;Save as my rig&rdquo; / &ldquo;Reset to my rig&rdquo; bar
+          appears. Add rounds from your saved datasets or the catalog picker; each row shows muzzle velocity and
           energy, the near zero, the optimal zero, height at 100yd, and the full vitals window (span plus entry/exit
           distances).
         </P>

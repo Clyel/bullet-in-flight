@@ -77,11 +77,20 @@ export default function Calculator() {
   // compares the live form against it.
   const [storedRig, setStoredRig] = useState(getMyRig);
   const [v, setState] = useState(() => ({ ...DEFAULTS, ...storedRig }));
+  // The drift bar shows only after the user *deliberately* touches a rig
+  // field -- not when a rig field changes because a saved dataset was
+  // loaded (that dataset carries its own conditions, and both "Save as my
+  // rig" and "Reset to my rig" would be wrong for it).
+  const [rigTouched, setRigTouched] = useState(false);
   const set = Object.fromEntries(
     Object.keys(DEFAULTS).map((k) => [k, (val) => setState((s) => ({ ...s, [k]: val }))])
   );
   for (const k of IDENTITY_FIELDS) {
     set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
+  }
+  for (const k of RIG_FIELDS) {
+    const base = set[k];
+    set[k] = (val) => { setRigTouched(true); base(val); };
   }
 
   const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
@@ -123,13 +132,17 @@ export default function Calculator() {
   // active (below) fixes that for both cases at once.
   const [bcOverridden, setBcOverridden] = useState(false);
 
-  const rigDrifted = rigDiffers(v, storedRig);
+  const rigDrifted = rigTouched && rigDiffers(v, storedRig);
   const handleSaveRig = () => {
     const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]]));
     setMyRig(next);
     setStoredRig(next);
+    setRigTouched(false);
   };
-  const handleResetRig = () => setState((s) => ({ ...s, ...storedRig }));
+  const handleResetRig = () => {
+    setState((s) => ({ ...s, ...storedRig }));
+    setRigTouched(false);
+  };
 
   // DopeChart mounts via a portal (see its own comment for why), so it
   // needs a render to actually land in the DOM before window.print() reads
@@ -161,6 +174,9 @@ export default function Calculator() {
     // stale name from whatever was loaded before it.
     setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", bcSource: "", ...formState }));
     setBcOverridden(false);
+    // The dataset's own sight/vitals/conditions came along -- they're not a
+    // deliberate rig edit, so don't let them raise the drift bar.
+    setRigTouched(false);
     return name;
   };
   const handleLoadSaved = (id) => { loadSavedEntry(id); };

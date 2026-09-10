@@ -47,17 +47,26 @@ export default function OptimalZero() {
   const { system } = useUnits();
   const [storedRig, setStoredRig] = useState(getMyRig);
   const [rig, setRig] = useState(() => ({ ...storedRig }));
+  // Only show the drift bar once the user deliberately edits a rig field --
+  // symmetric with Calculator, where the same flag also guards against a
+  // dataset load raising it. Nothing else here touches the rig, so in
+  // practice this tracks "has the user edited it".
+  const [rigTouched, setRigTouched] = useState(false);
   const set = Object.fromEntries(
-    RIG_FIELDS.map((k) => [k, (val) => setRig((s) => ({ ...s, [k]: val }))])
+    RIG_FIELDS.map((k) => [k, (val) => { setRigTouched(true); setRig((s) => ({ ...s, [k]: val })); }])
   );
 
-  const rigDrifted = rigDiffers(rig, storedRig);
+  const rigDrifted = rigTouched && rigDiffers(rig, storedRig);
   const handleSaveRig = () => {
     const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, rig[k]]));
     setMyRig(next);
     setStoredRig(next);
+    setRigTouched(false);
   };
-  const handleResetRig = () => setRig({ ...storedRig });
+  const handleResetRig = () => {
+    setRig({ ...storedRig });
+    setRigTouched(false);
+  };
   // useSavedLoads re-fetches on mount, which is when a load saved on the
   // Calculator tab (or synced from the cloud) should show up here (same
   // pattern as Compare.jsx).

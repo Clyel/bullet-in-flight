@@ -203,13 +203,13 @@ export function RigDriftBar({ drifted, onSave, onReset }) {
   if (!drifted) return null;
   const linkStyle = {
     background: "none", border: "none", padding: 0, cursor: "pointer",
-    color: C.steel, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif",
+    color: C.steel, textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif",
   };
   return (
-    <div style={{ marginBottom: 14, padding: "7px 9px", background: C.inputBg,
+    <div style={{ margin: "0 0 20px", padding: "8px 10px", background: C.inputBg,
                   border: `1px solid ${C.brass}`, display: "flex", flexWrap: "wrap",
                   alignItems: "center", gap: "4px 14px",
-                  font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+                  font: "500 12px/1.5 'IBM Plex Sans',sans-serif", color: C.ink }}>
       <span>Rig differs from your saved one.</span>
       <span style={{ display: "flex", gap: 14 }}>
         <button onClick={onSave} style={linkStyle}>Save as my rig</button>

@@ -59,9 +59,16 @@ export function dragCoefficient(table, mach) {
  * applied to the bullet's ground velocity. With no wind, relative velocity
  * equals ground velocity and this is identical to the pre-wind physics.
  *
+ * @param visit  optional per-step hook `(xYd, yIn, zIn, v, t, mach) => boolean`.
+ *               When given, the returned `path` array is left empty and the
+ *               hook is called instead for each sample point; returning true
+ *               stops the integration early. This is the allocation-free path
+ *               used by heightAtRange() below — the physics loop is otherwise
+ *               byte-identical, so integrate() with no `visit` behaves exactly
+ *               as before.
  * @returns {Array<{x:number,y:number,z:number,v:number,t:number,mach:number}>}
  *          x in yards, y and z in inches relative to line of sight, v in fps
- *          (ground speed), mach relative to the air.
+ *          (ground speed), mach relative to the air. Empty when `visit` is used.
  */
 export function integrate({
   muzzleVelocity,
@@ -75,6 +82,7 @@ export function integrate({
   windSpeedMph,
   windClock,
   timeStep = DEFAULT_STEP,
+  visit,
 }) {
   const table = DRAG_TABLES[dragModel];
   if (!table) throw new Error(`Unknown drag model: ${dragModel}`);
@@ -98,7 +106,11 @@ export function integrate({
     const relVz = vz - windCrossFps;
     const vRel = Math.hypot(relVx, vy, relVz);
     const v = Math.hypot(vx, vy, vz);
-    path.push({ x: x / 3, y: y * 12, z: z * 12, v, t, mach: vRel / speedOfSound });
+    if (visit) {
+      if (visit(x / 3, y * 12, z * 12, v, t, vRel / speedOfSound)) break;
+    } else {
+      path.push({ x: x / 3, y: y * 12, z: z * 12, v, t, mach: vRel / speedOfSound });
+    }
     if (v < 1) break;
 
     const decel =
@@ -116,10 +128,39 @@ export function integrate({
   return path;
 }
 
-/** Height above line of sight, in inches, at a given range. */
-function heightAt(path, rangeYd) {
-  const p = sampleAt(path, rangeYd);
-  return p ? p.y : NaN;
+/**
+ * Height above the line of sight (inches) at one range, without building or
+ * keeping the whole path. Equivalent to `sampleAt(integrate(params), rangeYd).y`
+ * — same integrator, same linear interpolation between the bracketing steps,
+ * same "return the last sample if the trajectory never reaches rangeYd"
+ * behaviour — but it stops the instant x passes the target and allocates
+ * nothing per step. solveZeroAngle calls this several times per zero solve,
+ * and optimalSightIn calls solveZeroAngle 100+ times per optimize, so the
+ * per-step object churn it removes is the whole point.
+ */
+export function heightAtRange(params, rangeYd) {
+  let prevX = null;
+  let prevY = null;
+  let lastY = NaN;
+  let hit = false;
+  let result = NaN;
+  integrate({
+    ...params,
+    visit: (xYd, yIn) => {
+      lastY = yIn;
+      if (xYd >= rangeYd) {
+        result = prevX == null
+          ? yIn
+          : prevY + (yIn - prevY) * ((rangeYd - prevX) / (xYd - prevX));
+        hit = true;
+        return true;
+      }
+      prevX = xYd;
+      prevY = yIn;
+      return false;
+    },
+  });
+  return hit ? result : lastY;
 }
 
 /**
@@ -133,10 +174,7 @@ function heightAt(path, rangeYd) {
 export function solveZeroAngle(params) {
   const { zeroRangeYd } = params;
   const trial = (angle) =>
-    heightAt(
-      integrate({ ...params, launchAngleRad: angle, maxRangeYd: zeroRangeYd * 1.02 }),
-      zeroRangeYd
-    );
+    heightAtRange({ ...params, launchAngleRad: angle, maxRangeYd: zeroRangeYd * 1.02 }, zeroRangeYd);
 
   let a0 = 0;
   let f0 = trial(a0);

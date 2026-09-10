@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { solveTrajectory, solveZeroAngle, integrate, sampleAt } from "../src/ballistics/solver.js";
+import { solveTrajectory, solveZeroAngle, integrate, sampleAt, heightAtRange } from "../src/ballistics/solver.js";
 import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js";
 import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
 
@@ -84,6 +84,30 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
     t.rows.every((r, i) => i === 0 || r.range > t.rows[i - 1].range);
   if (!tableOk) failures++;
   console.log(`${tableOk ? "pass" : "FAIL"}  off-grid max range   last row ${lastRow.range.toFixed(2)}yd (want 546.80)  rows ${t.rows.length}`);
+}
+
+// heightAtRange (the allocation-free path solveZeroAngle now uses) must be
+// bit-identical to sampling a full integrate() — same integrator, same
+// interpolation. Check across launch angles and ranges, including a range
+// past where the trajectory reaches (must fall back to the last sample) and
+// a range of 0 (must give the muzzle height).
+{
+  const base = {
+    muzzleVelocity: 2700, ballisticCoefficient: 0.243, dragModel: "G7",
+    sightHeight: 1.6, tempF: 47, pressInHg: 27.1, windSpeedMph: 12, windClock: 2,
+  };
+  let worst = 0;
+  for (const angle of [0, 0.001, 0.004, 0.01]) {
+    const path = integrate({ ...base, launchAngleRad: angle, maxRangeYd: 600 });
+    for (const r of [0, 1, 137.5, 300, 599.9, 600, 800]) {
+      const viaPath = sampleAt(path, r).y;
+      const direct = heightAtRange({ ...base, launchAngleRad: angle, maxRangeYd: 600 }, r);
+      worst = Math.max(worst, Math.abs(viaPath - direct));
+    }
+  }
+  const hOk = worst === 0;
+  if (!hOk) failures++;
+  console.log(`${hOk ? "pass" : "FAIL"}  heightAtRange vs full path   worst delta ${worst.toExponential(2)}in (want exactly 0)`);
 }
 
 // Vitals window / optimal sight-in: not new trajectory physics (built on

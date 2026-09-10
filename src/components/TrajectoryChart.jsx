@@ -37,7 +37,7 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
   // numbers, which could balloon a +2/-432in path out to -900/+2700).
   // Rebuilt only when the path or unit system changes — not on the local
   // vitals/optimal toggles or an unrelated parent re-render.
-  const { data, yDomain } = useMemo(() => {
+  const { data, yDomain, series, xValues } = useMemo(() => {
     const distc = (yd) => toDisplay(yd, "distance", system);
     const lenc = (inches) => toDisplay(inches, "length", system);
 
@@ -58,13 +58,66 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
       if (p.y < minH) minH = p.y;
       if (p.y > maxH) maxH = p.y;
     }
-    return { data, yDomain: [lenc(minH - 12), lenc(maxH + 12)] };
+    // Build the Plot props off the same walk so `linePath`/`hover` inside Plot
+    // don't see a fresh array identity on every parent re-render (the vitals
+    // toggles, an unrelated Calculator state change).
+    const series = [{ key: "h", color: C.steel, points: data.map((p) => ({ x: p.d, y: p.h })) }];
+    const xValues = data.map((p) => p.d);
+    return { data, yDomain: [lenc(minH - 12), lenc(maxH + 12)], series, xValues };
   }, [path, system]);
 
   const swatch = (color) => ({
     display: "inline-block", width: 10, height: 10,
     background: color, opacity: 0.5, marginRight: 5,
   });
+
+  // Memoise the Plot props so a re-render from the local toggles (or a
+  // Calculator state change) doesn't hand Plot fresh array/function
+  // identities and force its internal path/hover memos to recompute.
+  const refAreas = useMemo(() => [
+    transonicYd != null && {
+      x1: dist(transonicYd),
+      x2: subsonicYd != null ? dist(subsonicYd) : dist(maxRangeYd),
+      color: C.brass,
+    },
+    subsonicYd != null && { x1: dist(subsonicYd), x2: dist(maxRangeYd), color: C.ox },
+  ].filter(Boolean), [transonicYd, subsonicYd, maxRangeYd, dist]);
+
+  const refLines = useMemo(() => [
+    { axis: "y", value: 0, color: C.ink, dash: "6 3" },
+    ...(showVitals && hasVitalsRadius
+      ? [
+          { axis: "y", value: len(vitalsRadiusIn), color: C.vitals, label: "VITALS ZERO" },
+          { axis: "y", value: len(-vitalsRadiusIn), color: C.vitals },
+        ]
+      : []),
+  ], [showVitals, hasVitalsRadius, vitalsRadiusIn, len]);
+
+  const refDots = useMemo(() => [
+    ...crossings.map((x) => ({
+      x: dist(x), y: 0, r: 4, fill: C.card, stroke: C.ink, strokeWidth: 1.6,
+    })),
+    {
+      x: dist(apex.range), y: len(apex.height), r: 3.5,
+      fill: C.brass, stroke: C.ink, strokeWidth: 1.2,
+    },
+  ], [crossings, apex, dist, len]);
+
+  const tooltipRows = useMemo(() => (xVal) => {
+    const p = data.find((row) => row.d === xVal) ?? data[data.length - 1];
+    return [
+      { label: "Height", value: `${p.h} ${lSuf}`, color: C.steel },
+      { label: "Velocity", value: `${p.v} ${vSuf}` },
+      { label: "Mach", value: String(p.mach) },
+    ];
+  }, [data, lSuf, vSuf]);
+
+  const ariaLabel = useMemo(() => {
+    const last = data[data.length - 1];
+    return `Line chart of bullet height above the line of sight versus distance, `
+      + `muzzle to ${Math.round(dist(maxRangeYd))} ${dSuf}; ends at ${last.h} ${lSuf} `
+      + `height and ${last.v} ${vSuf}. The range table below has the full numbers.`;
+  }, [data, dist, maxRangeYd, dSuf, lSuf, vSuf]);
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`,
@@ -88,47 +141,19 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
 
       <Plot
         height={310}
-        series={[{ key: "h", color: C.steel, points: data.map((p) => ({ x: p.d, y: p.h })) }]}
+        series={series}
+        xValues={xValues}
+        ariaLabel={ariaLabel}
         xDomain={[0, dist(maxRangeYd)]}
         yDomain={yDomain}
         xLabel={`DISTANCE (${dSuf.toUpperCase()})`}
         yLabel={`HEIGHT (${lSuf.toUpperCase()})`}
         xFormat={(v) => String(Math.round(v))}
         yFormat={(v) => String(Math.round(v))}
-        refAreas={[
-          transonicYd != null && {
-            x1: dist(transonicYd),
-            x2: subsonicYd != null ? dist(subsonicYd) : dist(maxRangeYd),
-            color: C.brass,
-          },
-          subsonicYd != null && { x1: dist(subsonicYd), x2: dist(maxRangeYd), color: C.ox },
-        ].filter(Boolean)}
-        refLines={[
-          { axis: "y", value: 0, color: C.ink, dash: "6 3" },
-          ...(showVitals && hasVitalsRadius
-            ? [
-                { axis: "y", value: len(vitalsRadiusIn), color: C.vitals, label: "VITALS ZERO" },
-                { axis: "y", value: len(-vitalsRadiusIn), color: C.vitals },
-              ]
-            : []),
-        ]}
-        refDots={[
-          ...crossings.map((x) => ({
-            x: dist(x), y: 0, r: 4, fill: C.card, stroke: C.ink, strokeWidth: 1.6,
-          })),
-          {
-            x: dist(apex.range), y: len(apex.height), r: 3.5,
-            fill: C.brass, stroke: C.ink, strokeWidth: 1.2,
-          },
-        ]}
-        tooltipRows={(xVal) => {
-          const p = data.find((row) => row.d === xVal) ?? data[data.length - 1];
-          return [
-            { label: "Height", value: `${p.h} ${lSuf}`, color: C.steel },
-            { label: "Velocity", value: `${p.v} ${vSuf}` },
-            { label: "Mach", value: String(p.mach) },
-          ];
-        }}
+        refAreas={refAreas}
+        refLines={refLines}
+        refDots={refDots}
+        tooltipRows={tooltipRows}
       />
 
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", padding: "4px 6px 8px",

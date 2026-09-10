@@ -62,7 +62,14 @@ export function useOptimalZeroRows(selected, rig) {
     const worker = workerRef.current;
     if (!worker) return;
     const gen = ++genRef.current;
-    setByKey({}); // rows go pending until their result returns
+    // Drop cached results only for rows that are gone; leave the rest
+    // showing their last answer until their own fresh result lands. A
+    // single rig edit shouldn't flash every row back to "Solving…".
+    setByKey((m) => {
+      const live = {};
+      for (const e of selected) if (e.key in m) live[e.key] = m[e.key];
+      return live;
+    });
     if (!parsed.ok) return;
     for (const entry of selected) {
       if (!entryHasAmmo(entry)) continue;

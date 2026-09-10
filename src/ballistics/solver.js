@@ -185,6 +185,12 @@ export function solveZeroAngle(params) {
   let f1 = trial(a1);
 
   for (let i = 0; i < 40; i++) {
+    if (!Number.isFinite(f1)) {
+      // A later secant jump landed on inputs the integrator can't fly
+      // (a NaN trajectory) — the target is effectively unreachable.
+      // Better a clear throw than returning whatever `a1` last held.
+      throw new Error("Bullet does not reach the zero range with these inputs.");
+    }
     if (Math.abs(f1) < 1e-4) break;
     const denom = f1 - f0;
     if (!Number.isFinite(denom) || denom === 0) break;
@@ -239,7 +245,8 @@ export function machCrossing(path, mach) {
     if (path[i].mach <= mach) {
       const a = path[i - 1];
       const b = path[i];
-      const f = (a.mach - mach) / (a.mach - b.mach);
+      const span = a.mach - b.mach;
+      const f = span > 0 ? (a.mach - mach) / span : 0; // span 0 only if two samples share a Mach
       return a.x + (b.x - a.x) * f;
     }
   }
@@ -253,7 +260,9 @@ export function sightLineCrossings(path) {
     const a = path[i - 1];
     const b = path[i];
     if ((a.y < 0 && b.y >= 0) || (a.y > 0 && b.y <= 0)) {
-      hits.push(a.x + ((b.x - a.x) * -a.y) / (b.y - a.y));
+      const span = b.y - a.y;
+      const f = span !== 0 ? -a.y / span : 0; // span 0 is unreachable given the straddle test above
+      hits.push(a.x + (b.x - a.x) * f);
     }
   }
   return hits;

@@ -64,6 +64,14 @@ export default function CompareChart({ results, atYd }) {
 
   const atInRange = Number.isFinite(atYd) && atYd > 0 && atYd <= maxRangeCanonical;
 
+  const ariaLabel = useMemo(() => {
+    const names = series.map((s) => s.name).join(", ");
+    const n = series.length;
+    return `Line chart overlaying ${n} load${n === 1 ? "" : "s"} (${names}): height above `
+      + `the line of sight versus distance, out to ${Math.round(dist(maxRangeCanonical))} ${dSuf}. `
+      + `The compare table below has the full numbers.`;
+  }, [series, dist, maxRangeCanonical, dSuf]);
+
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`,
                   padding: "14px 10px 6px", marginBottom: 16 }}>
@@ -79,6 +87,8 @@ export default function CompareChart({ results, atYd }) {
         height={340}
         legend
         series={series}
+        xValues={xs}
+        ariaLabel={ariaLabel}
         xDomain={[0, dist(maxRangeCanonical)]}
         yDomain={yDomain}
         xLabel={`DISTANCE (${dSuf.toUpperCase()})`}

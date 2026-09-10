@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
 import { UnitField, StepHead, RigDriftBar } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
 import { energyFtLb } from "./ballistics/solver.js";
-import { optimalSightIn } from "./ballistics/vitalsWindow.js";
+import { useOptimalZeroRows } from "./useOptimalZeroRows.js";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num } from "./solveFromForm.js";
 import { useUnits } from "./UnitsContext.jsx";
@@ -90,18 +90,12 @@ export default function OptimalZero() {
     set.pressInHg(pressInHg.toFixed(2));
   };
 
-  // Every rig field feeds every selected row's optimalSightIn call (~130-
-  // 150ms each), run fully synchronously. With several rows selected, that
-  // adds up to a multi-second freeze — and without debouncing, it reruns on
-  // EVERY keystroke while typing, not just once you're done. Debounced here
-  // instead: the input itself stays driven by `rig` (so typing feels
-  // instant), but the expensive table recompute waits until 400ms after you
-  // stop.
-  const [debouncedRig, setDebouncedRig] = useState(rig);
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedRig(rig), 400);
-    return () => clearTimeout(t);
-  }, [rig]);
+  // Every rig field feeds every selected row's optimalSightIn search
+  // (~50ms each). useOptimalZeroRows runs those in a Web Worker — debounced,
+  // off the main thread, results streaming back per row — so the table
+  // stays responsive no matter how many rounds are selected. Rows come back
+  // as { entry, result } | { entry, error } | { entry, pending }.
+  const rows = useOptimalZeroRows(selected, rig);
 
   const dist = (yd) => toDisplay(yd, "distance", system);
   const dSuf = unitSuffix("distance", system);
@@ -111,39 +105,6 @@ export default function OptimalZero() {
   const lSuf = unitSuffix("length", system);
   const energy = (ftLb) => toDisplay(ftLb, "energy", system);
   const eSuf = unitSuffix("energy", system);
-
-  // One optimalSightIn call per row (~130-150ms each) — fine for the
-  // "a dozen or so rounds" scale this is meant for. Recomputes the whole
-  // table when the (debounced) shared rig changes, or when the selection
-  // itself changes — adding/removing a round is already a discrete click,
-  // not a rapid keystroke stream, so that path stays undebounced.
-  const rows = useMemo(() => {
-    const sightHeight = num(debouncedRig.sightHeight);
-    const vitalsRadiusIn = num(debouncedRig.vitalsRadiusIn);
-    const tempF = num(debouncedRig.tempF);
-    const pressInHg = num(debouncedRig.pressInHg);
-    const rigOk = Number.isFinite(sightHeight) && sightHeight >= 0 &&
-      Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0 &&
-      Number.isFinite(tempF) && Number.isFinite(pressInHg);
-
-    return selected.map((entry) => {
-      if (!rigOk) return { entry, error: "Fill in your rig above." };
-      if (!Number.isFinite(entry.muzzleVelocity) || !Number.isFinite(entry.ballisticCoefficient)) {
-        return { entry, error: "This dataset is missing muzzle velocity or BC." };
-      }
-      const base = {
-        muzzleVelocity: entry.muzzleVelocity, ballisticCoefficient: entry.ballisticCoefficient,
-        dragModel: entry.dragModel, sightHeight, tempF, pressInHg,
-        windSpeedMph: undefined, windClock: undefined,
-      };
-      try {
-        return { entry, result: optimalSightIn(base, vitalsRadiusIn) };
-      } catch (e) {
-        return { entry, error: e.message };
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, JSON.stringify(debouncedRig)]);
 
   const selectedSavedKeys = new Set(selected.filter((e) => e.key.startsWith("saved:")).map((e) => e.key));
 
@@ -226,7 +187,7 @@ export default function OptimalZero() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ entry, result, error }, i) => (
+                {rows.map(({ entry, result, error, pending }, i) => (
                   <tr key={entry.key} style={{ background: i % 2 ? C.cardAlt : C.card }}>
                     <td style={{ ...numeric, padding: "7px 12px", fontWeight: 600 }}>
                       {entry.label}
@@ -245,6 +206,10 @@ export default function OptimalZero() {
                     {error ? (
                       <td colSpan={4} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.ox }}>
                         {error}
+                      </td>
+                    ) : pending ? (
+                      <td colSpan={4} style={{ ...numeric, padding: "7px 12px", textAlign: "right", color: C.muted }}>
+                        Solving&hellip;
                       </td>
                     ) : (
                       <>

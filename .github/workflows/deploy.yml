@@ -1,7 +1,9 @@
-name: Deploy to GitHub Pages
+name: Build, test, deploy
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -10,8 +12,10 @@ permissions:
   pages: write
   id-token: write
 
+# Scope by ref so a PR build and a main deploy don't cancel each other; two
+# quick pushes to the same ref still supersede.
 concurrency:
-  group: pages
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,13 +31,21 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
+          # Same-repo PRs get the secrets; forks don't — the app builds
+          # either way (supabaseClient.js degrades to local-only when the
+          # env is absent), so a fork PR still gets a real CI signal.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      - uses: actions/upload-pages-artifact@v3
+      # Only the real deploy needs the Pages artifact.
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    # PRs run build+test above but never deploy — only pushes to main and a
+    # manual dispatch publish.
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

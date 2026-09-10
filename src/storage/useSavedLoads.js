@@ -5,7 +5,7 @@
 // for byte. Signed in: reads/writes Supabase instead, and offers a
 // one-time "import your local saves" prompt the first time a device with
 // existing local saves signs into an account.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext.jsx";
 import { listSavedLoads as listLocal, saveLoad as saveLocal, deleteLoad as deleteLocal } from "./savedLoads.js";
 import { listSavedLoadsCloud, saveLoadCloud, deleteLoadCloud, importLocalLoadsToCloud } from "./savedLoadsCloud.js";
@@ -55,6 +55,7 @@ export function useSavedLoads() {
   );
   const [saveError, setSaveError] = useState("");
   const [importCount, setImportCount] = useState(0);
+  const prevKeyRef = useRef(cacheKey);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -69,8 +70,14 @@ export function useSavedLoads() {
     const sync = () => { if (cache.key === cacheKey) setSavedLoads(cache.loads ?? []); };
     listeners.add(sync);
     sync();
-    // Fetch only when the cache isn't already holding this key's list.
-    if (cache.key !== cacheKey || cache.loads == null) refresh();
+    // Fetch when the cache doesn't hold this key's list, OR whenever the key
+    // changed during this mount — a sign-in/out. The cache may still hold
+    // this user's list from earlier in the session, but it could be stale
+    // (or briefly clobbered by a request that resolved after a sign-out).
+    // A plain tab remount keeps the same key, so it still skips the fetch.
+    const keyChanged = prevKeyRef.current !== cacheKey;
+    prevKeyRef.current = cacheKey;
+    if (cache.key !== cacheKey || cache.loads == null || keyChanged) refresh();
     return () => listeners.delete(sync);
   }, [cacheKey, refresh]);
 

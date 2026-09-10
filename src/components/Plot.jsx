@@ -71,7 +71,9 @@ export default function Plot({
     return () => ro.disconnect();
   }, []);
 
-  const m = { top: 10, right: 22, bottom: 42, left: 54 };
+  // Reserve room above the plot for the legend row when there is one, so it
+  // doesn't sit on top of a series line that reaches the top of the y-range.
+  const m = { top: legend ? 34 : 10, right: 22, bottom: 42, left: 54 };
   const iw = Math.max(0, w - m.left - m.right);
   const ih = Math.max(0, height - m.top - m.bottom);
   const [x0, x1] = xDomain;

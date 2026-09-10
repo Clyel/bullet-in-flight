@@ -6,7 +6,7 @@
 // are insert-only), so sharing one hook would mean threading that
 // difference through as a flag rather than just having two small, honest
 // hooks that each say what they do.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext.jsx";
 import { listRecoilSetups as listLocal, addRecoilSetup as addLocal, deleteRecoilSetup as deleteLocal } from "./recoilSetups.js";
 import { listRecoilSetupsCloud, addRecoilSetupCloud, deleteRecoilSetupCloud, importLocalRecoilSetupsToCloud } from "./recoilSetupsCloud.js";
@@ -49,6 +49,7 @@ export function useRecoilSetups() {
   );
   const [addError, setAddError] = useState("");
   const [importCount, setImportCount] = useState(0);
+  const prevKeyRef = useRef(cacheKey);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -63,7 +64,11 @@ export function useRecoilSetups() {
     const sync = () => { if (cache.key === cacheKey) setSetups(cache.setups ?? []); };
     listeners.add(sync);
     sync();
-    if (cache.key !== cacheKey || cache.setups == null) refresh();
+    // Also refetch whenever the key changed during this mount (a sign-in/
+    // out) — see useSavedLoads.js for the full reasoning.
+    const keyChanged = prevKeyRef.current !== cacheKey;
+    prevKeyRef.current = cacheKey;
+    if (cache.key !== cacheKey || cache.setups == null || keyChanged) refresh();
     return () => listeners.delete(sync);
   }, [cacheKey, refresh]);
 

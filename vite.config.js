@@ -13,13 +13,13 @@ export default defineConfig({
   // in-flight/" for production or every asset 404s.
   base: "/",
   build: {
-    // Peel the two cleanly-separable heavy pieces off the app bundle so an
-    // app-code deploy (the common case) doesn't re-download ~73 KB gzip of
-    // supabase + catalog that never changed. recharts/d3 and react are
-    // deliberately left in the default vendor chunk — splitting recharts
-    // out separately reorders module init in a way that trips a
-    // "cannot access X before initialization" TDZ error at load. The
-    // 855-entry catalog is repetitive data, ~16 KB gzip.
+    // Name the two cleanly-separable heavy pieces as their own chunks so an
+    // app-code deploy (the common case) doesn't bust ~75 KB gzip of
+    // supabase + catalog in everyone's cache. supabase-js is already a
+    // dynamic import (see supabaseClient.js) — this just gives its chunk a
+    // stable name; the 855-entry catalog is repetitive data, ~16 KB gzip.
+    // React stays in the entry chunk: the app is small enough that a
+    // separate vendor chunk buys nothing.
     rollupOptions: {
       output: {
         manualChunks(id) {

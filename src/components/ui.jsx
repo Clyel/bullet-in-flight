@@ -91,10 +91,14 @@ export function Segmented({ options, value, onChange }) {
  * Calculator, "setups" on Recoil).
  */
 export function SyncStatusHint({ signedIn, noun = "saves" }) {
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, authAvailable } = useAuth();
   const style = { marginTop: -6, marginBottom: 10, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted };
   if (signedIn) {
     return <div style={style}>Signed in — {noun} sync to your account.</div>;
+  }
+  // Local-only build — no account to nudge toward; just state where data lives.
+  if (!authAvailable) {
+    return <div style={style}>{noun[0].toUpperCase() + noun.slice(1)} are saved on this device.</div>;
   }
   return (
     <div style={style}>

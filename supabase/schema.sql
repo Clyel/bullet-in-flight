@@ -77,7 +77,16 @@ create table public.saved_loads (
   catalog_bullet text,
   catalog_load_id text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- Save-by-name is an upsert (savedLoadsCloud.js): a load's name is its
+  -- identity, re-saving the same name overwrites in place. This constraint
+  -- is what makes that a single atomic `insert ... on conflict` instead of
+  -- a racey select-then-write, and stops a double-clicked Save from
+  -- creating two rows the delete-by-id path can then only half-clean.
+  -- Migration for an existing project (run once in the SQL editor):
+  --   alter table public.saved_loads
+  --     add constraint saved_loads_user_id_name_key unique (user_id, name);
+  unique (user_id, name)
 );
 alter table public.saved_loads enable row level security;
 create policy "Users manage their own saved loads" on public.saved_loads

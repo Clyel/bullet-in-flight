@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { solveTrajectory, solveZeroAngle, integrate } from "../src/ballistics/solver.js";
+import { solveTrajectory, solveZeroAngle, integrate, sampleAt } from "../src/ballistics/solver.js";
 import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js";
 import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
 
@@ -61,6 +61,30 @@ const nearZero = s.crossings[0], farZero = s.crossings[1];
 const zeroOk = Math.abs(farZero - 200) < 0.6 && nearZero > 0 && nearZero < 60;
 if (!zeroOk) failures++;
 console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFixed(1)}yd  far ${farZero?.toFixed(1)}yd  apex ${s.apex.height.toFixed(2)}in @ ${s.apex.range.toFixed(0)}yd`);
+
+// Table assembly (not physics): the last row must land exactly on the
+// requested max range even when it isn't a whole number of steps out (every
+// metric session — the "table every" presets are 27.34 / 54.68 / 109.36
+// canonical yd), and `last` must be that row, with its numbers matching a
+// direct sample of the path at that range. Regression guard for the
+// SummaryStrip "At {maxRangeYd}" mislabel.
+{
+  const t = solveTrajectory({
+    muzzleVelocity: 2825, ballisticCoefficient: 0.265, dragModel: "G7", grains: 172,
+    sightHeight: 1.5, zeroRangeYd: 200, maxRangeYd: 546.8, tableStepYd: 109.36,
+    tempF: 59, pressInHg: 29.92,
+  });
+  const lastRow = t.rows[t.rows.length - 1];
+  const direct = sampleAt(t.path, 546.8);
+  const tableOk =
+    Math.abs(lastRow.range - 546.8) < 1e-9 &&
+    t.last === lastRow &&
+    Math.abs(lastRow.velocity - direct.v) < 1e-9 &&
+    Math.abs(lastRow.height - direct.y) < 1e-9 &&
+    t.rows.every((r, i) => i === 0 || r.range > t.rows[i - 1].range);
+  if (!tableOk) failures++;
+  console.log(`${tableOk ? "pass" : "FAIL"}  off-grid max range   last row ${lastRow.range.toFixed(2)}yd (want 546.80)  rows ${t.rows.length}`);
+}
 
 // Vitals window / optimal sight-in: not new trajectory physics (built on
 // solveZeroAngle/integrate unchanged), so no independent fixture — but the

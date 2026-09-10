@@ -230,18 +230,26 @@ export function solveTrajectory(input) {
 
   const rows = [];
   const step = Math.max(1, tableStepYd);
-  for (let d = 0; d <= maxRangeYd + 1e-6; d += step) {
-    const p = sampleAt(path, Math.min(d, maxRangeYd));
-    rows.push({
-      range: Math.min(d, maxRangeYd),
+  const rowAt = (rangeYd) => {
+    const p = sampleAt(path, rangeYd);
+    return {
+      range: rangeYd,
       velocity: p.v,
       energy: energyFtLb(grains, p.v),
       height: p.y,
       windage: p.z,
       time: p.t,
       mach: p.mach,
-    });
-  }
+    };
+  };
+  for (let d = 0; d < maxRangeYd - 1e-6; d += step) rows.push(rowAt(d));
+  // Always land the final row exactly on the requested max range, even when
+  // it isn't a whole number of steps out — which it never is in metric (the
+  // "table every" presets convert to 27.34 / 54.68 / 109.36 canonical yd)
+  // and often isn't in imperial either. Without this the table stops at the
+  // last whole step, and `last` — which SummaryStrip labels "At {maxRangeYd}"
+  // — is that short row, so the strip reports the wrong distance's numbers.
+  rows.push(rowAt(maxRangeYd));
 
   const apex = path.reduce((best, p) => (p.y > best.y ? p : best), path[0]);
 

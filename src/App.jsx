@@ -3,6 +3,7 @@ import { C } from "./components/theme.js";
 import { Segmented } from "./components/ui.jsx";
 import { UnitsProvider, useUnits } from "./UnitsContext.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
 import Calculator from "./Calculator.jsx";
 import Compare from "./Compare.jsx";
@@ -21,11 +22,13 @@ const HELP_SECTION_BY_TAB = {
 
 export default function App() {
   return (
-    <UnitsProvider>
-      <AuthProvider>
-        <AppShell />
-      </AuthProvider>
-    </UnitsProvider>
+    <ErrorBoundary>
+      <UnitsProvider>
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
+      </UnitsProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -86,11 +89,16 @@ function AppShell() {
           </div>
         )}
 
-        {tab === "Calculator" ? <Calculator />
-          : tab === "Compare" ? <Compare />
-          : tab === "Optimal Zero" ? <OptimalZero />
-          : tab === "Recoil" ? <Recoil />
-          : <Help scrollTarget={helpTarget} />}
+        {/* Keyed by tab so a throw in one view is contained there and clears
+            when you switch away — a broken Compare can't take Calculator or
+            your saved data down with it. */}
+        <ErrorBoundary key={tab} label={tab}>
+          {tab === "Calculator" ? <Calculator />
+            : tab === "Compare" ? <Compare />
+            : tab === "Optimal Zero" ? <OptimalZero />
+            : tab === "Recoil" ? <Recoil />
+            : <Help scrollTarget={helpTarget} />}
+        </ErrorBoundary>
       </div>
     </div>
   );

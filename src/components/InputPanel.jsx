@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { C, label } from "./theme.js";
-import { Field, UnitField, Segmented, SyncStatusHint, StepHead, RigDriftBar } from "./ui.jsx";
+import {
+  Field, UnitField, Segmented, SyncStatusHint, StepHead, RigDriftBar, useCollapsibleSteps,
+} from "./ui.jsx";
 import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
-import { mToYd } from "../units.js";
+import { mToYd, formatDisplay, unitSuffix } from "../units.js";
 
 const STEP_PRESETS = ["25", "50", "100"];
 
@@ -17,12 +19,18 @@ const STEP_PRESETS = ["25", "50", "100"];
 const stepCanonicalValue = (presetLabel, system) =>
   system === "metric" ? String(Math.round(mToYd(parseFloat(presetLabel)) * 100) / 100) : presetLabel;
 
+// The Step headers fold their section down to this one-liner. Ordered id
+// list drives the expand/collapse-all control and the persistence key.
+const SECTION_IDS = ["load", "sights", "target", "shot", "air", "wind"];
+const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
+
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
   rigDrifted, onSaveRig, onResetRig,
 }) {
   const { system } = useUnits();
+  const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS);
 
   // A catalog pick's BC and drag model are a manufacturer-vetted pair --
   // editing either invalidates the pairing (see IDENTITY_FIELDS in
@@ -77,232 +85,322 @@ export default function InputPanel({
   const trimmedName = saveName.trim();
   const isNameUpdate = savedLoads.some((l) => l.name === trimmedName);
 
+  // ---- collapsed-section summaries -----------------------------------------
+  // A field's value in the current unit system, e.g. "1.5 in" / "200 yd",
+  // or null when it's blank/unparseable so it drops out of the summary.
+  const disp = (raw, category) => {
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? `${formatDisplay(n, category, system)} ${unitSuffix(category, system)}` : null;
+  };
+  const joinDot = (...parts) => parts.filter(Boolean).join("  ·  ");
+
+  const sightH = disp(v.sightHeight, "length");
+  const zeroR = disp(v.zeroRangeYd, "distance");
+  const vitalsR = disp(v.vitalsRadiusIn, "length");
+  const maxR = disp(v.maxRangeYd, "distance");
+  const windSpeed = disp(v.windSpeedMph, "windSpeed");
+
+  const summaries = {
+    load: joinDot(
+      disp(v.muzzleVelocity, "velocity"),
+      Number.isFinite(parseFloat(v.grains)) ? `${v.grains} gr` : null,
+      v.ballisticCoefficient.trim() ? `${v.dragModel} ${v.ballisticCoefficient}` : null,
+    ) || "not set yet",
+    sights: joinDot(sightH && `${sightH} sight height`, zeroR && `${zeroR} zero`) || "not set yet",
+    target: vitalsR ? `${vitalsR} vitals radius` : "not set yet",
+    shot: joinDot(
+      maxR && `out to ${maxR}`,
+      Number.isFinite(parseFloat(v.shotAngleDeg)) ? `${v.shotAngleDeg}° angle` : null,
+      selectedStepLabel ? `table every ${selectedStepLabel}` : null,
+    ) || "not set yet",
+    air: joinDot(
+      disp(v.tempF, "temperature"),
+      disp(v.pressInHg, "pressure"),
+      disp(v.altitudeFt, "altitude"),
+    ) || "not set yet",
+    wind: windSpeed
+      ? joinDot(windSpeed, v.windClock.trim() ? `${v.windClock} o'clock` : null)
+      : "no wind entered",
+  };
+
+  const summaryStyle = {
+    margin: "-6px 0 8px 32px",
+    font: "500 12px/1.5 'IBM Plex Sans',sans-serif",
+    color: C.muted,
+    fontVariantNumeric: "tabular-nums",
+  };
+
+  // Plain function (not a component) so React keeps the field subtree
+  // mounted across renders -- a nested component type would remount it and
+  // steal focus on every keystroke.
+  const section = (id, headProps, children) => {
+    const open = isOpen(id);
+    return (
+      <React.Fragment key={id}>
+        <StepHead {...headProps} open={open} onToggle={() => toggle(id)} />
+        {open ? children : <div style={summaryStyle}>{summaries[id]}</div>}
+      </React.Fragment>
+    );
+  };
+
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
       <RigDriftBar drifted={rigDrifted} onSave={onSaveRig} onReset={onResetRig} />
+
+      {/* One control flips every section -- for the first read-through, or a
+          quick scan of everything before a range trip. */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+        <button
+          type="button"
+          onClick={() => setAll(anyOpen)}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                   color: C.steel, textDecoration: "underline",
+                   font: "600 11px 'IBM Plex Sans',sans-serif" }}
+        >
+          {anyOpen ? "Collapse all" : "Expand all"}
+        </button>
+      </div>
+
       {/* Numbered so the required, top-to-bottom flow reads as a sequence
           rather than a wall of fields — everything genuinely optional
-          (wind) is unnumbered and pushed to the very end instead. */}
-      <StepHead n={1} name="The load" first />
-
-      <span style={sub}>Pick a commercial round</span>
-      <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
-      <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        Fills in muzzle velocity, bullet weight, drag model, and BC below. Sight height, zero, and
-        conditions are yours to set separately.
-      </div>
-
-      {/* Hidden until there's actually something to load -- a disabled-
-          looking "No saved datasets yet" option read as broken/dead UI for
-          every first-time visitor, not a real third path. */}
-      {savedLoads.length > 0 && (
+          (wind) is unnumbered and pushed to the very end instead. Each
+          header folds its section to a one-line value summary, persisted
+          per section; nothing folds on its own. */}
+      {section("load", { n: 1, name: "The load", first: true }, (
         <>
-          <span style={sub}>Or load a saved dataset</span>
-          <select
-            value=""
-            onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
-            style={{ width: "100%", padding: "7px 8px", marginBottom: 6,
-                     border: `1.5px solid ${C.rule}`, background: C.inputBg, color: C.ink,
-                     font: "500 13px 'IBM Plex Mono',monospace" }}
-          >
-            <option value="">Choose…</option>
-            {savedLoads.map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
-            ))}
-          </select>
-          <div style={{ marginBottom: 16 }}>
-            {savedLoads.map((l) => (
-              <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-                                        padding: "2px 1px", font: "400 11px 'IBM Plex Sans',sans-serif",
-                                        color: C.muted }}>
-                <span>{l.name}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <button
-                    onClick={() => onEditSaved(l.id)}
-                    aria-label={`Edit ${l.name}`}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
-                             color: C.steel, textDecoration: "underline",
-                             font: "500 11px 'IBM Plex Sans',sans-serif" }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDeleteSaved(l.id)}
-                    aria-label={`Delete ${l.name}`}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
-                             font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
-                  >
-                    &times;
-                  </button>
-                </span>
-              </div>
-            ))}
+          <span style={sub}>Pick a commercial round</span>
+          <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
+          <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+            Fills in muzzle velocity, bullet weight, drag model, and BC below. Sight height, zero, and
+            conditions are yours to set separately.
           </div>
-        </>
-      )}
 
-      <span style={sub}>Or enter your own</span>
-      <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
-      <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
-      <span style={sub}>Ballistic coefficient</span>
-      {showEditableBc ? (
-        <div style={{ marginBottom: 14, padding: 10, border: `1.5px solid ${C.rule}` }}>
-          <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={handleDragModelChange} />
-          <div style={{ margin: "5px 0 12px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
-            {v.dragModel === "G1"
-              ? "Flat-base reference. Use with a BC published as G1."
-              : "Boat-tail reference. Use with a BC published as G7."}
-          </div>
-          {pendingModel && (
-            <div role="alert" style={{ marginBottom: 12, padding: "7px 9px", background: C.card, border: `1px solid ${C.brass}` }}>
-              <div style={{ marginBottom: 6, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
-                That BC must be a {pendingModel} value — {v.dragModel} and {pendingModel} aren't interchangeable.
+          {/* Hidden until there's actually something to load -- a disabled-
+              looking "No saved datasets yet" option read as broken/dead UI for
+              every first-time visitor, not a real third path. */}
+          {savedLoads.length > 0 && (
+            <>
+              <span style={sub}>Or load a saved dataset</span>
+              <select
+                value=""
+                onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
+                style={{ width: "100%", padding: "7px 8px", marginBottom: 6,
+                         border: `1.5px solid ${C.rule}`, background: C.inputBg, color: C.ink,
+                         font: "500 13px 'IBM Plex Mono',monospace" }}
+              >
+                <option value="">Choose…</option>
+                {savedLoads.map((l) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+              <div style={{ marginBottom: 16 }}>
+                {savedLoads.map((l) => (
+                  <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                                            padding: "2px 1px", font: "400 11px 'IBM Plex Sans',sans-serif",
+                                            color: C.muted }}>
+                    <span>{l.name}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <button
+                        onClick={() => onEditSaved(l.id)}
+                        aria-label={`Edit ${l.name}`}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                                 color: C.steel, textDecoration: "underline",
+                                 font: "500 11px 'IBM Plex Sans',sans-serif" }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDeleteSaved(l.id)}
+                        aria-label={`Delete ${l.name}`}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
+                                 font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div style={{ display: "flex", gap: 14 }}>
-                <button
-                  onClick={confirmDragModelSwitch}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
-                           color: C.ox, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
-                >
-                  Switch to {pendingModel} anyway
-                </button>
-                <button
-                  onClick={() => setPendingModel(null)}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
-                           color: C.steel, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
-                >
-                  Keep {v.dragModel}
-                </button>
+            </>
+          )}
+
+          <span style={sub}>Or enter your own</span>
+          <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
+          <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
+          <span style={sub}>Ballistic coefficient</span>
+          {showEditableBc ? (
+            <div style={{ marginBottom: 14, padding: 10, border: `1.5px solid ${C.rule}` }}>
+              <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={handleDragModelChange} />
+              <div style={{ margin: "5px 0 12px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+                {v.dragModel === "G1"
+                  ? "Flat-base reference. Use with a BC published as G1."
+                  : "Boat-tail reference. Use with a BC published as G7."}
+              </div>
+              {pendingModel && (
+                <div role="alert" style={{ marginBottom: 12, padding: "7px 9px", background: C.card, border: `1px solid ${C.brass}` }}>
+                  <div style={{ marginBottom: 6, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+                    That BC must be a {pendingModel} value — {v.dragModel} and {pendingModel} aren't interchangeable.
+                  </div>
+                  <div style={{ display: "flex", gap: 14 }}>
+                    <button
+                      onClick={confirmDragModelSwitch}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                               color: C.ox, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
+                    >
+                      Switch to {pendingModel} anyway
+                    </button>
+                    <button
+                      onClick={() => setPendingModel(null)}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                               color: C.steel, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
+                    >
+                      Keep {v.dragModel}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div style={{ marginBottom: 0 }}>
+                <Field
+                  label="BC value"
+                  hint={`Must be the ${v.dragModel} value. Mixing the two gives wrong answers.`}
+                  value={v.ballisticCoefficient}
+                  onChange={handleBcChange}
+                  suffix={v.dragModel}
+                />
               </div>
             </div>
+          ) : (
+            <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
+                          display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <span style={{ font: "500 12px 'IBM Plex Mono',monospace", color: C.ink }}>
+                {v.dragModel} {v.ballisticCoefficient}
+                <span style={{ marginLeft: 6, font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
+                  {" "}— {v.bcSource === "published" ? `${v.manufacturer}'s published data` : `derived from ${v.manufacturer}'s data`}
+                </span>
+              </span>
+              <button
+                onClick={onBcOverride}
+                style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer",
+                         color: C.steel, textDecoration: "underline", font: "500 11px 'IBM Plex Sans',sans-serif" }}
+              >
+                Override
+              </button>
+            </div>
           )}
-          <div style={{ marginBottom: 0 }}>
-            <Field
-              label="BC value"
-              hint={`Must be the ${v.dragModel} value. Mixing the two gives wrong answers.`}
-              value={v.ballisticCoefficient}
-              onChange={handleBcChange}
-              suffix={v.dragModel}
+
+          {/* Saving is its own action, not a fourth way to get a load, but it
+              only makes sense once a load's actually put together above --
+              keeping it inside Step 1 instead of its own numbered step. */}
+          <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
+          <SyncStatusHint signedIn={signedIn} noun="saves" />
+          <button
+            onClick={onSave}
+            disabled={!trimmedName}
+            style={{ width: "100%", padding: 9, marginBottom: 16,
+                     background: trimmedName ? C.ink : C.rule, color: C.card,
+                     border: "none", cursor: trimmedName ? "pointer" : "default",
+                     font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
+          >
+            {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
+          </button>
+          {saveError && (
+            <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
+              Couldn't save: {saveError}
+            </div>
+          )}
+        </>
+      ))}
+
+      {section("sights", { n: 2, name: "The sights" }, (
+        <>
+          <UnitField
+            label="Sight height over bore"
+            hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."
+            category="length"
+            value={v.sightHeight}
+            onChange={set.sightHeight}
+          />
+          <UnitField label="Zero range" category="distance" value={v.zeroRangeYd} onChange={set.zeroRangeYd} />
+        </>
+      ))}
+
+      {section("target", { n: 3, name: "The target" }, (
+        <UnitField
+          label="Vitals radius"
+          hint="Half-width of the vital zone you're aiming to stay within — smaller for varmints, larger for elk or moose. Drives the Vitals Zero chart lines and the vitals-window figures below."
+          category="length"
+          value={v.vitalsRadiusIn}
+          onChange={set.vitalsRadiusIn}
+        />
+      ))}
+
+      {section("shot", { n: 4, name: "The shot" }, (
+        <>
+          <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
+          <Field
+            label="Shot angle"
+            hint="Angle to the target, uphill or downhill — negative for downhill. Leave at 0 for a level shot."
+            value={v.shotAngleDeg}
+            onChange={set.shotAngleDeg}
+            suffix="deg"
+          />
+          <div style={{ marginBottom: 16 }}>
+            <span style={sub}>Table every ({system === "metric" ? "m" : "yd"})</span>
+            <Segmented
+              options={STEP_PRESETS}
+              value={selectedStepLabel}
+              onChange={(presetLabel) => set.tableStepYd(stepCanonicalValue(presetLabel, system))}
             />
           </div>
-        </div>
-      ) : (
-        <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
-                      display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-          <span style={{ font: "500 12px 'IBM Plex Mono',monospace", color: C.ink }}>
-            {v.dragModel} {v.ballisticCoefficient}
-            <span style={{ marginLeft: 6, font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
-              {" "}— {v.bcSource === "published" ? `${v.manufacturer}'s published data` : `derived from ${v.manufacturer}'s data`}
-            </span>
-          </span>
+        </>
+      ))}
+
+      {section("air", { n: 5, name: "The air" }, (
+        <>
+          <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
+          <UnitField
+            label="Station pressure"
+            hint="Absolute pressure where you are standing, not sea-level corrected."
+            category="pressure"
+            value={v.pressInHg}
+            onChange={set.pressInHg}
+          />
+          <UnitField
+            label="Altitude"
+            hint="Only fills the two fields above. It is not applied on top of them."
+            category="altitude"
+            value={v.altitudeFt}
+            onChange={set.altitudeFt}
+          />
           <button
-            onClick={onBcOverride}
-            style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer",
-                     color: C.steel, textDecoration: "underline", font: "500 11px 'IBM Plex Sans',sans-serif" }}
+            onClick={fillStandard}
+            style={{ width: "100%", padding: 9, marginBottom: 16, background: C.ink, color: C.card,
+                     border: "none", cursor: "pointer",
+                     font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
           >
-            Override
+            Fill from standard atmosphere
           </button>
-        </div>
-      )}
+        </>
+      ))}
 
-      {/* Saving is its own action, not a fourth way to get a load, but it
-          only makes sense once a load's actually put together above --
-          keeping it inside Step 1 instead of its own numbered step. */}
-      <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
-      <SyncStatusHint signedIn={signedIn} noun="saves" />
-      <button
-        onClick={onSave}
-        disabled={!trimmedName}
-        style={{ width: "100%", padding: 9, marginBottom: 16,
-                 background: trimmedName ? C.ink : C.rule, color: C.card,
-                 border: "none", cursor: trimmedName ? "pointer" : "default",
-                 font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
-      >
-        {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
-      </button>
-      {saveError && (
-        <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
-          Couldn't save: {saveError}
-        </div>
-      )}
-
-      <StepHead n={2} name="The sights" />
-      <UnitField
-        label="Sight height over bore"
-        hint="Bore centerline to sight centerline. Typical scope 1.5–2.0 in; irons about 0.8 in."
-        category="length"
-        value={v.sightHeight}
-        onChange={set.sightHeight}
-      />
-      <UnitField label="Zero range" category="distance" value={v.zeroRangeYd} onChange={set.zeroRangeYd} />
-
-      <StepHead n={3} name="The target" />
-      <UnitField
-        label="Vitals radius"
-        hint="Half-width of the vital zone you're aiming to stay within — smaller for varmints, larger for elk or moose. Drives the Vitals Zero chart lines and the vitals-window figures below."
-        category="length"
-        value={v.vitalsRadiusIn}
-        onChange={set.vitalsRadiusIn}
-      />
-
-      <StepHead n={4} name="The shot" />
-      <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
-      <Field
-        label="Shot angle"
-        hint="Angle to the target, uphill or downhill — negative for downhill. Leave at 0 for a level shot."
-        value={v.shotAngleDeg}
-        onChange={set.shotAngleDeg}
-        suffix="deg"
-      />
-      <div style={{ marginBottom: 16 }}>
-        <span style={sub}>Table every ({system === "metric" ? "m" : "yd"})</span>
-        <Segmented
-          options={STEP_PRESETS}
-          value={selectedStepLabel}
-          onChange={(presetLabel) => set.tableStepYd(stepCanonicalValue(presetLabel, system))}
-        />
-      </div>
-
-      <StepHead n={5} name="The air" />
-      <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
-      <UnitField
-        label="Station pressure"
-        hint="Absolute pressure where you are standing, not sea-level corrected."
-        category="pressure"
-        value={v.pressInHg}
-        onChange={set.pressInHg}
-      />
-      <UnitField
-        label="Altitude"
-        hint="Only fills the two fields above. It is not applied on top of them."
-        category="altitude"
-        value={v.altitudeFt}
-        onChange={set.altitudeFt}
-      />
-      <button
-        onClick={fillStandard}
-        style={{ width: "100%", padding: 9, marginBottom: 16, background: C.ink, color: C.card,
-                 border: "none", cursor: "pointer",
-                 font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
-      >
-        Fill from standard atmosphere
-      </button>
-
-      <StepHead eyebrow="Optional" name="The wind" />
-      <UnitField
-        label="Wind speed"
-        hint="Leave blank for no wind."
-        category="windSpeed"
-        value={v.windSpeedMph}
-        onChange={set.windSpeedMph}
-      />
-      <Field
-        label="Wind direction"
-        hint="Clock face: 12 is straight into your face, 3 is your right cheek, 6 is at your back, 9 is your left cheek."
-        value={v.windClock}
-        onChange={set.windClock}
-        suffix="o'clock"
-      />
+      {section("wind", { eyebrow: "Optional", name: "The wind" }, (
+        <>
+          <UnitField
+            label="Wind speed"
+            hint="Leave blank for no wind."
+            category="windSpeed"
+            value={v.windSpeedMph}
+            onChange={set.windSpeedMph}
+          />
+          <Field
+            label="Wind direction"
+            hint="Clock face: 12 is straight into your face, 3 is your right cheek, 6 is at your back, 9 is your left cheek."
+            value={v.windClock}
+            onChange={set.windClock}
+            suffix="o'clock"
+          />
+        </>
+      ))}
     </div>
   );
 }

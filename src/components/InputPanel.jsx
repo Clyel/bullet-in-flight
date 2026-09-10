@@ -247,6 +247,13 @@ export default function InputPanel({
 
       <StepHead n={4} name="The shot" />
       <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
+      <Field
+        label="Shot angle"
+        hint="Angle to the target, uphill or downhill — negative for downhill. Leave at 0 for a level shot."
+        value={v.shotAngleDeg}
+        onChange={set.shotAngleDeg}
+        suffix="deg"
+      />
       <div style={{ marginBottom: 16 }}>
         <span style={sub}>Table every ({system === "metric" ? "m" : "yd"})</span>
         <Segmented

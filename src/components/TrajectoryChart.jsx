@@ -4,12 +4,14 @@ import { C, label } from "./theme.js";
 import { toDisplay } from "../units.js";
 import { useUnitFormatters } from "../useUnitFormatters.js";
 import { vitalsWindow, optimalSightIn } from "../ballistics/vitalsWindow.js";
+import { reticleGroups } from "../ballistics/reticleGroups.js";
 
 export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, baseBallisticParams }) {
   const { system, dist, len, dSuf, lSuf, vSuf } = useUnitFormatters();
   const { path, transonicYd, subsonicYd, apex, crossings } = solution;
   const [showVitals, setShowVitals] = useState(false);
   const [showOptimal, setShowOptimal] = useState(false);
+  const [showBas, setShowBas] = useState(false);
 
   const hasVitalsRadius = Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0;
 
@@ -17,6 +19,15 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
   const currentWindow = useMemo(
     () => (hasVitalsRadius ? vitalsWindow(path, vitalsRadiusIn) : null),
     [path, vitalsRadiusIn, hasVitalsRadius]
+  );
+
+  // Leupold BAS reticle groups — a forced-200yd-zero read-off of the same
+  // solver (one zero solve). Opt-in (a minority run a BAS scope, and it's
+  // linear yd/in in an otherwise-metric-aware panel), so only computed when
+  // the toggle is on. `baseBallisticParams` is memoised by the caller.
+  const bas = useMemo(
+    () => (showBas ? reticleGroups(baseBallisticParams) : null),
+    [showBas, baseBallisticParams]
   );
 
   // Not cheap (an outer search wrapping the solver) — only computed while
@@ -125,7 +136,7 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap",
                     gap: 10, paddingLeft: 6, marginBottom: 8 }}>
         <div style={{ ...label, color: C.ink }}>Flight path relative to line of sight</div>
-        <div style={{ display: "flex", gap: 14 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
             <input type="checkbox" checked={showVitals} onChange={(e) => setShowVitals(e.target.checked)} />
             <span style={{ ...label, color: C.ink }}>Vitals zero</span>
@@ -135,6 +146,10 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
             <input type="checkbox" checked={showOptimal} disabled={!hasVitalsRadius}
                    onChange={(e) => setShowOptimal(e.target.checked)} />
             <span style={{ ...label, color: C.ink }}>Optimal sight-in</span>
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <input type="checkbox" checked={showBas} onChange={(e) => setShowBas(e.target.checked)} />
+            <span style={{ ...label, color: C.ink }}>Leupold BAS</span>
           </label>
         </div>
       </div>
@@ -172,6 +187,33 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
           Vitals window at your current zero: {dist(currentWindow.spanYd).toFixed(0)} {dSuf}{" "}
           ({dist(currentWindow.entryYd).toFixed(0)}&ndash;{dist(currentWindow.exitYd).toFixed(0)} {dSuf})
           {currentWindow.exitReason === "high" && " — cut short by poking above the vitals radius, not by falling below it"}
+        </div>
+      )}
+
+      {showBas && bas && Number.isFinite(bas.dropIn) && (
+        // Deliberately yd / in even in metric: these are fixed properties of
+        // a US-made reticle system, defined by Leupold in those units (like
+        // the MOA/MIL columns, they're not unit-switched) — a metric shooter
+        // with a BAS scope still zeros at "200 yards" or the hold points
+        // won't track. The toggle makes it opt-in, so the units are expected.
+        <div style={{ padding: "0 6px 10px", font: "400 11px/1.6 'IBM Plex Mono',monospace", color: C.ink }}>
+          <div style={{ ...label, color: C.muted, marginBottom: 1 }}>Leupold BAS</div>
+          <div style={{ color: C.muted, marginBottom: 3 }}>
+            {bas.dropIn.toFixed(1)} in drop at 500 yd, 200 yd zero
+          </div>
+          {bas.reticles.map((r) => (
+            <div key={r.key} style={{ display: "flex", flexWrap: "wrap", gap: "0 8px", marginTop: 2 }}>
+              <span style={{ minWidth: 150, color: C.muted }}>{r.label}</span>
+              {r.group ? (
+                <span>
+                  {r.group} — zero {r.zeroYd} yd
+                  {r.powerSelector ? `, ${r.powerSelector.toLowerCase()}` : ""}
+                </span>
+              ) : (
+                <span style={{ color: C.muted }}>drops past this reticle&rsquo;s range</span>
+              )}
+            </div>
+          ))}
         </div>
       )}
 

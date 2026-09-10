@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { solveTrajectory, solveZeroAngle, integrate, sampleAt, heightAtRange } from "../src/ballistics/solver.js";
 import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js";
+import { reticleGroups, dropAt500With200Zero } from "../src/ballistics/reticleGroups.js";
+import { inclinedEquivalentRange } from "../src/ballistics/inclineComp.js";
 import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
@@ -162,6 +164,92 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
       (widerNearby ? "  [a nearby zero found a WIDER window]" : "")
     );
   }
+}
+
+// Leupold BAS reticle groups: not new physics — a read-off of the same
+// solveZeroAngle/heightAtRange used everywhere else, against a forced 200 yd
+// zero. So no independent fixture, but the classification logic has its own
+// ways to be wrong, so check it three ways: (1) the drop figure moves the
+// right direction as a load slows down, (2) the assigned band never jumps
+// backwards to a flatter group as drop grows, (3) a load Leupold itself
+// names in a specific group lands in that group.
+{
+  const base = {
+    ballisticCoefficient: 0.5, dragModel: "G1", sightHeight: 1.5,
+    tempF: 59, pressInHg: 29.92,
+  };
+  // Sweep muzzle velocity from fast/flat to slow/steep.
+  const mvs = [3400, 3100, 2900, 2700, 2500, 2300, 2100];
+  let prevDrop = -Infinity;
+  let prevBcIdx = -1;
+  const bcBands = ["Group C", "Group A", "Group B", null];
+  let sweepOk = true;
+  for (const mv of mvs) {
+    const { dropIn, reticles } = reticleGroups({ ...base, muzzleVelocity: mv });
+    const bc = reticles.find((r) => r.key === "booneCrockett");
+    const idx = bcBands.indexOf(bc.group);
+    if (!(dropIn > prevDrop)) sweepOk = false;       // (1) monotone drop
+    if (idx < prevBcIdx) sweepOk = false;            // (2) band never regresses
+    prevDrop = dropIn;
+    prevBcIdx = idx;
+    console.log(
+      `      BAS sweep  mv ${mv}  drop ${dropIn.toFixed(1)}in  ` +
+      `B&C ${bc.group ?? "(none)"}  zero ${bc.zeroYd ?? "-"}yd  ${bc.powerSelector ?? "-"}`
+    );
+  }
+  if (!sweepOk) failures++;
+  console.log(`${sweepOk ? "pass" : "FAIL"}  BAS classification is monotone in muzzle velocity`);
+
+  // (3) Leupold's manual lists "Hornady 6.5 Creedmoor 143gr ELD-X 2700 FPS"
+  // as a Creedmoor-reticle Standard Load and puts 6.5 CM 143 @ 2700 in
+  // Boone & Crockett Group A. Published G7 BC for the 143 ELD-X is 0.315.
+  const eldx = reticleGroups({
+    muzzleVelocity: 2700, ballisticCoefficient: 0.315, dragModel: "G7",
+    sightHeight: 1.5, tempF: 59, pressInHg: 29.92,
+  });
+  const cm = eldx.reticles.find((r) => r.key === "creedmoor");
+  const bc143 = eldx.reticles.find((r) => r.key === "booneCrockett");
+  const knownOk = cm.group === "Standard loads" && bc143.group === "Group A";
+  if (!knownOk) failures++;
+  console.log(
+    `${knownOk ? "pass" : "FAIL"}  BAS known load (6.5 CM 143 ELD-X @ 2700)  ` +
+    `drop ${eldx.dropIn.toFixed(1)}in  Creedmoor "${cm.group}"  B&C "${bc143.group}"`
+  );
+
+  // A load far outside any reticle's designed range degrades to "no group"
+  // on every reticle rather than throwing or mislabelling.
+  let stubOk = true;
+  try {
+    const stub = reticleGroups({
+      muzzleVelocity: 900, ballisticCoefficient: 0.2, dragModel: "G1",
+      sightHeight: 1.5, tempF: 59, pressInHg: 29.92,
+    });
+    stubOk = stub.reticles.every((r) => r.group === null && r.zeroYd === null);
+  } catch {
+    stubOk = false;
+  }
+  if (!stubOk) failures++;
+  console.log(`${stubOk ? "pass" : "FAIL"}  BAS out-of-range load degrades to (no group), no throw`);
+}
+
+// Rifleman's rule: a textbook closed-form identity, not a solver change.
+// Checked against hand values — cos(0) = 1, cos(60) = 1/2, and a 400 yd
+// shot at 30 degrees plays like 400 * cos(30) = 346.4 yd.
+{
+  const cases = [
+    [400, 0, 400],
+    [400, 60, 200],
+    [400, 30, 346.41],
+    [300, 45, 212.13],
+  ];
+  let rrOk = true;
+  for (const [slant, angle, want] of cases) {
+    const got = inclinedEquivalentRange(slant, angle);
+    if (Math.abs(got - want) > 0.01) rrOk = false;
+  }
+  if (!Number.isNaN(inclinedEquivalentRange(400, NaN))) rrOk = false;
+  if (!rrOk) failures++;
+  console.log(`${rrOk ? "pass" : "FAIL"}  rifleman's rule (inclined equivalent range)`);
 }
 
 // Free recoil energy: exact physics (conservation of momentum + kinetic

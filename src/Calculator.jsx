@@ -9,6 +9,7 @@ import { ImportActions, Notice } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
+import { inclinedEquivalentRange } from "./ballistics/inclineComp.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
 import { toDisplay, toCanonical, unitSuffix } from "./units.js";
@@ -35,6 +36,7 @@ const DEFAULTS = {
   windSpeedMph: "",
   windClock: "",
   vitalsRadiusIn: "3",
+  shotAngleDeg: "0",
 };
 
 const REQUIRED = [
@@ -301,6 +303,7 @@ export default function Calculator() {
             <div className="bif-results">
               <LoadIdentity v={v} />
               <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
+              <InclineNote maxRangeYd={maxRangeYd} shotAngleDeg={num(v.shotAngleDeg)} system={system} />
               <TrajectoryChart
                 solution={solution} maxRangeYd={maxRangeYd}
                 vitalsRadiusIn={num(v.vitalsRadiusIn)}
@@ -342,6 +345,31 @@ export default function Calculator() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Rifleman's rule advisory. Shows only for a real, non-zero shot angle:
+ *  an inclined shot (up or down) drops like a flat shot over the horizontal
+ *  leg of the distance, so the shooter holds for a nearer range than the
+ *  rangefinder reads. Display-only — the trajectory itself isn't re-solved,
+ *  this just points at the row of the table to use. */
+function InclineNote({ maxRangeYd, shotAngleDeg, system }) {
+  const mag = Math.abs(shotAngleDeg);
+  // Below ~5deg the horizontal-range correction is under half a MOA — not
+  // worth an amber callout. Above 90deg it isn't a real shot angle.
+  if (!Number.isFinite(shotAngleDeg) || mag < 5 || mag >= 90) return null;
+  const dir = shotAngleDeg < 0 ? "downhill" : "uphill";
+  const equivYd = inclinedEquivalentRange(maxRangeYd, mag);
+  const shownMax = Math.round(toDisplay(maxRangeYd, "distance", system));
+  const shownEquiv = Math.round(toDisplay(equivYd, "distance", system));
+  const suf = unitSuffix("distance", system);
+  return (
+    <div style={{ margin: "0 0 12px", padding: "8px 10px", background: C.inputBg,
+                  border: `1px solid ${C.brass}`, font: "400 11.5px/1.5 'IBM Plex Mono',monospace",
+                  color: C.ink }}>
+      At {mag}&deg; {dir}, your {shownMax} {suf} shot holds like a flat ~{shownEquiv} {suf} shot &mdash;
+      use that distance for your elevation hold. Windage and drift are unchanged.
     </div>
   );
 }

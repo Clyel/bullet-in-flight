@@ -38,6 +38,9 @@ against a production preview build across all five tabs. Commits, oldest first:
   are gone; Calculator's setters built once.
 - `65e2492` — **#11**. Module-level cache for the saved-loads / recoil-setups lists — a tab
   switch no longer refetches.
+- `e181e72` `a5165a3` — **#13**. Vite 5→7, `@vitejs/plugin-react` 4→5, Node 20→22, Supabase
+  patch — `npm audit` now clean. The unused `user_settings` / `catalog_selection_events`
+  schema is marked "PROVISIONED, NOT YET WIRED".
 
 **Measured:** Calculator cold-load JS **256 KB gzip → ~79 KB** (`index` 63 + `catalog` 16),
 with recharts (~105 gzip — heavier than the review's 80 estimate) and supabase (~58) now
@@ -49,11 +52,8 @@ demand-loaded behind first paint.
   Supabase DB *before* this branch ships, or every save `upsert` fails. One-liner is in
   `supabase/schema.sql`. Then smoke-test save / re-save / import while signed in — that path
   can't be tested without an account + writes to the production DB.
-- **#13** — a "tooling refresh" chore: Vite 5→7, `@vitejs/plugin-react` 4→6, the Node 20→22
-  bump already on the `UX-REVIEW.md` deferral list, Supabase patch (clears the dev-only
-  `npm audit` findings). Plus: either wire or mark-as-unused the `user_settings` /
-  `catalog_selection_events` schema surface. React 18→19 and recharts 2→3 are separate,
-  deliberate.
+- **React 18→19 and recharts 2→3** — left on ^18 / ^2 deliberately; separate, considered
+  upgrades, not part of #13.
 - **#14** — replace recharts (~105 KB gzip for two line charts; `RecoilBars` already proves
   hand-rolled SVG works here). Biggest remaining "lighter" lever, highest effort/risk. A
   call for Jake, not a task.

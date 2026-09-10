@@ -94,10 +94,10 @@ export default function Calculator() {
     const ok = await save(trimmed, v);
     if (ok) setSaveName("");
   };
-  const handleLoadSaved = (id) => {
+  const loadSavedEntry = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
-    if (!entry) return;
-    const { id: _id, name: _name, savedAt: _savedAt, ...formState } = entry;
+    if (!entry) return null;
+    const { id: _id, name, savedAt: _savedAt, ...formState } = entry;
     // Datasets saved before the identity label existed have no cartridge/
     // bullet/manufacturer keys at all -- spreading formState over blanks
     // (rather than over whatever's currently on screen) means loading one
@@ -105,6 +105,17 @@ export default function Calculator() {
     // stale name from whatever was loaded before it.
     setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", bcSource: "", ...formState }));
     setBcOverridden(false);
+    return name;
+  };
+  const handleLoadSaved = (id) => { loadSavedEntry(id); };
+  // Edit differs from Load by one thing: it carries the dataset's name into
+  // the name field. Saving overwrites by name in both backends (see
+  // savedLoads.js / savedLoadsCloud.js), so with the name pre-filled, Save
+  // updates this dataset in place instead of making a copy -- and the Save
+  // button relabels itself to "Update ..." whenever the name matches.
+  const handleEditSaved = (id) => {
+    const name = loadSavedEntry(id);
+    if (name != null) setSaveName(name);
   };
   const handleDeleteSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -158,7 +169,8 @@ export default function Calculator() {
       <InputPanel
         v={v} set={set}
         savedLoads={savedLoads} saveName={saveName} onSaveNameChange={setSaveName}
-        onSave={handleSave} onLoadSaved={handleLoadSaved} onDeleteSaved={handleDeleteSaved}
+        onSave={handleSave} onLoadSaved={handleLoadSaved} onEditSaved={handleEditSaved}
+        onDeleteSaved={handleDeleteSaved}
         onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
         bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
       />

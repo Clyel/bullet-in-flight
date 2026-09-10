@@ -18,7 +18,7 @@ const stepCanonicalValue = (presetLabel, system) =>
   system === "metric" ? String(Math.round(mToYd(parseFloat(presetLabel)) * 100) / 100) : presetLabel;
 
 export default function InputPanel({
-  v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onDeleteSaved,
+  v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
 }) {
   const { system } = useUnits();
@@ -70,6 +70,12 @@ export default function InputPanel({
   const sub = { ...label, display: "block", marginBottom: 5 };
   const selectedStepLabel = STEP_PRESETS.find((p) => stepCanonicalValue(p, system) === v.tableStepYd) ?? "";
 
+  // Both backends overwrite by name on save (savedLoads.js / savedLoadsCloud.js),
+  // so a name matching an existing dataset IS an update -- whether it got
+  // there via the Edit link or the user just typed a colliding name.
+  const trimmedName = saveName.trim();
+  const isNameUpdate = savedLoads.some((l) => l.name === trimmedName);
+
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
       {/* Numbered so the required, top-to-bottom flow reads as a sequence
@@ -108,14 +114,25 @@ export default function InputPanel({
                                         padding: "2px 1px", font: "400 11px 'IBM Plex Sans',sans-serif",
                                         color: C.muted }}>
                 <span>{l.name}</span>
-                <button
-                  onClick={() => onDeleteSaved(l.id)}
-                  aria-label={`Delete ${l.name}`}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
-                           font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
-                >
-                  &times;
-                </button>
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    onClick={() => onEditSaved(l.id)}
+                    aria-label={`Edit ${l.name}`}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
+                             color: C.steel, textDecoration: "underline",
+                             font: "500 11px 'IBM Plex Sans',sans-serif" }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDeleteSaved(l.id)}
+                    aria-label={`Delete ${l.name}`}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
+                             font: "600 12px 'IBM Plex Mono',monospace", padding: "0 4px" }}
+                  >
+                    &times;
+                  </button>
+                </span>
               </div>
             ))}
           </div>
@@ -193,13 +210,13 @@ export default function InputPanel({
       <SyncStatusHint signedIn={signedIn} noun="saves" />
       <button
         onClick={onSave}
-        disabled={!saveName.trim()}
+        disabled={!trimmedName}
         style={{ width: "100%", padding: 9, marginBottom: 16,
-                 background: saveName.trim() ? C.ink : C.rule, color: C.card,
-                 border: "none", cursor: saveName.trim() ? "pointer" : "default",
+                 background: trimmedName ? C.ink : C.rule, color: C.card,
+                 border: "none", cursor: trimmedName ? "pointer" : "default",
                  font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
       >
-        Save current load
+        {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
       </button>
       {saveError && (
         <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>

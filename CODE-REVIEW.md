@@ -15,11 +15,12 @@ and `COLUMN_DEFS` stays the single source for RangeTable + DopeChart.
 
 ---
 
-## Status as of 2026-09-09
+## Status as of 2026-09-10
 
-Worked through on branch `code-review-fixes` (kept off `main` — push-to-main auto-deploys,
-and #7 needs a live DB migration first). Each commit has `npm test` green and was verified
-against a production preview build across all five tabs. Commits, oldest first:
+**Every finding (#1–#14) is done** on branch `code-review-fixes` (kept off `main` —
+push-to-main auto-deploys, and #7 needs a live DB migration first). Each commit has
+`npm test` green and was verified against a production preview build across all five tabs.
+Commits, oldest first:
 
 - `675be6c` — **#1–#3, #7** (Tier 1). Final table row lands exactly on the requested max
   range (+ regression test); `ErrorBoundary` around the shell and each tab; `supabaseClient`
@@ -41,22 +42,24 @@ against a production preview build across all five tabs. Commits, oldest first:
 - `e181e72` `a5165a3` — **#13**. Vite 5→7, `@vitejs/plugin-react` 4→5, Node 20→22, Supabase
   patch — `npm audit` now clean. The unused `user_settings` / `catalog_selection_events`
   schema is marked "PROVISIONED, NOT YET WIRED".
+- `614cb4f` — **#14**. recharts replaced by `components/Plot.jsx` (~220 lines, zero deps) —
+  a hand-rolled SVG line plot. Both charts rewritten against it; the `React.lazy` /
+  `ChartFallback` scaffolding that only existed to defer recharts is gone. Verified light +
+  dark, imperial + metric, 375px mobile (0px overflow), mouse + touch tooltip.
 
-**Measured:** Calculator cold-load JS **256 KB gzip → ~79 KB** (`index` 63 + `catalog` 16),
-with recharts (~105 gzip — heavier than the review's 80 estimate) and supabase (~58) now
-demand-loaded behind first paint.
+**Measured:** the single **256 KB gzip** original chunk is now `index` 67 + `catalog` 16 on
+the critical path, `supabase` 59 deferred behind first paint, every other chunk <6 KB gzip.
+~160 KB gzip total, **no chart library**. `npm audit` clean, build ~1.1 s.
 
-**Not done — need a decision or an action from you:**
+**One action left for you:**
 
 - **#7 deploy step.** The `unique (user_id, name)` constraint must be applied to the live
   Supabase DB *before* this branch ships, or every save `upsert` fails. One-liner is in
   `supabase/schema.sql`. Then smoke-test save / re-save / import while signed in — that path
   can't be tested without an account + writes to the production DB.
-- **React 18→19 and recharts 2→3** — left on ^18 / ^2 deliberately; separate, considered
-  upgrades, not part of #13.
-- **#14** — replace recharts (~105 KB gzip for two line charts; `RecoilBars` already proves
-  hand-rolled SVG works here). Biggest remaining "lighter" lever, highest effort/risk. A
-  call for Jake, not a task.
+
+**Deliberately not touched:** React 18→19, and the `<canvas>` charting libs — the SVG plot
+is the endpoint, not a stepping stone.
 
 ---
 

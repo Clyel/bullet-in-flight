@@ -5,6 +5,7 @@ import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { freeRecoilVelocity, freeRecoilEnergy, estimateChargeWeight, DEFAULT_LOAD_DENSITY } from "./ballistics/recoil.js";
 import { CASE_CAPACITY } from "./data/caseCapacity.js";
 import { useRecoilSetups } from "./storage/useRecoilSetups.js";
+import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num } from "./solveFromForm.js";
 import { useUnitFormatters } from "./useUnitFormatters.js";
 
@@ -30,6 +31,11 @@ export default function Recoil() {
   const [form, setForm] = useState(FORM_DEFAULTS);
   const [chargeTouched, setChargeTouched] = useState(false);
   const { setups, addError, add, remove, importCount, runImport, dismissImport, signedIn } = useRecoilSetups();
+  // The Calculator's saved datasets, read-only here — a dataset carries a
+  // bullet weight, muzzle velocity, and (usually) a cartridge, which is
+  // exactly the ballistic half of a recoil setup. Same shared hook the
+  // Calculator/Compare/Optimal Zero use, so the list can't disagree.
+  const { savedLoads } = useSavedLoads();
 
   const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -41,6 +47,35 @@ export default function Recoil() {
       const next = { ...f, grains: String(ammo.grains), muzzleVelocity: String(ammo.muzzleVelocity), cartridge: ammo.cartridge };
       if (!chargeTouched) {
         const est = estimateChargeWeight(ammo.cartridge);
+        next.chargeGr = est != null ? est.toFixed(1) : "";
+      }
+      return next;
+    });
+  };
+
+  // Loading a saved dataset behaves exactly like picking a commercial round
+  // (see handleSelectCommercial): it fills bullet weight + MV + the cartridge
+  // that drives the charge estimate, and re-estimates the charge unless the
+  // user has already typed their own. Rifle weight and powder charge aren't
+  // in a dataset — the Calculator has no such fields — so rifle weight is
+  // left as-is. A hand-typed dataset with no cartridge clears the cartridge
+  // and (if untouched) the estimate, same as the commercial picker would.
+  // The setup name is pre-filled from the dataset (matching the Calculator's
+  // "Edit"); picking is the first step of the flow, so there's rarely a
+  // hand-typed name to lose, and re-picking should track the new dataset.
+  const handleLoadSavedDataset = (id) => {
+    const entry = savedLoads.find((l) => l.id === id);
+    if (!entry) return;
+    setForm((f) => {
+      const next = {
+        ...f,
+        grains: entry.grains ?? f.grains,
+        muzzleVelocity: entry.muzzleVelocity ?? f.muzzleVelocity,
+        cartridge: entry.cartridge ?? "",
+        name: entry.name ?? "",
+      };
+      if (!chargeTouched) {
+        const est = entry.cartridge ? estimateChargeWeight(entry.cartridge) : null;
         next.chargeGr = est != null ? est.toFixed(1) : "";
       }
       return next;
@@ -115,6 +150,24 @@ export default function Recoil() {
         <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
           Fills in bullet weight, muzzle velocity, and the powder-charge estimate.
         </div>
+
+        {savedLoads.length > 0 && (
+          <>
+            <span style={sub}>Or load a saved dataset</span>
+            <select
+              value=""
+              onChange={(e) => e.target.value && handleLoadSavedDataset(e.target.value)}
+              style={{ width: "100%", padding: "7px 8px", marginBottom: 16,
+                       border: `1.5px solid ${C.rule}`, background: C.inputBg, color: C.ink,
+                       font: "500 13px 'IBM Plex Mono',monospace" }}
+            >
+              <option value="">Choose…</option>
+              {savedLoads.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+          </>
+        )}
 
         <span style={sub}>Or enter your own</span>
         <Field label="Bullet weight" value={form.grains} onChange={set("grains")} suffix="gr" />

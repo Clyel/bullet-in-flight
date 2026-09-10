@@ -12,4 +12,21 @@ export default defineConfig({
   // removed, this needs to flip back to a command-conditional "/bullet-
   // in-flight/" for production or every asset 404s.
   base: "/",
+  build: {
+    // Peel the two cleanly-separable heavy pieces off the app bundle so an
+    // app-code deploy (the common case) doesn't re-download ~73 KB gzip of
+    // supabase + catalog that never changed. recharts/d3 and react are
+    // deliberately left in the default vendor chunk — splitting recharts
+    // out separately reorders module init in a way that trips a
+    // "cannot access X before initialization" TDZ error at load. The
+    // 855-entry catalog is repetitive data, ~16 KB gzip.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("/node_modules/@supabase/")) return "supabase";
+          if (id.includes("/src/data/commercialAmmo")) return "catalog";
+        },
+      },
+    },
+  },
 });

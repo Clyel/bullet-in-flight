@@ -15,6 +15,51 @@ and `COLUMN_DEFS` stays the single source for RangeTable + DopeChart.
 
 ---
 
+## Status as of 2026-09-09
+
+Worked through on branch `code-review-fixes` (kept off `main` — push-to-main auto-deploys,
+and #7 needs a live DB migration first). Each commit has `npm test` green and was verified
+against a production preview build across all five tabs. Commits, oldest first:
+
+- `675be6c` — **#1–#3, #7** (Tier 1). Final table row lands exactly on the requested max
+  range (+ regression test); `ErrorBoundary` around the shell and each tab; `supabaseClient`
+  degrades to local-only instead of throwing when env is absent; `saveLoadCloud` is one
+  atomic upsert on a new `unique(user_id, name)`.
+- `a8596fe` — **#4a/b/c**. `manualChunks` splits `@supabase` + the catalog; the four
+  non-Calculator tabs and both chart components (recharts) are `React.lazy`.
+- `3e563df` — **#4d**. `@supabase/supabase-js` behind an async `getSupabase()`, off the
+  initial bundle.
+- `d84ebbc` — **#5, #6**. `sampleAt` binary-searches; the chart sample grids are `useMemo`'d.
+- `267947b` — **#8**. `integrate({ visit })` + `heightAtRange` — allocation-free zeroing
+  (self-consistency test proves bit-identical). `optimalSightIn` ~130–150 ms → ~51 ms.
+- `ed8b4d2` — **#9**. Optimal Zero solve runs in a Web Worker; rows stream in.
+- `ea16354` — **#10, #12**. One `<Notice>` and one `useUnitFormatters()`; `commas` imported
+  not redefined; the `JSON.stringify(v)` / `JSON.stringify(baseBallisticParams)` memo keys
+  are gone; Calculator's setters built once.
+- `65e2492` — **#11**. Module-level cache for the saved-loads / recoil-setups lists — a tab
+  switch no longer refetches.
+
+**Measured:** Calculator cold-load JS **256 KB gzip → ~79 KB** (`index` 63 + `catalog` 16),
+with recharts (~105 gzip — heavier than the review's 80 estimate) and supabase (~58) now
+demand-loaded behind first paint.
+
+**Not done — need a decision or an action from you:**
+
+- **#7 deploy step.** The `unique (user_id, name)` constraint must be applied to the live
+  Supabase DB *before* this branch ships, or every save `upsert` fails. One-liner is in
+  `supabase/schema.sql`. Then smoke-test save / re-save / import while signed in — that path
+  can't be tested without an account + writes to the production DB.
+- **#13** — a "tooling refresh" chore: Vite 5→7, `@vitejs/plugin-react` 4→6, the Node 20→22
+  bump already on the `UX-REVIEW.md` deferral list, Supabase patch (clears the dev-only
+  `npm audit` findings). Plus: either wire or mark-as-unused the `user_settings` /
+  `catalog_selection_events` schema surface. React 18→19 and recharts 2→3 are separate,
+  deliberate.
+- **#14** — replace recharts (~105 KB gzip for two line charts; `RecoilBars` already proves
+  hand-rolled SVG works here). Biggest remaining "lighter" lever, highest effort/risk. A
+  call for Jake, not a task.
+
+---
+
 ## Ranked summary
 
 | # | Finding | Class | Effort | Risk |

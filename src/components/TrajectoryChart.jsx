@@ -4,12 +4,12 @@ import {
   ResponsiveContainer, ReferenceArea, ReferenceLine, ReferenceDot,
 } from "recharts";
 import { C, label } from "./theme.js";
-import { useUnits } from "../UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "../units.js";
+import { toDisplay } from "../units.js";
+import { useUnitFormatters } from "../useUnitFormatters.js";
 import { vitalsWindow, optimalSightIn } from "../ballistics/vitalsWindow.js";
 
 export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, baseBallisticParams }) {
-  const { system } = useUnits();
+  const { system, dist, len, dSuf, lSuf, vSuf } = useUnitFormatters();
   const { path, transonicYd, subsonicYd, apex, crossings } = solution;
   const [showVitals, setShowVitals] = useState(false);
   const [showOptimal, setShowOptimal] = useState(false);
@@ -23,10 +23,9 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
   );
 
   // Not cheap (an outer search wrapping the solver) — only computed while
-  // the toggle is actually on, and only recomputed when the ammo/sights/air
-  // or radius actually change (JSON.stringify keeps this from re-running on
-  // every unrelated re-render, matching the pattern already used for the
-  // main solve in Calculator.jsx).
+  // the toggle is on. `baseBallisticParams` is memoised by the caller
+  // (Calculator) so it's stable per input set, hence safe as an identity
+  // dep here instead of stringifying it every render.
   const optimal = useMemo(() => {
     if (!showOptimal || !hasVitalsRadius) return { result: null, error: null };
     try {
@@ -34,14 +33,7 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
     } catch (e) {
       return { result: null, error: e.message };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showOptimal, hasVitalsRadius, vitalsRadiusIn, JSON.stringify(baseBallisticParams)]);
-
-  const dist = (yd) => toDisplay(yd, "distance", system);
-  const len = (inches) => toDisplay(inches, "length", system);
-  const dSuf = unitSuffix("distance", system);
-  const lSuf = unitSuffix("length", system);
-  const vSuf = unitSuffix("velocity", system);
+  }, [showOptimal, hasVitalsRadius, vitalsRadiusIn, baseBallisticParams]);
 
   // Thin the integration path down to something a chart can draw, and find
   // the y-extent for a tight domain (not recharts' auto-padded round

@@ -78,6 +78,27 @@ export function ChartFallback({ height = 340 }) {
   );
 }
 
+/**
+ * The bordered, left-accented callout used for every "nothing to plot yet",
+ * "couldn't solve", "double-check these values" message across Calculator,
+ * Compare, Optimal Zero and Recoil. `tone` is a C.* colour (C.ox for
+ * errors, C.brass for cautions).
+ */
+export function Notice({ tone, title, children }) {
+  return (
+    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
+                  padding: 14, marginBottom: 16 }}>
+      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
+                    textTransform: "uppercase", color: tone }}>
+        {title}
+      </div>
+      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function Segmented({ options, value, onChange }) {
   return (
     <div style={{ display: "flex", border: `1.5px solid ${C.rule}` }}>

@@ -1,21 +1,11 @@
 import React from "react";
 import { C, label } from "./theme.js";
-import { useUnits } from "../UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "../units.js";
+import { useUnitFormatters } from "../useUnitFormatters.js";
 
 export default function SummaryStrip({ solution, maxRangeYd }) {
-  const { system } = useUnits();
+  const { dist, vel, len, energy, dSuf, vSuf, lSuf, eSuf } = useUnitFormatters();
   const { last, crossings, apex, subsonicYd } = solution;
   const near = crossings[0];
-
-  const dSuf = unitSuffix("distance", system);
-  const vSuf = unitSuffix("velocity", system);
-  const lSuf = unitSuffix("length", system);
-  const eSuf = unitSuffix("energy", system);
-  const dist = (yd) => toDisplay(yd, "distance", system);
-  const vel = (fps) => toDisplay(fps, "velocity", system);
-  const len = (inches) => toDisplay(inches, "length", system);
-  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
 
   const cells = [
     [`At ${Math.round(dist(maxRangeYd))} ${dSuf}`, `${Math.round(vel(last.velocity))} ${vSuf}`],

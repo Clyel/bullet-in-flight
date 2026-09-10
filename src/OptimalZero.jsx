@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { UnitField, StepHead, RigDriftBar } from "./components/ui.jsx";
+import { UnitField, StepHead, RigDriftBar, Notice } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
@@ -8,8 +8,7 @@ import { energyFtLb } from "./ballistics/solver.js";
 import { useOptimalZeroRows } from "./useOptimalZeroRows.js";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num } from "./solveFromForm.js";
-import { useUnits } from "./UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "./units.js";
+import { useUnitFormatters } from "./useUnitFormatters.js";
 
 // The rig fields (sight height, vitals radius, atmosphere) are the shared
 // "My rig" -- see storage/myRig.js, which is also where the "deliberately
@@ -44,7 +43,6 @@ const fromSaved = (load) => ({
 });
 
 export default function OptimalZero() {
-  const { system } = useUnits();
   const [storedRig, setStoredRig] = useState(getMyRig);
   const [rig, setRig] = useState(() => ({ ...storedRig }));
   // Only show the drift bar once the user deliberately edits a rig field --
@@ -97,14 +95,7 @@ export default function OptimalZero() {
   // as { entry, result } | { entry, error } | { entry, pending }.
   const rows = useOptimalZeroRows(selected, rig);
 
-  const dist = (yd) => toDisplay(yd, "distance", system);
-  const dSuf = unitSuffix("distance", system);
-  const vel = (fps) => toDisplay(fps, "velocity", system);
-  const vSuf = unitSuffix("velocity", system);
-  const len = (inches) => toDisplay(inches, "length", system);
-  const lSuf = unitSuffix("length", system);
-  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
-  const eSuf = unitSuffix("energy", system);
+  const { dist, vel, len, energy, dSuf, vSuf, lSuf, eSuf } = useUnitFormatters();
 
   const selectedSavedKeys = new Set(selected.filter((e) => e.key.startsWith("saved:")).map((e) => e.key));
 
@@ -251,17 +242,3 @@ export default function OptimalZero() {
   );
 }
 
-function Notice({ tone, title, children }) {
-  return (
-    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
-                  padding: 14, marginBottom: 16 }}>
-      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
-                    textTransform: "uppercase", color: tone }}>
-        {title}
-      </div>
-      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
-        {children}
-      </div>
-    </div>
-  );
-}

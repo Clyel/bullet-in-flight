@@ -5,8 +5,8 @@ import {
 } from "recharts";
 import { C, label } from "./theme.js";
 import { sampleAt } from "../ballistics/solver.js";
-import { useUnits } from "../UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "../units.js";
+import { toDisplay } from "../units.js";
+import { useUnitFormatters } from "../useUnitFormatters.js";
 
 // Cycled by index when comparing more loads than named theme colors.
 const PALETTE = [C.steel, C.ox, C.brass, "var(--c-series-a)", "var(--c-series-b)", "var(--c-series-c)"];
@@ -14,12 +14,8 @@ const SAMPLES = 250;
 
 /** results: [{ id, name, vitalsRadiusIn, solution }]. atYd: the "Compare at" distance (canonical yards) driving the chart's scale. */
 export default function CompareChart({ results, atYd }) {
-  const { system } = useUnits();
+  const { system, dist, len, dSuf, lSuf } = useUnitFormatters();
   const [showVitals, setShowVitals] = useState(false);
-  const dist = (yd) => toDisplay(yd, "distance", system);
-  const len = (inches) => toDisplay(inches, "length", system);
-  const dSuf = unitSuffix("distance", system);
-  const lSuf = unitSuffix("length", system);
 
   // The whole sample grid is rebuilt only when the loads, the "Compare at"
   // distance, or the unit system actually change — not on the local

@@ -10,7 +10,7 @@ const DERIVED_BC_NOTE = " (derived BC — approximated from published velocity d
 
 /**
  * Caliber -> Manufacturer -> Load: each choice narrows the next select's
- * options, so picking one of ~1,300 loads never means scanning a single huge
+ * options, so picking one of ~1,450 loads never means scanning a single huge
  * list. Auto-advances past a step when it only has one option, all the way
  * through to auto-applying the load itself if a caliber+manufacturer combo
  * has just one.

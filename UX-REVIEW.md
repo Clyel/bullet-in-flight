@@ -35,7 +35,16 @@ All local commits — not pushed / not deployed as of this writing.
 
 Known deferred, not blocking: the sticky column's empty-space-below-content (gets folded
 into a future "collapse filled sections" pass — see §3's last bullet); a signed-in cloud
-copy of "My rig" (localStorage-only for now, same as saved loads / recoil setups started).
+copy of "My rig" (localStorage-only for now, same as saved loads / recoil setups started);
+the "add a round to Compare directly" half of #9 (Compare still opens to "save something
+first" — a minor annoyance, and a bigger change than it looks).
+
+Pre-existing behaviour worth knowing, surfaced during the #9 review: form state does not
+survive a tab switch — Calculator/Optimal Zero remount from defaults (plus the stored rig)
+every time you leave and come back. #9 doesn't cause this, but "My rig" makes it more
+noticeable, and #9's read-the-rig-on-mount design is *coupled* to tabs unmounting — if form
+state is ever made to persist across tab switches, "My rig" needs reworking to a live
+subscription instead.
 
 ---
 

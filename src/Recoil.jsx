@@ -119,7 +119,7 @@ export default function Recoil() {
         <StepHead n={1} name="The round" first />
         <span style={sub}>Pick a commercial round</span>
         <CommercialLoadPicker onSelect={handleSelectCommercial} resetLoadAfterSelect />
-        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
           Fills in bullet weight, muzzle velocity, and the powder-charge estimate.
         </div>
 
@@ -140,7 +140,7 @@ export default function Recoil() {
           value={form.cartridge}
           onChange={(e) => handleCartridgeChange(e.target.value)}
           style={{ width: "100%", padding: "7px 8px", marginBottom: 5,
-                   border: `1.5px solid ${C.rule}`, background: C.card, color: C.ink,
+                   border: `1.5px solid ${C.rule}`, background: C.inputBg, color: C.ink,
                    font: "500 13px 'IBM Plex Mono',monospace" }}
         >
           <option value="">None — I'll enter my own charge weight</option>
@@ -148,7 +148,7 @@ export default function Recoil() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
-        <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
           Set automatically by the commercial-round picker above; only 82 of this app's cartridges have Nosler
           case-capacity data to estimate from — pick one here directly if your round wasn't in that list.
         </div>

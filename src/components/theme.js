@@ -11,6 +11,7 @@ export const C = {
   ink:     "var(--c-ink)",
   muted:   "var(--c-muted)",
   rule:    "var(--c-rule)",
+  inputBg: "var(--c-input-bg)",
   brass:   "var(--c-brass)",
   ox:      "var(--c-ox)",
   steel:   "var(--c-steel)",

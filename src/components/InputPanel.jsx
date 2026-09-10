@@ -85,7 +85,7 @@ export default function InputPanel({
 
       <span style={sub}>Pick a commercial round</span>
       <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
-      <div style={{ marginBottom: 16, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+      <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
         Fills in muzzle velocity, bullet weight, drag model, and BC below. Sight height, zero, and
         conditions are yours to set separately.
       </div>
@@ -100,7 +100,7 @@ export default function InputPanel({
             value=""
             onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
             style={{ width: "100%", padding: "7px 8px", marginBottom: 6,
-                     border: `1.5px solid ${C.rule}`, background: C.card, color: C.ink,
+                     border: `1.5px solid ${C.rule}`, background: C.inputBg, color: C.ink,
                      font: "500 13px 'IBM Plex Mono',monospace" }}
           >
             <option value="">Choose…</option>
@@ -146,7 +146,7 @@ export default function InputPanel({
       {showEditableBc ? (
         <div style={{ marginBottom: 14, padding: 10, border: `1.5px solid ${C.rule}` }}>
           <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={handleDragModelChange} />
-          <div style={{ margin: "5px 0 12px", font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+          <div style={{ margin: "5px 0 12px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
             {v.dragModel === "G1"
               ? "Flat-base reference. Use with a BC published as G1."
               : "Boat-tail reference. Use with a BC published as G7."}

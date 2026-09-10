@@ -240,7 +240,7 @@ function FilterableSelect({ value, onChange, options, placeholder, ariaLabel, di
         onKeyDown={handleKeyDown}
         onBlur={() => setOpen(false)}
         style={{ width: "100%", padding: "7px 24px 7px 8px",
-                 border: `1.5px solid ${C.rule}`, background: disabled ? C.rule : C.card, color: C.ink,
+                 border: `1.5px solid ${C.rule}`, background: disabled ? C.rule : C.inputBg, color: C.ink,
                  font: "500 13px 'IBM Plex Mono',monospace" }}
       />
       <span aria-hidden="true" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",

@@ -17,7 +17,7 @@ export function Field({ label: text, hint, value, onChange, suffix, type, inputM
       <span style={{ ...label, display: "block", marginBottom: 4 }}>{text}</span>
       <span className="bif-field"
             style={{ display: "flex", alignItems: "center", gap: 6,
-                     border: `1.5px solid ${C.rule}`, background: C.card, padding: "7px 8px" }}>
+                     border: `1.5px solid ${C.rule}`, background: C.inputBg, padding: "7px 8px" }}>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -92,7 +92,7 @@ export function Segmented({ options, value, onChange }) {
  */
 export function SyncStatusHint({ signedIn, noun = "saves" }) {
   const { openAuthModal } = useAuth();
-  const style = { marginTop: -10, marginBottom: 10, font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted };
+  const style = { marginTop: -6, marginBottom: 10, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted };
   if (signedIn) {
     return <div style={style}>Signed in — {noun} sync to your account.</div>;
   }

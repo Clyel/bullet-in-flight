@@ -77,7 +77,7 @@ function AuthModal({ initialMode, onClose, signUp, signIn }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: C.card, border: `1.5px solid ${C.ink}`, padding: 20, width: 320, maxWidth: "90vw" }}
+        style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 20, width: 320, maxWidth: "90vw" }}
       >
         <div style={{ marginBottom: 14 }}>
           <Segmented

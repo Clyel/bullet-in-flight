@@ -17,10 +17,12 @@ and `COLUMN_DEFS` stays the single source for RangeTable + DopeChart.
 
 ## Status as of 2026-09-10
 
-**Every finding (#1–#14) is done** on branch `code-review-fixes` (kept off `main` —
-push-to-main auto-deploys, and #7 needs a live DB migration first). Each commit has
-`npm test` green and was verified against a production preview build across all five tabs.
-Commits, oldest first:
+**Every finding (#1–#14) is done and shipped.** Landed on `main` via PRs #1–#5 and
+deployed to ballisticnerd.com. #7's `unique (user_id, name)` migration is confirmed present
+on the live Supabase DB (`pg_constraint` shows `saved_loads_user_id_name_key UNIQUE
+(user_id, name)`), and signed-in save / re-save was smoke-tested working — one row, no
+error — on 2026-09-10. Each commit had `npm test` green and was verified against a
+production preview build across all five tabs. Commits, oldest first:
 
 - `675be6c` — **#1–#3, #7** (Tier 1). Final table row lands exactly on the requested max
   range (+ regression test); `ErrorBoundary` around the shell and each tab; `supabaseClient`
@@ -51,12 +53,9 @@ Commits, oldest first:
 the critical path, `supabase` 59 deferred behind first paint, every other chunk <6 KB gzip.
 ~160 KB gzip total, **no chart library**. `npm audit` clean, build ~1.1 s.
 
-**One action left for you:**
-
-- **#7 deploy step.** The `unique (user_id, name)` constraint must be applied to the live
-  Supabase DB *before* this branch ships, or every save `upsert` fails. One-liner is in
-  `supabase/schema.sql`. Then smoke-test save / re-save / import while signed in — that path
-  can't be tested without an account + writes to the production DB.
+**#7 deploy step — done.** The `unique (user_id, name)` constraint (one-liner in
+`supabase/schema.sql`) is confirmed applied to the live Supabase DB, and signed-in
+save / re-save was smoke-tested working (2026-09-10). Nothing outstanding.
 
 **Deliberately not touched:** React 18→19, and the `<canvas>` charting libs — the SVG plot
 is the endpoint, not a stepping stone.

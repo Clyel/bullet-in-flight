@@ -1,4 +1,4 @@
-// One shared Supabase client for the whole app. Both values here are
+// One shared Supabase client for the whole app. Both env values are
 // deliberately safe to expose client-side (that's what "publishable" means
 // in Supabase's current key naming, replacing the old "anon" name) —
 // Row Level Security in supabase/schema.sql is what actually governs what
@@ -9,15 +9,15 @@
 // injected as GitHub Actions secrets at build time) without ever committing
 // them to the repo either way.
 //
-// If the env vars are absent (a fork, a local `npm run dev` with no
-// .env.local, a misconfigured CI secret), `supabase` is exported as null
-// and the app runs in local-only mode: the solver, catalog, charts, and
-// every localStorage-backed feature work unchanged; only account sign-in /
-// cloud sync is disabled. This must NOT throw at import — the calculator is
-// the product and has zero dependency on Supabase, so a bad env var can't
-// be allowed to blank the whole page. `isSupabaseConfigured` lets the auth
-// layer say so explicitly instead of guessing from a null.
-import { createClient } from "@supabase/supabase-js";
+// `@supabase/supabase-js` is ~58 KB gzip and matters only for accounts and
+// cloud sync — the solver, catalog, charts and every localStorage feature
+// need none of it. So it's a DYNAMIC import behind getSupabase(), kept off
+// the initial bundle; AuthContext calls it from a mount effect, after first
+// paint. If the env vars are absent (a fork, `npm run dev` with no
+// .env.local, a bad CI secret) getSupabase() resolves to null and the app
+// runs local-only — this must never throw at import, the calculator is the
+// product. isSupabaseConfigured lets the auth layer say so up front without
+// awaiting anything.
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -32,4 +32,19 @@ if (!isSupabaseConfigured) {
   );
 }
 
-export const supabase = isSupabaseConfigured ? createClient(supabaseUrl, supabaseKey) : null;
+let clientPromise = null;
+
+/**
+ * The shared client, created once on first call, or null if the env isn't
+ * configured. Always await it — the underlying library load is dynamic.
+ * @returns {Promise<import("@supabase/supabase-js").SupabaseClient | null>}
+ */
+export function getSupabase() {
+  if (!isSupabaseConfigured) return Promise.resolve(null);
+  if (!clientPromise) {
+    clientPromise = import("@supabase/supabase-js").then(({ createClient }) =>
+      createClient(supabaseUrl, supabaseKey)
+    );
+  }
+  return clientPromise;
+}

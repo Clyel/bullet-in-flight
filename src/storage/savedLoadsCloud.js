@@ -3,7 +3,7 @@
 // without either caller-facing API needing to change. Never imported
 // directly by page components; always go through useSavedLoads.js, which
 // decides which of the two backends applies.
-import { supabase } from "../supabaseClient.js";
+import { getSupabase } from "../supabaseClient.js";
 
 // Every local form field is a STRING (this app's own convention -- see
 // Calculator.jsx's DEFAULTS), but the DB columns are `numeric`. Postgres
@@ -58,6 +58,7 @@ function fromRow(row) {
 
 /** All saved loads for the signed-in user, alphabetical by name. */
 export async function listSavedLoadsCloud() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase.from("saved_loads").select("*").order("name");
   if (error) return { data: [], error };
   return { data: data.map(fromRow), error: null };
@@ -76,6 +77,7 @@ export async function listSavedLoadsCloud() {
  * enforces the schema, so a bad save here is a real, visible failure.
  */
 export async function saveLoadCloud(name, formState) {
+  const supabase = await getSupabase();
   const { error } = await supabase
     .from("saved_loads")
     .upsert(toRow(name, formState), { onConflict: "user_id,name" });
@@ -83,6 +85,7 @@ export async function saveLoadCloud(name, formState) {
 }
 
 export async function deleteLoadCloud(id) {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("saved_loads").delete().eq("id", id);
   return { error };
 }
@@ -98,6 +101,7 @@ export async function deleteLoadCloud(id) {
  * duplicate row; now it can't.
  */
 export async function importLocalLoadsToCloud(localLoads) {
+  const supabase = await getSupabase();
   const rows = localLoads.map((l) => {
     const { id: _id, name, savedAt: _savedAt, ...formState } = l;
     return toRow(name, formState);

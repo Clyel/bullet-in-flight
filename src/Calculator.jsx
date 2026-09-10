@@ -10,7 +10,7 @@ import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
-import { toDisplay, toCanonical } from "./units.js";
+import { toDisplay, toCanonical, unitSuffix } from "./units.js";
 
 // 30-06 Springfield, Remington Premier Long Range 172gr (Speer Impact).
 // MV/BC published directly by Remington: remington.com/rifle/premier-long-range/29-R21344.html
@@ -44,6 +44,21 @@ const REQUIRED = [
   ["zeroRangeYd", "zero range"],
   ["maxRangeYd", "distance"],
   ["pressInHg", "station pressure"],
+];
+
+// Soft sanity ranges, in canonical (imperial) units -- a value outside
+// these still computes, it just gets a non-blocking caution above the
+// results, because the usual cause is a fat-fingered extra zero or a value
+// typed into the wrong field, not a real load. Bounds are deliberately
+// wide (a .17 varmint round and a .50 BMG both have to fit): this catches
+// "50,000 fps", not "unusual but real". `cat` is the units.js category for
+// echoing the value back in the user's chosen units; BC has none.
+const SANITY = [
+  { k: "muzzleVelocity", cat: "velocity", low: 300, high: 5200, name: "Muzzle velocity" },
+  { k: "ballisticCoefficient", low: 0.04, high: 1.6, name: "Ballistic coefficient" },
+  { k: "grains", low: 5, high: 1200, name: "Bullet weight" },
+  { k: "zeroRangeYd", cat: "distance", low: 5, high: 1500, name: "Zero range" },
+  { k: "sightHeight", cat: "length", low: 0.2, high: 6, name: "Sight height" },
 ];
 
 // Editing any of these by hand invalidates whatever catalog round was
@@ -173,9 +188,18 @@ export default function Calculator() {
 
   const missing = REQUIRED.filter(([k]) => {
     const n = num(v[k]);
-    return k === "sightHeight" ? !(n >= 0) : !(n > 0);
+    if (!Number.isFinite(n)) return true; // also rules out Infinity, which > 0 would let through
+    return k === "sightHeight" ? n < 0 : n <= 0;
   }).map(([, name]) => name);
   if (!Number.isFinite(num(v.tempF))) missing.push("temperature");
+
+  // Non-blocking: these still feed the solve, they just get flagged.
+  const cautions = SANITY.flatMap(({ k, cat, low, high, name }) => {
+    const n = num(v[k]);
+    if (!Number.isFinite(n) || n <= 0 || (n >= low && n <= high)) return [];
+    const shown = cat ? `${Math.round(toDisplay(n, cat, system))} ${unitSuffix(cat, system)}` : String(n);
+    return [`${name} (${shown}) looks ${n < low ? "low" : "high"}`];
+  });
 
   const zeroPastMax = num(v.zeroRangeYd) > num(v.maxRangeYd);
   const windActive = isWindActive(v);
@@ -220,6 +244,11 @@ export default function Calculator() {
         {zeroPastMax && solution && (
           <Notice tone={C.brass} title="Zero is past the charted distance">
             The chart has been extended to {Math.round(maxRangeYd)} yd so the zero is visible.
+          </Notice>
+        )}
+        {cautions.length > 0 && solution && (
+          <Notice tone={C.brass} title="Double-check these values">
+            {cautions.join("; ")}. The trajectory below still uses them as entered.
           </Notice>
         )}
 

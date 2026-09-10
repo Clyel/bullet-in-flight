@@ -4,7 +4,10 @@ export const C = {
   card:    "#E9E7DC",
   cardAlt: "#DEDBCD",
   ink:     "#1A1C18",
-  muted:   "#5E6357",
+  // Darkened from #5E6357 (~3.15:1 on the sage page bg -- fails WCAG AA
+  // for the small sizes it's used at). #40453B lands ~5.3:1 and still
+  // sits well below ink, so the muted/primary hierarchy holds.
+  muted:   "#40453B",
   rule:    "#A8AC9C",
   brass:   "#8A6A17",
   ox:      "#8C3B2E",

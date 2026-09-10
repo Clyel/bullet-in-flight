@@ -1,7 +1,10 @@
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
-body { background: #B7BBAD; }
+/* Without an explicit family the body falls back to the UA serif (Times
+   on most browsers) -- every text container overrides it, but a base
+   here is the safety net the review asked for. */
+body { background: #B7BBAD; color: #1A1C18; font: 400 14px/1.5 'IBM Plex Sans', system-ui, sans-serif; }
 
 table { border-collapse: collapse; width: 100%; }
 

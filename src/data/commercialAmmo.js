@@ -3,12 +3,14 @@
 // Selecting an entry in the UI fills only muzzleVelocity/ballisticCoefficient/
 // dragModel/grains, leaving everything else on the form untouched.
 //
-// dragModel is "G1" for almost every entry in this file — none of these
-// manufacturers publish G7 in their BULK product-listing pages (what most
-// of this catalog was built from), and G1 is what's actually available at
-// catalog scale. Real, documented exception: 46 Hornady ELD Match/ELD-X
-// entries use "G7" — see the "published" bcSource case below. Everything
-// else stays a real accuracy gap for modern boat-tail bullets (where G7
+// dragModel is "G1" for almost every entry in this file — most of these
+// manufacturers only publish G1 in the BULK product listings this catalog
+// was built from, and G1 is what's available at catalog scale. Documented
+// exceptions that carry "G7" and the G7 BC: the 46 Hornady ELD Match/ELD-X
+// entries (Hornady's own G7 from hornady.com/bc), and every Berger entry
+// (Berger publishes a radar-measured G7 for all its bullets — see the
+// Berger section below). Everything else on G1 stays a real accuracy gap
+// for modern boat-tail bullets (where G7
 // tracks drag more faithfully), documented here rather than hidden.
 //
 // bcSource on every entry records where its BC actually came from:
@@ -85,6 +87,15 @@
 // chart is laid out as separate per-column text frames so `pdftotext`
 // mangles it — extracted with PyMuPDF's table detection instead (see
 // scripts/barnes_raw.py + scripts/buildBarnes.mjs). No drops.
+//
+// ---- Berger ----
+// Source: the WooCommerce Store API behind bergerbullets.com
+// (/wp-json/wc/store/products, category "Rifle Ammunition"), pulled
+// 2026-09-10 — see scripts/berger_raw.mjs + scripts/buildBerger.mjs. Berger
+// publishes a Doppler-radar-measured G7 BC (averaged 3000->1500 fps) for
+// every load, so these 34 entries are the catalog's cleanest G7 data:
+// dragModel "G7", the G7 value, bcSource "published". 4 Classic Hunter
+// loads Berger states no muzzle velocity for were dropped.
 
 export const COMMERCIAL_AMMO = [
   // 17 Remington Fireball
@@ -1390,4 +1401,40 @@ export const COMMERCIAL_AMMO = [
   { id: "22031", cartridge: "470 Nitro Express", bullet: "VOR-TX Safari — BANDED SOLID", grains: 500, muzzleVelocity: 2150, ballisticCoefficient: 0.243, dragModel: "G1", manufacturer: "Barnes", bcSource: "published" },
   { id: "22032", cartridge: "500 Nitro Express 3in", bullet: "VOR-TX Safari — TSX FB", grains: 570, muzzleVelocity: 2100, ballisticCoefficient: 0.369, dragModel: "G1", manufacturer: "Barnes", bcSource: "published" },
   { id: "22033", cartridge: "500 Nitro Express 3in", bullet: "VOR-TX Safari — BANDED SOLID", grains: 570, muzzleVelocity: 2100, ballisticCoefficient: 0.243, dragModel: "G1", manufacturer: "Barnes", bcSource: "published" },
+
+  // ---- Berger (see header — dragModel G7) ----
+  { id: "berger-55040", cartridge: "300 PRC", bullet: "Elite Hunter", grains: 217, muzzleVelocity: 2800, ballisticCoefficient: 0.347, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-52820", cartridge: "7mm PRC", bullet: "Elite Hunter", grains: 195, muzzleVelocity: 2800, ballisticCoefficient: 0.387, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-52810", cartridge: "7mm PRC", bullet: "Elite Hunter", grains: 175, muzzleVelocity: 2920, ballisticCoefficient: 0.336, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-23040", cartridge: "223 Rem", bullet: "OTM Tactical", grains: 69, muzzleVelocity: 2980, ballisticCoefficient: 0.167, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-62030", cartridge: "300 Norma Mag", bullet: "Long Range Hybrid Target", grains: 245, muzzleVelocity: 2770, ballisticCoefficient: 0.433, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-50030", cartridge: "6.5 PRC", bullet: "Hybrid Target", grains: 153.5, muzzleVelocity: 2900, ballisticCoefficient: 0.356, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-55030", cartridge: "300 PRC", bullet: "Hybrid Target", grains: 215, muzzleVelocity: 2940, ballisticCoefficient: 0.354, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-55020", cartridge: "300 PRC", bullet: "Elite Hunter", grains: 245, muzzleVelocity: 2720, ballisticCoefficient: 0.413, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-20040", cartridge: "6mm Creedmoor", bullet: "Elite Hunter", grains: 108, muzzleVelocity: 2931, ballisticCoefficient: 0.287, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-50020", cartridge: "6.5 PRC", bullet: "Elite Hunter", grains: 140, muzzleVelocity: 3000, ballisticCoefficient: 0.31, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31040", cartridge: "6.5 Creedmoor", bullet: "Elite Hunter", grains: 140, muzzleVelocity: 2750, ballisticCoefficient: 0.31, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-50010", cartridge: "6.5 PRC", bullet: "Elite Hunter", grains: 156, muzzleVelocity: 2900, ballisticCoefficient: 0.347, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-23030", cartridge: "223 Rem", bullet: "OTM Tactical", grains: 77, muzzleVelocity: 2750, ballisticCoefficient: 0.192, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-23020", cartridge: "223 Rem", bullet: "Boat Tail Target", grains: 73, muzzleVelocity: 2820, ballisticCoefficient: 0.178, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31091", cartridge: "6.5 Creedmoor", bullet: "Long Range Hybrid Target", grains: 153.5, muzzleVelocity: 2700, ballisticCoefficient: 0.356, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31081", cartridge: "6.5 Creedmoor", bullet: "Long Range Hybrid Target", grains: 144, muzzleVelocity: 2830, ballisticCoefficient: 0.336, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-20030", cartridge: "6mm Creedmoor", bullet: "Long Range Hybrid Target", grains: 109, muzzleVelocity: 2950, ballisticCoefficient: 0.292, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31070", cartridge: "6.5 Creedmoor", bullet: "Elite Hunter", grains: 156, muzzleVelocity: 2680, ballisticCoefficient: 0.347, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-81110", cartridge: "338 Lapua Mag", bullet: "Hybrid OTM Tactical", grains: 300, muzzleVelocity: 2725, ballisticCoefficient: 0.421, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-81050", cartridge: "338 Lapua Mag", bullet: "Elite Hunter", grains: 300, muzzleVelocity: 2725, ballisticCoefficient: 0.417, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-62010", cartridge: "300 Norma Mag", bullet: "Hybrid OTM Tactical", grains: 230, muzzleVelocity: 2934, ballisticCoefficient: 0.368, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-62020", cartridge: "300 Norma Mag", bullet: "Hybrid Target", grains: 215, muzzleVelocity: 3017, ballisticCoefficient: 0.354, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-70020", cartridge: "300 Win Mag", bullet: "Classic Hunter", grains: 185, muzzleVelocity: 3079, ballisticCoefficient: 0.273, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-70010", cartridge: "300 Win Mag", bullet: "Classic Hunter", grains: 168, muzzleVelocity: 3150, ballisticCoefficient: 0.251, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-60050", cartridge: "308 Win", bullet: "Juggernaut OTM Tactical", grains: 185, muzzleVelocity: 2608, ballisticCoefficient: 0.283, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-60070", cartridge: "308 Win", bullet: "Classic Hunter", grains: 185, muzzleVelocity: 2532, ballisticCoefficient: 0.273, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-60010", cartridge: "308 Win", bullet: "OTM Tactical", grains: 175, muzzleVelocity: 2668, ballisticCoefficient: 0.263, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-60040", cartridge: "308 Win", bullet: "Classic Hunter", grains: 168, muzzleVelocity: 2675, ballisticCoefficient: 0.251, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31011", cartridge: "6.5 Creedmoor", bullet: "Hybrid Target", grains: 140, muzzleVelocity: 2750, ballisticCoefficient: 0.311, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31031", cartridge: "6.5 Creedmoor", bullet: "Classic Hunter", grains: 135, muzzleVelocity: 2850, ballisticCoefficient: 0.303, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-31021", cartridge: "6.5 Creedmoor", bullet: "Hybrid OTM Tactical", grains: 130, muzzleVelocity: 2850, ballisticCoefficient: 0.287, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-30020", cartridge: "260 Rem", bullet: "Hybrid OTM Tactical", grains: 130, muzzleVelocity: 2847, ballisticCoefficient: 0.287, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-20010", cartridge: "6mm Creedmoor", bullet: "Classic Hunter", grains: 95, muzzleVelocity: 3140, ballisticCoefficient: 0.223, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
+  { id: "berger-20020", cartridge: "6mm Creedmoor", bullet: "Hybrid Target", grains: 105, muzzleVelocity: 2959, ballisticCoefficient: 0.275, dragModel: "G7", manufacturer: "Berger", bcSource: "published" },
 ];

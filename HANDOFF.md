@@ -57,6 +57,13 @@ boundary — see `CODE-REVIEW.md`).
 - Before publishing/deploying (a `git push` to `main` goes live automatically), run
   `npm test` and verify the change live in the browser — this user has caught real
   bugs that only showed up running the app, not reading the code.
+- **Large changes get an explicit checkpoint with me before they merge to `main`.**
+  A merge to `main` *is* a deploy. CI being green and another agent session having
+  reviewed it are not enough on their own. If a change swaps or removes a runtime
+  dependency, bumps the build toolchain, changes how the app loads (bundle splitting,
+  workers, lazy-loading, routing), touches auth/DB/storage, or spans several files
+  across unrelated areas, stop and get my sign-off before merging — don't let it
+  reach production on agent review alone. Small, self-contained fixes don't need this.
 
 ## What remains
 

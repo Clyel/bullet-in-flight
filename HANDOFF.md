@@ -22,8 +22,8 @@ zeroing), wind deflection (3D relative-velocity), Imperial/Metric unit switching
 MOA/MIL correction columns, Saved Datasets (localStorage per device, plus Supabase
 cloud sync when signed in), Compare tab.
 
-Built since: a ~1,440-entry commercial ammo catalog across eight manufacturers
-(Remington, Winchester, Nosler, Barnes, Federal, Hornady, Weatherby, Berger; BC back-calculated from the
+Built since: a ~1,490-entry commercial ammo catalog across nine manufacturers
+(Remington, Winchester, Nosler, Barnes, Federal, Hornady, Weatherby, Berger, Browning; BC back-calculated from the
 manufacturer's own published data where they don't state one — see
 `scripts/deriveBC.mjs`), a cascading Caliber -> Manufacturer -> Load picker,
 per-load vitals-zone radius + a "vitals window" readout and an "Optimal Zero" solve

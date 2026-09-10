@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { C } from "./theme.js";
 
 // A small dependency-free SVG line plot — enough to replace what
@@ -53,11 +53,20 @@ function linePath(points, sx, sy) {
  * @param height    px
  * @param legend    boolean — render series name+swatch above the plot
  * @param tooltipRows (hoveredXValue) => Array<{ label, value, color? }>  tooltip body
+ * @param xValues   optional ascending list of x-values (display units) the hover
+ *                  crosshair snaps to. Defaults to the union of every series'
+ *                  x-values — pass it when the series don't share one grid (e.g.
+ *                  Compare, where a shorter-range load's line stops early).
+ * @param ariaLabel optional one-line text alternative. Sets role="img" +
+ *                  aria-label; the range / compare tables remain the full
+ *                  text alternative to the chart.
  */
 export default function Plot({
   series, xDomain, yDomain, xLabel, yLabel, xFormat = String, yFormat = String,
   refLines = [], refAreas = [], refDots = [], height = 320, legend = false, tooltipRows,
+  xValues, ariaLabel,
 }) {
+  const clipId = useId();
   const wrapRef = useRef(null);
   const [w, setW] = useState(0);
   const [hoverX, setHoverX] = useState(null); // pixel x within the plot area, or null
@@ -83,19 +92,27 @@ export default function Plot({
   const xTicks = useMemo(() => niceTicks(x0, x1, 6), [x0, x1]);
   const yTicks = useMemo(() => niceTicks(y0, y1, 5), [y0, y1]);
 
-  // Hover: snap to the nearest x among the first series' points.
+  // Hover: snap to the nearest x among `xValues` if given, else the union of
+  // every series' x-values — not just series[0], which on the Compare chart
+  // could be a shorter-range load and would strand the crosshair at its last
+  // point once the pointer moved past it.
   const hover = useMemo(() => {
     if (hoverX == null || !series.length) return null;
     const xVal = x0 + ((hoverX - m.left) / (iw || 1)) * (x1 - x0);
     let best = null;
     let bestErr = Infinity;
-    for (const p of series[0].points) {
-      if (p == null) continue;
-      const err = Math.abs(p.x - xVal);
-      if (err < bestErr) { bestErr = err; best = p.x; }
+    const consider = (x) => {
+      if (x == null || !Number.isFinite(x)) return;
+      const err = Math.abs(x - xVal);
+      if (err < bestErr) { bestErr = err; best = x; }
+    };
+    if (xValues) {
+      for (const x of xValues) consider(x);
+    } else {
+      for (const s of series) for (const p of s.points) if (p != null) consider(p.x);
     }
     return best == null ? null : { xValue: best, px: sx(best) };
-  }, [hoverX, series, x0, x1, iw, m.left]);
+  }, [hoverX, series, xValues, x0, x1, iw, m.left]);
 
   const setHoverFromClientX = (target, clientX) => {
     const px = clientX - target.getBoundingClientRect().left;
@@ -127,12 +144,25 @@ export default function Plot({
       {w > 0 && (
         <svg width={w} height={height} onMouseMove={onMove} onMouseLeave={() => setHoverX(null)}
              onTouchStart={onTouch} onTouchMove={onTouch}
+             {...(ariaLabel ? { role: "img", "aria-label": ariaLabel } : {})}
              style={{ display: "block", overflow: "visible" }}>
+          {/* Clip everything data-driven to the plot rect. The domains are
+              computed from the data today so nothing spills, but a refArea or
+              refLine whose value fell outside the domain would otherwise draw
+              across the margins and axis labels. */}
+          <defs>
+            <clipPath id={clipId}>
+              <rect x={m.left} y={m.top} width={iw} height={ih} />
+            </clipPath>
+          </defs>
+
+          <g clipPath={`url(#${clipId})`}>
           {/* shaded bands */}
           {refAreas.map((a, i) => (
             <rect key={`a${i}`} x={sx(Math.min(a.x1, a.x2))} y={m.top}
                   width={Math.abs(sx(a.x2) - sx(a.x1))} height={ih} fill={a.color} fillOpacity={0.16} />
           ))}
+          </g>
 
           {/* grid */}
           {xTicks.map((t) => (
@@ -144,6 +174,7 @@ export default function Plot({
                   stroke={C.rule} strokeDasharray="2 4" />
           ))}
 
+          <g clipPath={`url(#${clipId})`}>
           {/* reference lines */}
           {refLines.map((r, i) => {
             const isX = r.axis === "x";
@@ -171,8 +202,10 @@ export default function Plot({
             <path key={s.key} d={linePath(s.points, sx, sy)} fill="none"
                   stroke={s.color} strokeWidth={2.2} strokeLinejoin="round" />
           ))}
+          </g>
 
-          {/* marker dots */}
+          {/* marker dots — always in-domain by construction, drawn unclipped so
+              a dot sitting on the axis isn't sliced by the clip rect edge */}
           {refDots.map((d, i) => (
             <circle key={`d${i}`} cx={sx(d.x)} cy={sy(d.y)} r={d.r ?? 3.5}
                     fill={d.fill} stroke={d.stroke} strokeWidth={d.strokeWidth ?? 1.4} />

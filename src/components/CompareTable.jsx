@@ -1,22 +1,12 @@
 import React from "react";
 import { C, numeric } from "./theme.js";
 import { sampleAt, energyFtLb } from "../ballistics/solver.js";
-import { useUnits } from "../UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "../units.js";
-
-const commas = (n, digits) => n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+import { useUnitFormatters } from "../useUnitFormatters.js";
+import { commas } from "./RangeTable.jsx";
 
 /** results: [{ id, name, grains, solution }]. atYd: the single distance to compare at (canonical yards). */
 export default function CompareTable({ results, atYd }) {
-  const { system } = useUnits();
-  const dist = (yd) => toDisplay(yd, "distance", system);
-  const vel = (fps) => toDisplay(fps, "velocity", system);
-  const len = (inches) => toDisplay(inches, "length", system);
-  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
-  const dSuf = unitSuffix("distance", system);
-  const vSuf = unitSuffix("velocity", system);
-  const lSuf = unitSuffix("length", system);
-  const eSuf = unitSuffix("energy", system);
+  const { dist, vel, len, energy, dSuf, vSuf, lSuf, eSuf } = useUnitFormatters();
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto" }}>

@@ -2,7 +2,7 @@
 // same list/add/delete shape (insert-only, no overwrite-by-name), so
 // useRecoilSetups.js can swap between the two without either caller-facing
 // API needing to change. Mirrors savedLoadsCloud.js's own structure.
-import { supabase } from "../supabaseClient.js";
+import { getSupabase } from "../supabaseClient.js";
 
 const NUMERIC_FIELDS = ["rifleWeightLb", "grains", "muzzleVelocity", "chargeGr"];
 const DB_COLUMN = {
@@ -35,23 +35,27 @@ function fromRow(row) {
 
 /** All recoil setups for the signed-in user, in the order they were added. */
 export async function listRecoilSetupsCloud() {
+  const supabase = await getSupabase();
   const { data, error } = await supabase.from("recoil_setups").select("*").order("created_at");
   if (error) return { data: [], error };
   return { data: data.map(fromRow), error: null };
 }
 
 export async function addRecoilSetupCloud(setup) {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("recoil_setups").insert(toRow(setup));
   return { error };
 }
 
 export async function deleteRecoilSetupCloud(id) {
+  const supabase = await getSupabase();
   const { error } = await supabase.from("recoil_setups").delete().eq("id", id);
   return { error };
 }
 
 /** One-time bulk import of a device's local setups into the signed-in account. */
 export async function importLocalRecoilSetupsToCloud(localSetups) {
+  const supabase = await getSupabase();
   const rows = localSetups.map(toRow);
   if (rows.length === 0) return { error: null };
   const { error } = await supabase.from("recoil_setups").insert(rows);

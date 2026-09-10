@@ -5,7 +5,7 @@ import SummaryStrip from "./components/SummaryStrip.jsx";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
-import { ImportActions } from "./components/ui.jsx";
+import { ImportActions, Notice } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
@@ -82,16 +82,21 @@ export default function Calculator() {
   // loaded (that dataset carries its own conditions, and both "Save as my
   // rig" and "Reset to my rig" would be wrong for it).
   const [rigTouched, setRigTouched] = useState(false);
-  const set = Object.fromEntries(
-    Object.keys(DEFAULTS).map((k) => [k, (val) => setState((s) => ({ ...s, [k]: val }))])
-  );
-  for (const k of IDENTITY_FIELDS) {
-    set[k] = (val) => setState((s) => ({ ...s, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
-  }
-  for (const k of RIG_FIELDS) {
-    const base = set[k];
-    set[k] = (val) => { setRigTouched(true); base(val); };
-  }
+  // One stable set of per-field setters (all the state setters they close
+  // over are stable) — was rebuilding ~20 closures on every render.
+  const set = useMemo(() => {
+    const s = Object.fromEntries(
+      Object.keys(DEFAULTS).map((k) => [k, (val) => setState((prev) => ({ ...prev, [k]: val }))])
+    );
+    for (const k of IDENTITY_FIELDS) {
+      s[k] = (val) => setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
+    }
+    for (const k of RIG_FIELDS) {
+      const base = s[k];
+      s[k] = (val) => { setRigTouched(true); base(val); };
+    }
+    return s;
+  }, []);
 
   const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
   const { system } = useUnits();
@@ -234,6 +239,9 @@ export default function Calculator() {
   const zeroPastMax = num(v.zeroRangeYd) > num(v.maxRangeYd);
   const windActive = isWindActive(v);
 
+  // `v`'s identity only changes when a field actually changes (every setter
+  // spreads a new object), so it's a sound dep on its own — no need to
+  // JSON.stringify it on every render to get a stable key.
   const { solution, error } = useMemo(() => {
     if (missing.length) return { solution: null, error: null };
     try {
@@ -241,7 +249,12 @@ export default function Calculator() {
     } catch (e) {
       return { solution: null, error: e.message };
     }
-  }, [JSON.stringify(v)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v]);
+
+  // Stable per-`v` so TrajectoryChart's optimal-sight-in memo can depend on
+  // it by identity instead of stringifying it.
+  const baseParams = useMemo(() => baseBallisticParams(v), [v]);
 
   const maxRangeYd = Math.max(num(v.maxRangeYd), num(v.zeroRangeYd));
 
@@ -291,7 +304,7 @@ export default function Calculator() {
               <TrajectoryChart
                 solution={solution} maxRangeYd={maxRangeYd}
                 vitalsRadiusIn={num(v.vitalsRadiusIn)}
-                baseBallisticParams={baseBallisticParams(v)}
+                baseBallisticParams={baseParams}
               />
             </div>
 
@@ -354,17 +367,3 @@ function LoadIdentity({ v }) {
   );
 }
 
-function Notice({ tone, title, children }) {
-  return (
-    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
-                  padding: 14, marginBottom: 16 }}>
-      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
-                    textTransform: "uppercase", color: tone }}>
-        {title}
-      </div>
-      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
-        {children}
-      </div>
-    </div>
-  );
-}

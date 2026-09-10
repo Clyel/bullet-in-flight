@@ -1,13 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { Field, UnitField, SyncStatusHint, ImportActions, StepHead } from "./components/ui.jsx";
+import { Field, UnitField, SyncStatusHint, ImportActions, StepHead, Notice } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { freeRecoilVelocity, freeRecoilEnergy, estimateChargeWeight, DEFAULT_LOAD_DENSITY } from "./ballistics/recoil.js";
 import { CASE_CAPACITY } from "./data/caseCapacity.js";
 import { useRecoilSetups } from "./storage/useRecoilSetups.js";
 import { num } from "./solveFromForm.js";
-import { useUnits } from "./UnitsContext.jsx";
-import { toDisplay, unitSuffix } from "./units.js";
+import { useUnitFormatters } from "./useUnitFormatters.js";
 
 // Setups are compared, not just calculated one at a time — "rifle + optics
 // weight" IS the variable this whole tab exists to isolate (a 6.5lb
@@ -28,7 +27,6 @@ const FORM_DEFAULTS = {
 const CARTRIDGES_WITH_CAPACITY = Object.keys(CASE_CAPACITY).sort((a, b) => a.localeCompare(b));
 
 export default function Recoil() {
-  const { system } = useUnits();
   const [form, setForm] = useState(FORM_DEFAULTS);
   const [chargeTouched, setChargeTouched] = useState(false);
   const { setups, addError, add, remove, importCount, runImport, dismissImport, signedIn } = useRecoilSetups();
@@ -101,12 +99,7 @@ export default function Recoil() {
     };
   }), [setups]);
 
-  const wSuf = unitSuffix("weight", system);
-  const weight = (lb) => toDisplay(lb, "weight", system);
-  const vSuf = unitSuffix("velocity", system);
-  const vel = (fps) => toDisplay(fps, "velocity", system);
-  const eSuf = unitSuffix("energy", system);
-  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
+  const { weight, vel, energy, wSuf, vSuf, eSuf } = useUnitFormatters();
 
   const sub = { ...label, display: "block", marginBottom: 5 };
 
@@ -267,12 +260,10 @@ export default function Recoil() {
 // A simple horizontal bar per setup keeps the energy comparison readable at
 // a glance once there are more than two or three rows — the table above has
 // the exact numbers, this is just for the "which of these kicks harder"
-// read. Plain SVG, no charting library: the app already reserves recharts
-// for the trajectory line charts, and a handful of static bars don't need it.
+// read. Plain inline SVG, like every chart in the app now (see
+// components/Plot.jsx) — a handful of static bars don't even need that.
 function RecoilBars({ results }) {
-  const { system } = useUnits();
-  const eSuf = unitSuffix("energy", system);
-  const energy = (ftLb) => toDisplay(ftLb, "energy", system);
+  const { energy, eSuf } = useUnitFormatters();
   // Bar width is a ratio (r.energy / max) -- unit-invariant, since both
   // sides scale by the same factor, so this stays in raw canonical ft-lb
   // regardless of display unit. Only the printed number needs conversion.
@@ -297,17 +288,3 @@ function RecoilBars({ results }) {
   );
 }
 
-function Notice({ tone, title, children }) {
-  return (
-    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
-                  padding: 14, marginBottom: 16 }}>
-      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
-                    textTransform: "uppercase", color: tone }}>
-        {title}
-      </div>
-      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
-        {children}
-      </div>
-    </div>
-  );
-}

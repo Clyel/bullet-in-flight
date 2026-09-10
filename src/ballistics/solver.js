@@ -59,9 +59,16 @@ export function dragCoefficient(table, mach) {
  * applied to the bullet's ground velocity. With no wind, relative velocity
  * equals ground velocity and this is identical to the pre-wind physics.
  *
+ * @param visit  optional per-step hook `(xYd, yIn, zIn, v, t, mach) => boolean`.
+ *               When given, the returned `path` array is left empty and the
+ *               hook is called instead for each sample point; returning true
+ *               stops the integration early. This is the allocation-free path
+ *               used by heightAtRange() below — the physics loop is otherwise
+ *               byte-identical, so integrate() with no `visit` behaves exactly
+ *               as before.
  * @returns {Array<{x:number,y:number,z:number,v:number,t:number,mach:number}>}
  *          x in yards, y and z in inches relative to line of sight, v in fps
- *          (ground speed), mach relative to the air.
+ *          (ground speed), mach relative to the air. Empty when `visit` is used.
  */
 export function integrate({
   muzzleVelocity,
@@ -75,6 +82,7 @@ export function integrate({
   windSpeedMph,
   windClock,
   timeStep = DEFAULT_STEP,
+  visit,
 }) {
   const table = DRAG_TABLES[dragModel];
   if (!table) throw new Error(`Unknown drag model: ${dragModel}`);
@@ -98,7 +106,11 @@ export function integrate({
     const relVz = vz - windCrossFps;
     const vRel = Math.hypot(relVx, vy, relVz);
     const v = Math.hypot(vx, vy, vz);
-    path.push({ x: x / 3, y: y * 12, z: z * 12, v, t, mach: vRel / speedOfSound });
+    if (visit) {
+      if (visit(x / 3, y * 12, z * 12, v, t, vRel / speedOfSound)) break;
+    } else {
+      path.push({ x: x / 3, y: y * 12, z: z * 12, v, t, mach: vRel / speedOfSound });
+    }
     if (v < 1) break;
 
     const decel =
@@ -116,10 +128,39 @@ export function integrate({
   return path;
 }
 
-/** Height above line of sight, in inches, at a given range. */
-function heightAt(path, rangeYd) {
-  const p = sampleAt(path, rangeYd);
-  return p ? p.y : NaN;
+/**
+ * Height above the line of sight (inches) at one range, without building or
+ * keeping the whole path. Equivalent to `sampleAt(integrate(params), rangeYd).y`
+ * — same integrator, same linear interpolation between the bracketing steps,
+ * same "return the last sample if the trajectory never reaches rangeYd"
+ * behaviour — but it stops the instant x passes the target and allocates
+ * nothing per step. solveZeroAngle calls this several times per zero solve,
+ * and optimalSightIn calls solveZeroAngle 100+ times per optimize, so the
+ * per-step object churn it removes is the whole point.
+ */
+export function heightAtRange(params, rangeYd) {
+  let prevX = null;
+  let prevY = null;
+  let lastY = NaN;
+  let hit = false;
+  let result = NaN;
+  integrate({
+    ...params,
+    visit: (xYd, yIn) => {
+      lastY = yIn;
+      if (xYd >= rangeYd) {
+        result = prevX == null
+          ? yIn
+          : prevY + (yIn - prevY) * ((rangeYd - prevX) / (xYd - prevX));
+        hit = true;
+        return true;
+      }
+      prevX = xYd;
+      prevY = yIn;
+      return false;
+    },
+  });
+  return hit ? result : lastY;
 }
 
 /**
@@ -133,10 +174,7 @@ function heightAt(path, rangeYd) {
 export function solveZeroAngle(params) {
   const { zeroRangeYd } = params;
   const trial = (angle) =>
-    heightAt(
-      integrate({ ...params, launchAngleRad: angle, maxRangeYd: zeroRangeYd * 1.02 }),
-      zeroRangeYd
-    );
+    heightAtRange({ ...params, launchAngleRad: angle, maxRangeYd: zeroRangeYd * 1.02 }, zeroRangeYd);
 
   let a0 = 0;
   let f0 = trial(a0);
@@ -159,26 +197,40 @@ export function solveZeroAngle(params) {
   return a1;
 }
 
-/** Interpolates the path at an exact range. */
+/**
+ * Interpolates the path at an exact range. `path` is sorted ascending by x
+ * (downrange distance only ever increases), so this binary-searches for the
+ * bracketing pair rather than scanning from the start — the chart
+ * resamplers call it hundreds of times per render against a ~3000-point
+ * path, which made a linear scan O(samples * n).
+ */
 export function sampleAt(path, rangeYd) {
   if (!path.length) return null;
   if (rangeYd <= path[0].x) return path[0];
-  for (let i = 1; i < path.length; i++) {
-    if (path[i].x >= rangeYd) {
-      const a = path[i - 1];
-      const b = path[i];
-      const f = (rangeYd - a.x) / (b.x - a.x);
-      return {
-        x: rangeYd,
-        y: a.y + (b.y - a.y) * f,
-        z: a.z + (b.z - a.z) * f,
-        v: a.v + (b.v - a.v) * f,
-        t: a.t + (b.t - a.t) * f,
-        mach: a.mach + (b.mach - a.mach) * f,
-      };
-    }
+  const last = path.length - 1;
+  if (rangeYd >= path[last].x) return path[last];
+
+  // First index whose x is >= rangeYd. Guaranteed to exist in [1, last]
+  // given the two boundary checks above.
+  let lo = 1;
+  let hi = last;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (path[mid].x < rangeYd) lo = mid + 1;
+    else hi = mid;
   }
-  return path[path.length - 1];
+  const a = path[lo - 1];
+  const b = path[lo];
+  const span = b.x - a.x;
+  const f = span > 0 ? (rangeYd - a.x) / span : 0; // span 0 only if two samples coincide
+  return {
+    x: rangeYd,
+    y: a.y + (b.y - a.y) * f,
+    z: a.z + (b.z - a.z) * f,
+    v: a.v + (b.v - a.v) * f,
+    t: a.t + (b.t - a.t) * f,
+    mach: a.mach + (b.mach - a.mach) * f,
+  };
 }
 
 /** First range at which the bullet falls to or below a given Mach number. */
@@ -230,18 +282,26 @@ export function solveTrajectory(input) {
 
   const rows = [];
   const step = Math.max(1, tableStepYd);
-  for (let d = 0; d <= maxRangeYd + 1e-6; d += step) {
-    const p = sampleAt(path, Math.min(d, maxRangeYd));
-    rows.push({
-      range: Math.min(d, maxRangeYd),
+  const rowAt = (rangeYd) => {
+    const p = sampleAt(path, rangeYd);
+    return {
+      range: rangeYd,
       velocity: p.v,
       energy: energyFtLb(grains, p.v),
       height: p.y,
       windage: p.z,
       time: p.t,
       mach: p.mach,
-    });
-  }
+    };
+  };
+  for (let d = 0; d < maxRangeYd - 1e-6; d += step) rows.push(rowAt(d));
+  // Always land the final row exactly on the requested max range, even when
+  // it isn't a whole number of steps out — which it never is in metric (the
+  // "table every" presets convert to 27.34 / 54.68 / 109.36 canonical yd)
+  // and often isn't in imperial either. Without this the table stops at the
+  // last whole step, and `last` — which SummaryStrip labels "At {maxRangeYd}"
+  // — is that short row, so the strip reports the wrong distance's numbers.
+  rows.push(rowAt(maxRangeYd));
 
   const apex = path.reduce((best, p) => (p.y > best.y ? p : best), path[0]);
 

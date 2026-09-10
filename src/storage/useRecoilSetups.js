@@ -6,7 +6,7 @@
 // are insert-only), so sharing one hook would mean threading that
 // difference through as a flag rather than just having two small, honest
 // hooks that each say what they do.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext.jsx";
 import { listRecoilSetups as listLocal, addRecoilSetup as addLocal, deleteRecoilSetup as deleteLocal } from "./recoilSetups.js";
 import { listRecoilSetupsCloud, addRecoilSetupCloud, deleteRecoilSetupCloud, importLocalRecoilSetupsToCloud } from "./recoilSetupsCloud.js";
@@ -30,22 +30,47 @@ function wasImportOffered(userId) {
   }
 }
 
+// Module-level cache — same rationale as useSavedLoads.js: a remount (tab
+// switch) shouldn't re-fetch a list only this session's own adds/removes
+// change. `key` is a user id, or "local" for the signed-out list.
+let cache = { key: undefined, setups: null };
+const listeners = new Set();
+
+function publish(key, setups) {
+  cache = { key, setups };
+  listeners.forEach((fn) => fn());
+}
+
 export function useRecoilSetups() {
   const { user } = useAuth();
-  const [setups, setSetups] = useState([]);
+  const cacheKey = user ? `u:${user.id}` : "local";
+  const [setups, setSetups] = useState(
+    () => (cache.key === cacheKey && cache.setups) || []
+  );
   const [addError, setAddError] = useState("");
   const [importCount, setImportCount] = useState(0);
+  const prevKeyRef = useRef(cacheKey);
 
   const refresh = useCallback(async () => {
     if (!user) {
-      setSetups(listLocal());
+      publish(cacheKey, listLocal());
       return;
     }
     const { data, error } = await listRecoilSetupsCloud();
-    if (!error) setSetups(data);
-  }, [user]);
+    if (!error) publish(cacheKey, data);
+  }, [user, cacheKey]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const sync = () => { if (cache.key === cacheKey) setSetups(cache.setups ?? []); };
+    listeners.add(sync);
+    sync();
+    // Also refetch whenever the key changed during this mount (a sign-in/
+    // out) — see useSavedLoads.js for the full reasoning.
+    const keyChanged = prevKeyRef.current !== cacheKey;
+    prevKeyRef.current = cacheKey;
+    if (cache.key !== cacheKey || cache.setups == null || keyChanged) refresh();
+    return () => listeners.delete(sync);
+  }, [cacheKey, refresh]);
 
   useEffect(() => {
     if (!user || wasImportOffered(user.id)) { setImportCount(0); return; }

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { C } from "./components/theme.js";
-import { UnitField, StepHead } from "./components/ui.jsx";
+import { UnitField, StepHead, Notice } from "./components/ui.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
@@ -106,17 +106,3 @@ export default function Compare() {
   );
 }
 
-function Notice({ tone, title, children }) {
-  return (
-    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
-                  padding: 14, marginBottom: 16 }}>
-      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
-                    textTransform: "uppercase", color: tone }}>
-        {title}
-      </div>
-      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
-        {children}
-      </div>
-    </div>
-  );
-}

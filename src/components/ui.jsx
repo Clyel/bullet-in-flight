@@ -62,6 +62,27 @@ export function UnitField({ label: text, hint, category, value, onChange }) {
   );
 }
 
+/**
+ * The bordered, left-accented callout used for every "nothing to plot yet",
+ * "couldn't solve", "double-check these values" message across Calculator,
+ * Compare, Optimal Zero and Recoil. `tone` is a C.* colour (C.ox for
+ * errors, C.brass for cautions).
+ */
+export function Notice({ tone, title, children }) {
+  return (
+    <div style={{ background: C.card, border: `1.5px solid ${tone}`, borderLeft: `5px solid ${tone}`,
+                  padding: 14, marginBottom: 16 }}>
+      <div style={{ font: "600 12px 'Oswald',sans-serif", letterSpacing: ".1em",
+                    textTransform: "uppercase", color: tone }}>
+        {title}
+      </div>
+      <div style={{ marginTop: 5, font: "400 12.5px 'IBM Plex Sans',sans-serif", color: C.ink }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function Segmented({ options, value, onChange }) {
   return (
     <div style={{ display: "flex", border: `1.5px solid ${C.rule}` }}>
@@ -91,10 +112,14 @@ export function Segmented({ options, value, onChange }) {
  * Calculator, "setups" on Recoil).
  */
 export function SyncStatusHint({ signedIn, noun = "saves" }) {
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, authAvailable } = useAuth();
   const style = { marginTop: -6, marginBottom: 10, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted };
   if (signedIn) {
     return <div style={style}>Signed in — {noun} sync to your account.</div>;
+  }
+  // Local-only build — no account to nudge toward; just state where data lives.
+  if (!authAvailable) {
+    return <div style={style}>{noun[0].toUpperCase() + noun.slice(1)} are saved on this device.</div>;
   }
   return (
     <div style={style}>

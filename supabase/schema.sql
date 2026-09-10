@@ -27,6 +27,10 @@ create policy "Users can update their own profile" on public.profiles
 grant select, update on public.profiles to authenticated;
 
 -- ── user_settings ─────────────────────────────────────────────────────
+-- PROVISIONED, NOT YET WIRED: no client code reads or writes this table.
+-- UnitsContext.jsx keeps the unit_system in localStorage only. This exists
+-- so cross-device unit-preference sync is a pure additive change (add a
+-- read on sign-in + a write on toggle) whenever it's wanted.
 create table public.user_settings (
   user_id uuid primary key references auth.users(id) on delete cascade,
   unit_system text not null default 'imperial' check (unit_system in ('imperial', 'metric')),
@@ -41,9 +45,10 @@ grant select, insert, update, delete on public.user_settings to authenticated;
 -- Mirrors Calculator.jsx's DEFAULTS form-state shape field-for-field, so
 -- the sync layer is a straight read/write with no translation needed.
 -- catalog_* columns are nullable, only set when the load came from
--- CommercialLoadPicker (never for a hand-typed load) -- this is what makes
--- the cartridge-popularity stats possible from saved loads specifically,
--- separate from the broader pick-tracking in catalog_selection_events below.
+-- CommercialLoadPicker (never for a hand-typed load) -- these are what a
+-- future "which catalog rounds get saved most" stat would read, separate
+-- from the broader pick-tracking that catalog_selection_events below is
+-- provisioned for (also not yet wired).
 -- catalog_bullet specifically holds the descriptive bullet string (e.g.
 -- "172gr Speer Impact (Premier Long Range)") that feeds Calculator.jsx's
 -- LoadIdentity label -- added after this table was first locked, when that
@@ -77,7 +82,16 @@ create table public.saved_loads (
   catalog_bullet text,
   catalog_load_id text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- Save-by-name is an upsert (savedLoadsCloud.js): a load's name is its
+  -- identity, re-saving the same name overwrites in place. This constraint
+  -- is what makes that a single atomic `insert ... on conflict` instead of
+  -- a racey select-then-write, and stops a double-clicked Save from
+  -- creating two rows the delete-by-id path can then only half-clean.
+  -- Migration for an existing project (run once in the SQL editor):
+  --   alter table public.saved_loads
+  --     add constraint saved_loads_user_id_name_key unique (user_id, name);
+  unique (user_id, name)
 );
 alter table public.saved_loads enable row level security;
 create policy "Users manage their own saved loads" on public.saved_loads
@@ -109,11 +123,14 @@ create policy "Users manage their own recoil setups" on public.recoil_setups
 grant select, insert, update, delete on public.recoil_setups to authenticated;
 
 -- ── catalog_selection_events ──────────────────────────────────────────
--- Insert-only log, one row per commercial-round pick anywhere in the app
--- (Calculator, Optimal Zero, Recoil all route through the shared
--- CommercialLoadPicker component — tracking lives there once, not
--- duplicated per page). user_id is nullable and set to null for guests,
--- since picks are logged whether or not someone's signed in.
+-- PROVISIONED, NOT YET WIRED: CommercialLoadPicker doesn't log picks and
+-- there's no "Trending" surface in the client. Only the supabase-keepalive
+-- workflow touches the aggregate view below, as its ping target. The
+-- intent, when built: an insert-only log, one row per commercial-round
+-- pick anywhere in the app (Calculator, Optimal Zero, Recoil all route
+-- through the shared CommercialLoadPicker component — tracking would live
+-- there once, not per page). user_id is nullable and null for guests,
+-- since picks would be logged whether or not someone's signed in.
 --
 -- Known tradeoff, accepted for now at hobby scale: `with check (true)`
 -- means literally anyone can insert without auth, which is what makes
@@ -142,9 +159,11 @@ create policy "Anyone can log a catalog pick" on public.catalog_selection_events
 grant insert on public.catalog_selection_events to anon, authenticated;
 
 -- Public, anonymous-safe aggregate — counts only, never a user_id or a
--- timestamp of any individual pick. This is what the app's "Trending"
--- section actually queries; it needs no login to view per the user's
--- own call ("public, visible to everyone").
+-- timestamp of any individual pick. Intended as the read surface for a
+-- future "Trending" section (no login needed to view, per the user's own
+-- call — "public, visible to everyone"). Today its only consumer is the
+-- supabase-keepalive workflow, which reads one row from it every 3 days
+-- to keep the free-tier project from pausing.
 create view public.cartridge_popularity as
   select cartridge, manufacturer, count(*) as picks
   from public.catalog_selection_events

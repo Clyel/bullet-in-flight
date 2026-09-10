@@ -12,4 +12,21 @@ export default defineConfig({
   // removed, this needs to flip back to a command-conditional "/bullet-
   // in-flight/" for production or every asset 404s.
   base: "/",
+  build: {
+    // Name the two cleanly-separable heavy pieces as their own chunks so an
+    // app-code deploy (the common case) doesn't bust ~75 KB gzip of
+    // supabase + catalog in everyone's cache. supabase-js is already a
+    // dynamic import (see supabaseClient.js) — this just gives its chunk a
+    // stable name; the 855-entry catalog is repetitive data, ~16 KB gzip.
+    // React stays in the entry chunk: the app is small enough that a
+    // separate vendor chunk buys nothing.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("/node_modules/@supabase/")) return "supabase";
+          if (id.includes("/src/data/commercialAmmo")) return "catalog";
+        },
+      },
+    },
+  },
 });

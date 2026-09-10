@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { C } from "./components/theme.js";
 import { Segmented } from "./components/ui.jsx";
 import { UnitsProvider, useUnits } from "./UnitsContext.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
+
+// Calculator is the landing tab — keep it in the initial bundle. The other
+// four are split out and fetched on first visit to each, so their code
+// (and the catalog data Recoil/Optimal Zero pull in) isn't parsed for a
+// visitor who never opens them.
 import Calculator from "./Calculator.jsx";
-import Compare from "./Compare.jsx";
-import OptimalZero from "./OptimalZero.jsx";
-import Recoil from "./Recoil.jsx";
-import Help from "./Help.jsx";
+const Compare = lazy(() => import("./Compare.jsx"));
+const OptimalZero = lazy(() => import("./OptimalZero.jsx"));
+const Recoil = lazy(() => import("./Recoil.jsx"));
+const Help = lazy(() => import("./Help.jsx"));
 
 // Maps the main tab switcher's value to the Help tab's matching section id,
 // for the contextual "How does this page work?" link below the switcher.
@@ -21,11 +27,13 @@ const HELP_SECTION_BY_TAB = {
 
 export default function App() {
   return (
-    <UnitsProvider>
-      <AuthProvider>
-        <AppShell />
-      </AuthProvider>
-    </UnitsProvider>
+    <ErrorBoundary>
+      <UnitsProvider>
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
+      </UnitsProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -86,12 +94,30 @@ function AppShell() {
           </div>
         )}
 
-        {tab === "Calculator" ? <Calculator />
-          : tab === "Compare" ? <Compare />
-          : tab === "Optimal Zero" ? <OptimalZero />
-          : tab === "Recoil" ? <Recoil />
-          : <Help scrollTarget={helpTarget} />}
+        {/* Keyed by tab so a throw in one view is contained there and clears
+            when you switch away — a broken Compare can't take Calculator or
+            your saved data down with it. Suspense covers the lazy chunks;
+            a failed chunk fetch throws and the boundary catches it. */}
+        <ErrorBoundary key={tab} label={tab}>
+          <Suspense fallback={<TabLoading />}>
+            {tab === "Calculator" ? <Calculator />
+              : tab === "Compare" ? <Compare />
+              : tab === "Optimal Zero" ? <OptimalZero />
+              : tab === "Recoil" ? <Recoil />
+              : <Help scrollTarget={helpTarget} />}
+          </Suspense>
+        </ErrorBoundary>
       </div>
+    </div>
+  );
+}
+
+// Shown for the fraction of a second a lazy tab chunk takes to arrive on
+// first visit. Deliberately minimal — a spinner would flash and be gone.
+function TabLoading() {
+  return (
+    <div style={{ padding: "40px 4px", font: "400 12px 'IBM Plex Sans',sans-serif", color: C.muted }}>
+      Loading…
     </div>
   );
 }

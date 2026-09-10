@@ -5,7 +5,7 @@
 // for byte. Signed in: reads/writes Supabase instead, and offers a
 // one-time "import your local saves" prompt the first time a device with
 // existing local saves signs into an account.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../AuthContext.jsx";
 import { listSavedLoads as listLocal, saveLoad as saveLocal, deleteLoad as deleteLocal } from "./savedLoads.js";
 import { listSavedLoadsCloud, saveLoadCloud, deleteLoadCloud, importLocalLoadsToCloud } from "./savedLoadsCloud.js";
@@ -32,22 +32,54 @@ function wasImportOffered(userId) {
   }
 }
 
+// Module-level cache of the current list, so switching tabs — which
+// unmounts and remounts every consumer (Calculator / Compare / Optimal
+// Zero) — doesn't re-hit the network each time for a list that only this
+// session's own saves/deletes change. `key` records who the cached list
+// belongs to: a user id, or "local" for the signed-out localStorage list.
+// A change made on another device is picked up on a full reload (and every
+// save/delete here refreshes anyway).
+let cache = { key: undefined, loads: null };
+const listeners = new Set();
+
+function publish(key, loads) {
+  cache = { key, loads };
+  listeners.forEach((fn) => fn());
+}
+
 export function useSavedLoads() {
   const { user } = useAuth();
-  const [savedLoads, setSavedLoads] = useState([]);
+  const cacheKey = user ? `u:${user.id}` : "local";
+  const [savedLoads, setSavedLoads] = useState(
+    () => (cache.key === cacheKey && cache.loads) || []
+  );
   const [saveError, setSaveError] = useState("");
   const [importCount, setImportCount] = useState(0);
+  const prevKeyRef = useRef(cacheKey);
 
   const refresh = useCallback(async () => {
     if (!user) {
-      setSavedLoads(listLocal());
+      publish(cacheKey, listLocal());
       return;
     }
     const { data, error } = await listSavedLoadsCloud();
-    if (!error) setSavedLoads(data);
-  }, [user]);
+    if (!error) publish(cacheKey, data);
+  }, [user, cacheKey]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const sync = () => { if (cache.key === cacheKey) setSavedLoads(cache.loads ?? []); };
+    listeners.add(sync);
+    sync();
+    // Fetch when the cache doesn't hold this key's list, OR whenever the key
+    // changed during this mount — a sign-in/out. The cache may still hold
+    // this user's list from earlier in the session, but it could be stale
+    // (or briefly clobbered by a request that resolved after a sign-out).
+    // A plain tab remount keeps the same key, so it still skips the fetch.
+    const keyChanged = prevKeyRef.current !== cacheKey;
+    prevKeyRef.current = cacheKey;
+    if (cache.key !== cacheKey || cache.loads == null || keyChanged) refresh();
+    return () => listeners.delete(sync);
+  }, [cacheKey, refresh]);
 
   // Runs once per sign-in transition (user id changing), not on every
   // render -- offers the import exactly once per account+device, ever,

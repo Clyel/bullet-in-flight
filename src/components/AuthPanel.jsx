@@ -14,7 +14,10 @@ const linkButtonStyle = {
  *  yet — see the sign-up flow's own comment) plus a Sign out link. Lives in
  *  App.jsx's header, next to the Imperial/Metric toggle. */
 export default function AuthPanel() {
-  const { user, signUp, signIn, signOut, authModalMode, openAuthModal, closeAuthModal } = useAuth();
+  const { user, authAvailable, signUp, signIn, signOut, authModalMode, openAuthModal, closeAuthModal } = useAuth();
+
+  // Local-only build (no Supabase env) — no sign-in affordance at all.
+  if (!authAvailable) return null;
 
   if (user) {
     return (

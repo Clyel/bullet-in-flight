@@ -132,6 +132,17 @@
 // muzzle velocity (dataFacts.velocityImp0). One stray CMS test record
 // ("Hoy Oryx", 14-digit article number) was dropped. Adds a lot of European
 // / driven-hunt calibers (7x65 R, 8x68 S, 9.3x57, 8.5x55 Blaser, …).
+//
+// ---- Lapua ----
+// Source: the WooCommerce Store API behind lapua.com (WordPress + Woo,
+// /wp-json public). Product attributes carry pa_caliber / pa_bullet /
+// pa_bullet-weight / pa_muzzle-velocity / pa_bc-g1 / pa_bc-g7. See
+// scripts/lapua_raw.mjs + scripts/buildLapua.mjs. Lapua publishes both G1
+// and G7; the match bullets (Scenar, Scenar-L, Lock Base, TRX, MaxRange,
+// AP/API, FMJ BT) carry dragModel "G7" and the G7 value, the hunting
+// bullets (Naturalis, Mega, plain SP/FMJ) only get a G1. bcSource
+// "published". Component bullets and .22 LR are filtered out; 1 FMJ load
+// with no BC at all was dropped.
 
 export const COMMERCIAL_AMMO = [
   // 17 Remington Fireball
@@ -1950,4 +1961,77 @@ export const COMMERCIAL_AMMO = [
   { id: "norma-20195252", cartridge: "375 H&H Mag", bullet: "African PH — SP-RN", grains: 350, muzzleVelocity: 2300, ballisticCoefficient: 0.321, dragModel: "G1", manufacturer: "Norma", bcSource: "published" },
   { id: "norma-20195352", cartridge: "375 H&H Mag", bullet: "African PH Solids — Solid", grains: 300, muzzleVelocity: 2550, ballisticCoefficient: 0.229, dragModel: "G1", manufacturer: "Norma", bcSource: "published" },
   { id: "norma-20195502", cartridge: "375 H&H Mag", bullet: "Ecostrike — Tipped Expanding BT-LF", grains: 250, muzzleVelocity: 2690, ballisticCoefficient: 0.438, dragModel: "G1", manufacturer: "Norma", bcSource: "published" },
+
+  // ---- Lapua (see header) ----
+  { id: "lapua-N315025", cartridge: "222 Rem", bullet: "Naturalis — Lead-free copper", grains: 50, muzzleVelocity: 3166, ballisticCoefficient: 0.197, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4315021", cartridge: "222 Rem", bullet: "FMJ — Full metal Jacket", grains: 55, muzzleVelocity: 2887, ballisticCoefficient: 0.255, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4315030", cartridge: "222 Rem", bullet: "Soft Point", grains: 55, muzzleVelocity: 2887, ballisticCoefficient: 0.185, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N315026", cartridge: "223 Rem", bullet: "Naturalis — Lead-free copper", grains: 50, muzzleVelocity: 3330, ballisticCoefficient: 0.197, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4315042", cartridge: "223 Rem", bullet: "FMJ — Full metal Jacket", grains: 55, muzzleVelocity: 3133, ballisticCoefficient: 0.255, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4315015", cartridge: "223 Rem", bullet: "Scenar-L — Open Tip Match", grains: 69, muzzleVelocity: 2723, ballisticCoefficient: 0.171, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316201", cartridge: "243 Win", bullet: "Naturalis — Lead-free copper", grains: 90, muzzleVelocity: 2985, ballisticCoefficient: 0.23, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316044", cartridge: "6mm BR Norma", bullet: "Scenar-L — Open Tip Match", grains: 90, muzzleVelocity: 2950, ballisticCoefficient: 0.216, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316047", cartridge: "6mm BR Norma", bullet: "Scenar-L — Open Tip Match", grains: 105, muzzleVelocity: 2674, ballisticCoefficient: 0.236, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316017", cartridge: "6.5x47 Lapua", bullet: "Scenar-L — Open Tip Match", grains: 120, muzzleVelocity: 2772, ballisticCoefficient: 0.246, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316011", cartridge: "6.5x47 Lapua", bullet: "Scenar — Open Tip Match", grains: 123, muzzleVelocity: 2790, ballisticCoefficient: 0.263, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316016", cartridge: "6.5x47 Lapua", bullet: "Scenar-L — Open Tip Match", grains: 136, muzzleVelocity: 2625, ballisticCoefficient: 0.274, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316012", cartridge: "6.5x47 Lapua", bullet: "Scenar — Open Tip Match", grains: 139, muzzleVelocity: 2690, ballisticCoefficient: 0.29, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316301", cartridge: "6.5x47 Lapua", bullet: "Naturalis — Lead-free copper", grains: 140, muzzleVelocity: 2648, ballisticCoefficient: 0.201, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316402", cartridge: "6.5 Creedmoor", bullet: "TRX TrueRange Expanding — Lead-free copper", grains: 120, muzzleVelocity: 2864, ballisticCoefficient: 0.212, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316060", cartridge: "6.5 Creedmoor", bullet: "Scenar — Open Tip Match", grains: 123, muzzleVelocity: 2790, ballisticCoefficient: 0.263, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-43M6001", cartridge: "6.5 Creedmoor", bullet: "AP — Armor Piercing", grains: 145, muzzleVelocity: 2772, ballisticCoefficient: 0.297, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316063", cartridge: "6.5 Creedmoor", bullet: "Scenar-L — Open Tip Match", grains: 136, muzzleVelocity: 2740, ballisticCoefficient: 0.274, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316401", cartridge: "6.5 Creedmoor", bullet: "Naturalis", grains: 140, muzzleVelocity: 2559, ballisticCoefficient: 0.201, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316071", cartridge: "6.5 Creedmoor", bullet: "MaxRange Target — Open Tip Match", grains: 144, muzzleVelocity: 2664, ballisticCoefficient: 0.335, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316064", cartridge: "6.5 Creedmoor", bullet: "Mega — Soft Point", grains: 156, muzzleVelocity: 2559, ballisticCoefficient: 0.377, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316065", cartridge: "260 Rem", bullet: "Scenar-L — Open Tip Match", grains: 136, muzzleVelocity: 2671, ballisticCoefficient: 0.274, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316035", cartridge: "6.5x55 Swedish", bullet: "Scenar — Open Tip Match", grains: 100, muzzleVelocity: 2657, ballisticCoefficient: 0.212, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316033", cartridge: "6.5x55 Swedish", bullet: "Full metal Jacket", grains: 100, muzzleVelocity: 2723, ballisticCoefficient: 0.25, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316031", cartridge: "6.5x55 Swedish", bullet: "Scenar — Open Tip Match", grains: 108, muzzleVelocity: 2950, ballisticCoefficient: 0.231, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316103", cartridge: "6.5x55 Swedish", bullet: "TRX TrueRange Expanding — Lead-free copper", grains: 120, muzzleVelocity: 2766, ballisticCoefficient: 0.212, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316039", cartridge: "6.5x55 Swedish", bullet: "Scenar-L — Open Tip Match", grains: 120, muzzleVelocity: 3018, ballisticCoefficient: 0.246, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316038", cartridge: "6.5x55 Swedish", bullet: "Scenar-L — Open Tip Match", grains: 120, muzzleVelocity: 2723, ballisticCoefficient: 0.246, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316036", cartridge: "6.5x55 Swedish", bullet: "Scenar — Open Tip Match", grains: 123, muzzleVelocity: 3015, ballisticCoefficient: 0.263, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316032", cartridge: "6.5x55 Swedish", bullet: "Scenar — Open Tip Match", grains: 123, muzzleVelocity: 2723, ballisticCoefficient: 0.263, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316040", cartridge: "6.5x55 Swedish", bullet: "Scenar-L — Open Tip Match", grains: 136, muzzleVelocity: 2674, ballisticCoefficient: 0.274, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316030", cartridge: "6.5x55 Swedish", bullet: "Scenar — Open Tip Match", grains: 139, muzzleVelocity: 2625, ballisticCoefficient: 0.29, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N316102", cartridge: "6.5x55 Swedish", bullet: "Naturalis — Lead-free copper", grains: 140, muzzleVelocity: 2625, ballisticCoefficient: 0.201, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316041", cartridge: "6.5x55 Swedish", bullet: "MaxRange Target — Open Tip Match", grains: 144, muzzleVelocity: 2740, ballisticCoefficient: 0.335, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4316021", cartridge: "6.5x55 Swedish", bullet: "Mega — Soft Point", grains: 156, muzzleVelocity: 2559, ballisticCoefficient: 0.377, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317322", cartridge: "7x64 Brenneke", bullet: "Naturalis — Lead-free copper", grains: 156, muzzleVelocity: 2756, ballisticCoefficient: 0.28, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317323", cartridge: "7x65 R", bullet: "Naturalis — Lead-free copper", grains: 156, muzzleVelocity: 2756, ballisticCoefficient: 0.28, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317108", cartridge: "308 Win", bullet: "TRX TrueRange Expanding — Lead-free copper", grains: 150, muzzleVelocity: 2776, ballisticCoefficient: 0.19, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317527", cartridge: "308 Win", bullet: "Full metal Jacket", grains: 123, muzzleVelocity: 2936, ballisticCoefficient: 0.27, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317498", cartridge: "308 Win", bullet: "Mega — Soft Point", grains: 150, muzzleVelocity: 2790, ballisticCoefficient: 0.33, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317205", cartridge: "300 Win Mag", bullet: "TRX TrueRange Expanding — Lead-free copper", grains: 165, muzzleVelocity: 2979, ballisticCoefficient: 0.243, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-43M7075", cartridge: "308 Win", bullet: "AP — Armor Piercing", grains: 167, muzzleVelocity: 2805, ballisticCoefficient: 0.218, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317076", cartridge: "308 Win", bullet: "Scenar-L — Open Tip Match", grains: 155, muzzleVelocity: 2820, ballisticCoefficient: 0.23, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317515", cartridge: "308 Win", bullet: "Scenar — Open Tip Match", grains: 167, muzzleVelocity: 2690, ballisticCoefficient: 0.223, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317105", cartridge: "308 Win", bullet: "Naturalis", grains: 170, muzzleVelocity: 2625, ballisticCoefficient: 0.177, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317596", cartridge: "308 Win", bullet: "Lock Base", grains: 170, muzzleVelocity: 2756, ballisticCoefficient: 0.249, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-43M7600", cartridge: "308 Win", bullet: "Lock Base", grains: 170, muzzleVelocity: 2441, ballisticCoefficient: 0.249, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317520", cartridge: "308 Win", bullet: "Scenar-L — Open Tip Match", grains: 175, muzzleVelocity: 2602, ballisticCoefficient: 0.247, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317523", cartridge: "308 Win", bullet: "Scenar — Open Tip Match", grains: 185, muzzleVelocity: 2475, ballisticCoefficient: 0.242, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317189", cartridge: "308 Win", bullet: "Mega — Soft Point", grains: 185, muzzleVelocity: 2510, ballisticCoefficient: 0.319, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317590", cartridge: "308 Win", bullet: "FMJ Boat Tail — FMJBT (Full Metal Jacket Boat Tail)", grains: 185, muzzleVelocity: 2490, ballisticCoefficient: 0.254, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317340", cartridge: "308 Win", bullet: "Subsonic — FMJBT (Full Metal Jacket Boat Tail)", grains: 200, muzzleVelocity: 1066, ballisticCoefficient: 0.235, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317577", cartridge: "30-06 Springfield", bullet: "FMJ — Full metal Jacket", grains: 123, muzzleVelocity: 2936, ballisticCoefficient: 0.27, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317107", cartridge: "30-06 Springfield", bullet: "TRX TrueRange Expanding — Lead-free copper", grains: 165, muzzleVelocity: 2713, ballisticCoefficient: 0.243, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317106", cartridge: "30-06 Springfield", bullet: "Naturalis — Lead-free copper", grains: 170, muzzleVelocity: 2723, ballisticCoefficient: 0.177, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317563", cartridge: "30-06 Springfield", bullet: "Mega — Soft Point", grains: 185, muzzleVelocity: 2625, ballisticCoefficient: 0.319, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317567", cartridge: "30-06 Springfield", bullet: "Mega — Soft Point", grains: 200, muzzleVelocity: 2545, ballisticCoefficient: 0.344, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N317204", cartridge: "300 Win Mag", bullet: "Naturalis — Lead-free copper", grains: 170, muzzleVelocity: 2959, ballisticCoefficient: 0.177, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4317312", cartridge: "300 Win Mag", bullet: "Mega — Soft Point", grains: 185, muzzleVelocity: 2723, ballisticCoefficient: 0.319, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N318009", cartridge: "8x57", bullet: "Naturalis — Lead-free copper", grains: 180, muzzleVelocity: 2625, ballisticCoefficient: 0.179, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N318010", cartridge: "8x57 IRS", bullet: "Naturalis — Lead-free copper", grains: 180, muzzleVelocity: 2641, ballisticCoefficient: 0.179, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N318020", cartridge: "338 Lapua Mag", bullet: "Naturalis — Lead-free copper", grains: 231, muzzleVelocity: 3018, ballisticCoefficient: 0.373, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4318035", cartridge: "338 Lapua Mag", bullet: "AP — Armor Piercing", grains: 248, muzzleVelocity: 2936, ballisticCoefficient: 0.289, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4318017", cartridge: "338 Lapua Mag", bullet: "Scenar — Open Tip Match", grains: 250, muzzleVelocity: 2920, ballisticCoefficient: 0.322, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4318033", cartridge: "338 Lapua Mag", bullet: "Lock Base — FMJBT (Full Metal Jacket Boat Tail)", grains: 250, muzzleVelocity: 2920, ballisticCoefficient: 0.31, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4318048", cartridge: "338 Lapua Mag", bullet: "API", grains: 253, muzzleVelocity: 2905, ballisticCoefficient: 0.269, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4318013", cartridge: "338 Lapua Mag", bullet: "Scenar — Open Tip Match", grains: 300, muzzleVelocity: 2690, ballisticCoefficient: 0.368, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-43M8055", cartridge: "338 Lapua Mag", bullet: "AP — Armor Piercing", grains: 300, muzzleVelocity: 2723, ballisticCoefficient: 0.366, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4319012", cartridge: "9.3x62 Mauser", bullet: "Open Tip", grains: 185, muzzleVelocity: 2772, ballisticCoefficient: 0.283, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-N319204", cartridge: "9.3x62 Mauser", bullet: "Naturalis — Lead-free copper", grains: 250, muzzleVelocity: 2428, ballisticCoefficient: 0.215, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
+  { id: "lapua-4319010", cartridge: "9.3x62 Mauser", bullet: "Mega — Soft Point", grains: 285, muzzleVelocity: 2265, ballisticCoefficient: 0.339, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
 ];

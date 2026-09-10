@@ -68,12 +68,25 @@ boundary — see `CODE-REVIEW.md`).
 ## What remains
 
 **Features, roughly in priority order:**
-1. **Leupold Boone & Crockett ballistic group classification** — fully scoped, not
-   yet built. Purely drop-based (inches of drop at 500yd with a 200yd zero), sourced
-   from Leupold's own published BAS manual, no proprietary formula needed. Computable
-   with the existing solver, no new physics.
-2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
+1. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
    — it is now. Needs independent fixtures like wind did.
-3. Plain Leupold TBR (True Ballistic Range) angle-compensation — a much smaller,
-   separate idea from item 1 above (trivial cosine correction for inclined shots),
-   mentioned in passing, not requested outright.
+2. Deferred UX items (from the 2026-09-09 UX pass, agreed but not built): a
+   collapse-filled-sections pass on the input panel; a fully flattened/searchable
+   catalog picker (Jake chose to keep the 3 cascading dropdowns with typeahead for
+   now); "add a round to Compare" from the Compare empty state; cloud sync for the
+   shared "My rig" (currently localStorage-only, unlike saved loads / recoil setups).
+3. React 18 → 19.
+
+**Shipped 2026-09-10 (in `main`, awaiting the next prod push — commits `a5f6eac`,
+`e126c15`):**
+- **Leupold BAS ballistic-group classification** — `src/ballistics/reticleGroups.js`,
+  classifies a load against the Boone & Crockett / LR Varmint Hunter / Creedmoor
+  reticles by drop at 500 yd with a forced 200 yd zero. Behind an off-by-default
+  "Leupold BAS" toggle on the trajectory chart. Thresholds quoted from Leupold's BAS
+  manual #55994. Read-off of the existing solver, no new physics.
+- **Shot-angle hold advisory (rifleman's rule)** — `src/ballistics/inclineComp.js`,
+  `slant × cos(angle)`. "Shot angle" field in Step 4, advisory line under the summary
+  strip for angles ≥ 5°. Display-only, solver untouched. (This was the old item 3,
+  "plain Leupold TBR angle-compensation.")
+- **Recoil tab: load a saved dataset** as a setup starting point, mirroring the
+  Calculator's saved-dataset picker.

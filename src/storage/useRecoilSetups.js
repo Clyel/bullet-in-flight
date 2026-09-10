@@ -30,22 +30,42 @@ function wasImportOffered(userId) {
   }
 }
 
+// Module-level cache — same rationale as useSavedLoads.js: a remount (tab
+// switch) shouldn't re-fetch a list only this session's own adds/removes
+// change. `key` is a user id, or "local" for the signed-out list.
+let cache = { key: undefined, setups: null };
+const listeners = new Set();
+
+function publish(key, setups) {
+  cache = { key, setups };
+  listeners.forEach((fn) => fn());
+}
+
 export function useRecoilSetups() {
   const { user } = useAuth();
-  const [setups, setSetups] = useState([]);
+  const cacheKey = user ? `u:${user.id}` : "local";
+  const [setups, setSetups] = useState(
+    () => (cache.key === cacheKey && cache.setups) || []
+  );
   const [addError, setAddError] = useState("");
   const [importCount, setImportCount] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!user) {
-      setSetups(listLocal());
+      publish(cacheKey, listLocal());
       return;
     }
     const { data, error } = await listRecoilSetupsCloud();
-    if (!error) setSetups(data);
-  }, [user]);
+    if (!error) publish(cacheKey, data);
+  }, [user, cacheKey]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const sync = () => { if (cache.key === cacheKey) setSetups(cache.setups ?? []); };
+    listeners.add(sync);
+    sync();
+    if (cache.key !== cacheKey || cache.setups == null) refresh();
+    return () => listeners.delete(sync);
+  }, [cacheKey, refresh]);
 
   useEffect(() => {
     if (!user || wasImportOffered(user.id)) { setImportCount(0); return; }

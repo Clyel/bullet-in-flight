@@ -32,22 +32,47 @@ function wasImportOffered(userId) {
   }
 }
 
+// Module-level cache of the current list, so switching tabs — which
+// unmounts and remounts every consumer (Calculator / Compare / Optimal
+// Zero) — doesn't re-hit the network each time for a list that only this
+// session's own saves/deletes change. `key` records who the cached list
+// belongs to: a user id, or "local" for the signed-out localStorage list.
+// A change made on another device is picked up on a full reload (and every
+// save/delete here refreshes anyway).
+let cache = { key: undefined, loads: null };
+const listeners = new Set();
+
+function publish(key, loads) {
+  cache = { key, loads };
+  listeners.forEach((fn) => fn());
+}
+
 export function useSavedLoads() {
   const { user } = useAuth();
-  const [savedLoads, setSavedLoads] = useState([]);
+  const cacheKey = user ? `u:${user.id}` : "local";
+  const [savedLoads, setSavedLoads] = useState(
+    () => (cache.key === cacheKey && cache.loads) || []
+  );
   const [saveError, setSaveError] = useState("");
   const [importCount, setImportCount] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!user) {
-      setSavedLoads(listLocal());
+      publish(cacheKey, listLocal());
       return;
     }
     const { data, error } = await listSavedLoadsCloud();
-    if (!error) setSavedLoads(data);
-  }, [user]);
+    if (!error) publish(cacheKey, data);
+  }, [user, cacheKey]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const sync = () => { if (cache.key === cacheKey) setSavedLoads(cache.loads ?? []); };
+    listeners.add(sync);
+    sync();
+    // Fetch only when the cache isn't already holding this key's list.
+    if (cache.key !== cacheKey || cache.loads == null) refresh();
+    return () => listeners.delete(sync);
+  }, [cacheKey, refresh]);
 
   // Runs once per sign-in transition (user id changing), not on every
   // render -- offers the import exactly once per account+device, ever,

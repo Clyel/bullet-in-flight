@@ -1,18 +1,53 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { C } from "./components/theme.js";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { C, label } from "./components/theme.js";
 import { UnitField, StepHead, Notice } from "./components/ui.jsx";
+import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
+import { getMyRig } from "./storage/myRig.js";
 import { num, solveFromForm } from "./solveFromForm.js";
+
+// Everything solveFromForm/CompareChart need that isn't ammo: the shared
+// rig (sight/vitals/atmosphere) plus the same zero / distance / step the
+// Calculator starts a fresh load at. Wind stays out — Compare has no wind
+// input, and a saved dataset with no wind is what the rest of the tab
+// already expects.
+function datasetFromAmmo(ammo) {
+  const rig = getMyRig();
+  return {
+    cartridge: ammo.cartridge,
+    bullet: `${ammo.grains}gr ${ammo.bullet}${ammo.bcSource !== "published" ? " (derived BC)" : ""}`,
+    manufacturer: ammo.manufacturer,
+    bcSource: ammo.bcSource,
+    muzzleVelocity: String(ammo.muzzleVelocity),
+    ballisticCoefficient: String(ammo.ballisticCoefficient),
+    grains: String(ammo.grains),
+    dragModel: ammo.dragModel,
+    zeroRangeYd: "200",
+    maxRangeYd: "500",
+    tableStepYd: "100",
+    windSpeedMph: "",
+    windClock: "",
+    ...rig, // sightHeight, vitalsRadiusIn, tempF, pressInHg, altitudeFt
+  };
+}
+
+const datasetName = (ammo) =>
+  `${ammo.cartridge} · ${ammo.grains}gr ${ammo.bullet}`.slice(0, 80);
 
 export default function Compare() {
   // useSavedLoads re-fetches on mount, which is when a load saved on the
   // Calculator tab (or synced from the cloud) should show up here.
-  const { savedLoads } = useSavedLoads();
+  const { savedLoads, save } = useSavedLoads();
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [atYd, setAtYd] = useState("500");
   const [atYdTouched, setAtYdTouched] = useState(false);
+  const [addError, setAddError] = useState("");
+  // A round picked from the catalog is saved by name; once it lands in
+  // savedLoads (async, via the storage layer) this pulls it into the
+  // comparison so the pick feels immediate.
+  const pendingSelectName = useRef(null);
 
   const toggle = (id) => {
     setSelectedIds((s) => {
@@ -21,6 +56,30 @@ export default function Compare() {
       return next;
     });
   };
+
+  const handleAddCatalogRound = async (ammo) => {
+    setAddError("");
+    const name = datasetName(ammo);
+    // Set the pending-select before saving: save() refreshes savedLoads,
+    // and outside React's batching (this is past an await) that state
+    // update can flush and run the effect below before this line would
+    // otherwise reach it.
+    pendingSelectName.current = name;
+    const ok = await save(name, datasetFromAmmo(ammo));
+    if (!ok) {
+      pendingSelectName.current = null;
+      setAddError("Couldn't add that round.");
+    }
+  };
+
+  useEffect(() => {
+    if (!pendingSelectName.current) return;
+    const added = savedLoads.find((l) => l.name === pendingSelectName.current);
+    if (added) {
+      setSelectedIds((s) => new Set(s).add(added.id));
+      pendingSelectName.current = null;
+    }
+  }, [savedLoads]);
 
   const { results, failed } = useMemo(() => {
     const results = [];
@@ -55,11 +114,38 @@ export default function Compare() {
 
   const atYdNum = num(atYd);
 
+  const catalogPicker = (
+    <>
+      <span style={{ ...label, display: "block", marginBottom: 5, color: C.muted }}>
+        Add a round from the catalog
+      </span>
+      <CommercialLoadPicker onSelect={handleAddCatalogRound} resetLoadAfterSelect />
+      <div style={{ marginBottom: 4, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 500&nbsp;yd — it's
+        saved as a dataset and added to the comparison. Tune it on the Calculator tab.
+      </div>
+      {addError && (
+        <div style={{ marginBottom: 8, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
+          {addError}
+        </div>
+      )}
+    </>
+  );
+
   if (savedLoads.length === 0) {
     return (
-      <Notice tone={C.ox} title="No saved datasets yet">
-        Save a load from the Calculator tab first, then come back here to compare it against others.
-      </Notice>
+      <div className="bif-grid">
+        <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
+          <StepHead n={1} name="Datasets to compare" first />
+          {catalogPicker}
+        </div>
+        <div>
+          <Notice tone={C.brass} title="Nothing to compare yet">
+            Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
+            come back — every saved dataset shows up here.
+          </Notice>
+        </div>
+      </div>
     );
   }
 
@@ -74,6 +160,8 @@ export default function Compare() {
             <span style={{ font: "500 13px 'IBM Plex Sans',sans-serif", color: C.ink }}>{l.name}</span>
           </label>
         ))}
+
+        <div style={{ marginTop: 16 }}>{catalogPicker}</div>
 
         <StepHead n={2} name="Compare at" />
         <UnitField
@@ -105,4 +193,3 @@ export default function Compare() {
     </div>
   );
 }
-

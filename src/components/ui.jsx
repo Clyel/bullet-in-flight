@@ -190,30 +190,104 @@ export function ImportActions({ onImport, onDismiss }) {
  * wind" section) but still wants the same size/divider treatment. `first`
  * drops the divider and top margin for whichever section sits at the very
  * top of its panel.
+ *
+ * Pass `onToggle` (and `open`) to make the whole row a collapse button --
+ * used by InputPanel to fold a settled section down to a one-line summary.
+ * Without `onToggle` it's the same static `<div>` heading it always was.
  */
-export function StepHead({ n, eyebrow, name, first }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10,
-                  borderTop: first ? "none" : `1px solid ${C.rule}`,
-                  paddingTop: first ? 0 : 14,
-                  margin: first ? "0 0 14px" : "32px 0 14px" }}>
-      {n != null ? (
-        <span style={{ flexShrink: 0, width: 22, height: 22, display: "flex",
-                       alignItems: "center", justifyContent: "center",
-                       background: C.rule, color: C.ink, font: "600 11px 'Oswald',sans-serif" }}>
-          {n}
-        </span>
-      ) : eyebrow ? (
-        <span style={{ flexShrink: 0, font: "600 10px 'Oswald',sans-serif", letterSpacing: ".14em",
-                       textTransform: "uppercase", color: C.muted }}>
-          {eyebrow}
-        </span>
-      ) : null}
-      <span style={{ font: "600 15px 'Oswald',sans-serif", letterSpacing: ".01em", color: C.ink }}>
-        {name}
-      </span>
-    </div>
+export function StepHead({ n, eyebrow, name, first, open, onToggle }) {
+  const rowStyle = {
+    display: "flex", alignItems: "center", gap: 10,
+    borderTop: first ? "none" : `1px solid ${C.rule}`,
+    paddingTop: first ? 0 : 14,
+    margin: first ? "0 0 14px" : "32px 0 14px",
+  };
+  const marker = n != null ? (
+    <span style={{ flexShrink: 0, width: 22, height: 22, display: "flex",
+                   alignItems: "center", justifyContent: "center",
+                   background: C.rule, color: C.ink, font: "600 11px 'Oswald',sans-serif" }}>
+      {n}
+    </span>
+  ) : eyebrow ? (
+    <span style={{ flexShrink: 0, font: "600 10px 'Oswald',sans-serif", letterSpacing: ".14em",
+                   textTransform: "uppercase", color: C.muted }}>
+      {eyebrow}
+    </span>
+  ) : null;
+  const nameEl = (
+    <span style={{ font: "600 15px 'Oswald',sans-serif", letterSpacing: ".01em", color: C.ink }}>
+      {name}
+    </span>
   );
+
+  if (typeof onToggle !== "function") {
+    return <div style={rowStyle}>{marker}{nameEl}</div>;
+  }
+  return (
+    <button
+      type="button"
+      className="bif-step-toggle"
+      onClick={onToggle}
+      aria-expanded={open}
+      style={{ ...rowStyle, width: "100%", background: "none", border: "none",
+               borderTop: first ? "none" : `1px solid ${C.rule}`,
+               padding: first ? 0 : "14px 0 0", cursor: "pointer",
+               textAlign: "left", color: "inherit", font: "inherit" }}
+    >
+      {marker}
+      {nameEl}
+      <span aria-hidden="true"
+            style={{ marginLeft: "auto", flexShrink: 0, fontSize: 11, lineHeight: 1,
+                     color: C.muted, transition: "transform .12s ease",
+                     transform: open ? "none" : "rotate(-90deg)" }}>
+        ▾
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Per-section collapse state for a numbered-step panel, persisted in
+ * localStorage under `storageKey` as an array of the *collapsed* section
+ * ids. Nothing collapses on its own -- a section is open unless the user
+ * folded it -- so a first-ever visitor (no stored key) gets everything
+ * open. `ids` is the full ordered id list, used by the expand/collapse-all
+ * control (`anyOpen` / `setAll`).
+ */
+export function useCollapsibleSteps(storageKey, ids) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const arr = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  });
+
+  const commit = (next) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify([...next]));
+    } catch {
+      /* private mode / quota -- in-session state still works */
+    }
+    return next;
+  };
+
+  const toggle = (id) =>
+    setCollapsed((s) => {
+      const next = new Set(s);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return commit(next);
+    });
+
+  const setAll = (collapse) => setCollapsed(() => commit(new Set(collapse ? ids : [])));
+
+  return {
+    isOpen: (id) => !collapsed.has(id),
+    anyOpen: ids.some((id) => !collapsed.has(id)),
+    toggle,
+    setAll,
+  };
 }
 
 /**

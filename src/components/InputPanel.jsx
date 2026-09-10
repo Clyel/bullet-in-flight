@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { C, label } from "./theme.js";
-import { Field, UnitField, Segmented, SyncStatusHint, StepHead } from "./ui.jsx";
+import { Field, UnitField, Segmented, SyncStatusHint, StepHead, RigDriftBar } from "./ui.jsx";
 import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
@@ -20,6 +20,7 @@ const stepCanonicalValue = (presetLabel, system) =>
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
+  rigDrifted, onSaveRig, onResetRig,
 }) {
   const { system } = useUnits();
 
@@ -78,6 +79,7 @@ export default function InputPanel({
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
+      <RigDriftBar drifted={rigDrifted} onSave={onSaveRig} onReset={onResetRig} />
       {/* Numbered so the required, top-to-bottom flow reads as a sequence
           rather than a wall of fields — everything genuinely optional
           (wind) is unnumbered and pushed to the very end instead. */}

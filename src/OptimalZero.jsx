@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
-import { UnitField, StepHead } from "./components/ui.jsx";
+import { UnitField, StepHead, RigDriftBar } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
+import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
 import { energyFtLb } from "./ballistics/solver.js";
 import { optimalSightIn } from "./ballistics/vitalsWindow.js";
@@ -10,18 +11,10 @@ import { num } from "./solveFromForm.js";
 import { useUnits } from "./UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "./units.js";
 
-// The shared rig — everything a round needs beyond its own ammo data to
-// compute an optimal zero. Deliberately smaller than Calculator's full
-// input set: no zero (that's the output), no shot distance, no wind
-// (barely touches apex height, not worth the complexity for a browsing
-// tool like this one).
-const DEFAULTS = {
-  sightHeight: "1.5",
-  vitalsRadiusIn: "3",
-  tempF: "59",
-  pressInHg: "29.92",
-  altitudeFt: "0",
-};
+// The rig fields (sight height, vitals radius, atmosphere) are the shared
+// "My rig" -- see storage/myRig.js, which is also where the "deliberately
+// smaller than Calculator's full input set" reasoning lives now. This tab
+// applies one rig to every row it compares.
 
 // Both a catalog round and a saved dataset get normalized to this same
 // ammo-only shape before anything downstream touches them — this page
@@ -52,10 +45,19 @@ const fromSaved = (load) => ({
 
 export default function OptimalZero() {
   const { system } = useUnits();
-  const [rig, setRig] = useState(DEFAULTS);
+  const [storedRig, setStoredRig] = useState(getMyRig);
+  const [rig, setRig] = useState(() => ({ ...storedRig }));
   const set = Object.fromEntries(
-    Object.keys(DEFAULTS).map((k) => [k, (val) => setRig((s) => ({ ...s, [k]: val }))])
+    RIG_FIELDS.map((k) => [k, (val) => setRig((s) => ({ ...s, [k]: val }))])
   );
+
+  const rigDrifted = rigDiffers(rig, storedRig);
+  const handleSaveRig = () => {
+    const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, rig[k]]));
+    setMyRig(next);
+    setStoredRig(next);
+  };
+  const handleResetRig = () => setRig({ ...storedRig });
   // useSavedLoads re-fetches on mount, which is when a load saved on the
   // Calculator tab (or synced from the cloud) should show up here (same
   // pattern as Compare.jsx).
@@ -139,6 +141,7 @@ export default function OptimalZero() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
+        <RigDriftBar drifted={rigDrifted} onSave={handleSaveRig} onReset={handleResetRig} />
         <StepHead n={1} name="Add rounds" first />
 
         {savedLoads.length > 0 && (

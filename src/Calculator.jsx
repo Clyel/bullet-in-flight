@@ -7,6 +7,7 @@ import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
 import { ImportActions } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
+import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
@@ -70,7 +71,12 @@ const SANITY = [
 const IDENTITY_FIELDS = ["muzzleVelocity", "ballisticCoefficient", "grains", "dragModel"];
 
 export default function Calculator() {
-  const [v, setState] = useState(DEFAULTS);
+  // The 5 shared rig fields start from "My rig" (set on either this tab or
+  // Optimal Zero) rather than the hardcoded DEFAULTS; everything else is
+  // still DEFAULTS. `storedRig` is what's currently saved -- the drift bar
+  // compares the live form against it.
+  const [storedRig, setStoredRig] = useState(getMyRig);
+  const [v, setState] = useState(() => ({ ...DEFAULTS, ...storedRig }));
   const set = Object.fromEntries(
     Object.keys(DEFAULTS).map((k) => [k, (val) => setState((s) => ({ ...s, [k]: val }))])
   );
@@ -116,6 +122,14 @@ export default function Calculator() {
   // it directly in the two handlers that actually change which load is
   // active (below) fixes that for both cases at once.
   const [bcOverridden, setBcOverridden] = useState(false);
+
+  const rigDrifted = rigDiffers(v, storedRig);
+  const handleSaveRig = () => {
+    const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]]));
+    setMyRig(next);
+    setStoredRig(next);
+  };
+  const handleResetRig = () => setState((s) => ({ ...s, ...storedRig }));
 
   // DopeChart mounts via a portal (see its own comment for why), so it
   // needs a render to actually land in the DOM before window.print() reads
@@ -224,6 +238,7 @@ export default function Calculator() {
         onDeleteSaved={handleDeleteSaved}
         onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
         bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
+        rigDrifted={rigDrifted} onSaveRig={handleSaveRig} onResetRig={handleResetRig}
       />
 
       <div className="bif-results-col">

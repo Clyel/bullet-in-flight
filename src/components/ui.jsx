@@ -191,6 +191,34 @@ export function StepHead({ n, eyebrow, name, first }) {
   );
 }
 
+/**
+ * Shown on Calculator / Optimal Zero when the tab's live rig fields (sight
+ * height, vitals radius, atmosphere) differ from the saved "My rig". Save
+ * pushes the current values to the shared store -- the other tab picks
+ * them up next time it mounts; Reset pulls the saved ones back. Editing a
+ * rig field never writes back on its own, so this is the only way a change
+ * on one tab reaches the other.
+ */
+export function RigDriftBar({ drifted, onSave, onReset }) {
+  if (!drifted) return null;
+  const linkStyle = {
+    background: "none", border: "none", padding: 0, cursor: "pointer",
+    color: C.steel, textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif",
+  };
+  return (
+    <div style={{ marginBottom: 14, padding: "7px 9px", background: C.inputBg,
+                  border: `1px solid ${C.brass}`, display: "flex", flexWrap: "wrap",
+                  alignItems: "center", gap: "4px 14px",
+                  font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+      <span>Rig differs from your saved one.</span>
+      <span style={{ display: "flex", gap: 14 }}>
+        <button onClick={onSave} style={linkStyle}>Save as my rig</button>
+        <button onClick={onReset} style={linkStyle}>Reset to my rig</button>
+      </span>
+    </div>
+  );
+}
+
 export function Panel({ title, children, style }) {
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, ...style }}>

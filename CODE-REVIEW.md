@@ -61,6 +61,26 @@ the critical path, `supabase` 59 deferred behind first paint, every other chunk 
 **Deliberately not touched:** React 18→19, and the `<canvas>` charting libs — the SVG plot
 is the endpoint, not a stepping stone.
 
+### Deferred tail — done 2026-09-10 (branch `deferred-review-followups`)
+
+The "minor, deferred" follow-ups, one branch → one PR, `npm test` green throughout:
+
+- **`.gitattributes`** — `* text=auto eol=lf` + `*.png/*.jpg binary`; working tree
+  renormalised to LF so `git` stops warning on every operation.
+- **#13c solver hardening** — `machCrossing` / `sightLineCrossings` got the same
+  zero-span guard `sampleAt` has; `solveZeroAngle` now throws on a later NaN trial
+  instead of returning a garbage angle. `test/solver.test.mjs` `TOL` tightened to
+  just above the README Accuracy figures (energy 3.0→1.5, height 0.5→0.3, windage
+  0.5→0.15, time 0.002→0.001).
+- **Plot.jsx (D/F/H)** — `<clipPath>` around refAreas/refLines/series; hover snaps
+  to a union `xValues` grid, not `series[0]` alone (Compare crosshair no longer
+  strands past a short-range load); optional `role="img"` + `aria-label`, one line
+  per consumer.
+- **TrajectoryChart (G)** — `series` / refAreas / refLines / refDots / tooltipRows
+  all `useMemo`'d so Plot's internal memos stop recomputing on the vitals toggles.
+- **useOptimalZeroRows (E)** — a rig edit no longer blanks the whole table to
+  "Solving…"; each row keeps its last answer until its own fresh result streams back.
+
 ---
 
 ## Ranked summary

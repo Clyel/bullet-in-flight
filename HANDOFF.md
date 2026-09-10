@@ -69,25 +69,33 @@ boundary — see `CODE-REVIEW.md`).
 ## What remains
 
 **Features, roughly in priority order:**
-1. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
+1. **More ammo manufacturers.** Winchester landed 2026-09-10 (PR #7, +252). Research
+   done on the rest (data availability, format, effort) — recommended order:
+   **Barnes** (VOR-TX ballistics-chart PDF, published BC) → **Berger** (publishes
+   G1 *and* G7 — would be the catalog's first real G7 data) → Nosler → Browning /
+   Norma. CCI is rimfire-only, out of scope unless a rimfire section is added.
+   Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
+   derive script, then the cartridge-name normalization pass before merge.
+2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
    — it is now. Needs independent fixtures like wind did.
-2. Deferred UX items (from the 2026-09-09 UX pass, agreed but not built): a
+3. Deferred UX items (from the 2026-09-09 UX pass, agreed but not built): a
    collapse-filled-sections pass on the input panel; a fully flattened/searchable
    catalog picker (Jake chose to keep the 3 cascading dropdowns with typeahead for
    now); "add a round to Compare" from the Compare empty state; cloud sync for the
    shared "My rig" (currently localStorage-only, unlike saved loads / recoil setups).
-3. React 18 → 19.
+4. React 18 → 19.
 
-**Shipped 2026-09-10 (in `main`, awaiting the next prod push — commits `a5f6eac`,
-`e126c15`):**
-- **Leupold BAS ballistic-group classification** — `src/ballistics/reticleGroups.js`,
-  classifies a load against the Boone & Crockett / LR Varmint Hunter / Creedmoor
-  reticles by drop at 500 yd with a forced 200 yd zero. Behind an off-by-default
-  "Leupold BAS" toggle on the trajectory chart. Thresholds quoted from Leupold's BAS
-  manual #55994. Read-off of the existing solver, no new physics.
-- **Shot-angle hold advisory (rifleman's rule)** — `src/ballistics/inclineComp.js`,
-  `slant × cos(angle)`. "Shot angle" field in Step 4, advisory line under the summary
-  strip for angles ≥ 5°. Display-only, solver untouched. (This was the old item 3,
-  "plain Leupold TBR angle-compensation.")
-- **Recoil tab: load a saved dataset** as a setup starting point, mirroring the
-  Calculator's saved-dataset picker.
+**Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Leupold BAS ballistic-group classification** (`src/ballistics/reticleGroups.js`)
+  — classifies a load against the Boone & Crockett / LR Varmint Hunter / Creedmoor
+  reticles by drop at 500 yd with a forced 200 yd zero. Off-by-default "Leupold BAS"
+  toggle on the trajectory chart. Thresholds from Leupold's BAS manual #55994.
+- **Shot-angle hold advisory (rifleman's rule)** (`src/ballistics/inclineComp.js`)
+  — `slant × cos(angle)`. "Shot angle" field in Step 4, advisory under the summary
+  strip for angles ≥ 5°. Display-only. (Was the old "plain Leupold TBR" item.)
+- **Recoil tab: load a saved dataset** as a setup starting point.
+- **Calculator results-column scroll fix** (PR #6) — the sticky chart block was
+  covering the range table on laptop-height screens once the BAS readout grew it
+  past the viewport. Results column is now its own capped scroll region.
+- **Winchester catalog** (PR #7) — +252 loads, `scripts/winchester_raw.mjs` +
+  `scripts/buildWinchester.mjs`.

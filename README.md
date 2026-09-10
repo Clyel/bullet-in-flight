@@ -3,7 +3,7 @@
 A point-mass exterior ballistics calculator. Enter a load and a sight setup; get a
 range table (velocity, energy, height above/below the line of sight) and a chart of
 the arc from the muzzle out to a chosen distance. Also does wind deflection, unit
-switching, a saved-load library, a compare view, a ~1,260-round commercial ammo
+switching, a saved-load library, a compare view, a ~1,440-round commercial ammo
 catalog, and a "vitals window" / optimal-zero tool — see **Features** below.
 
 Live: https://clyel.github.io/bullet-in-flight/ (public GitHub Pages, auto-deploys
@@ -100,7 +100,7 @@ smaller window, never a wider one).
   sync across devices.
 - **Compare tab** — overlay several saved loads on one chart plus a single-distance
   table, with a "Compare at" field that scales the chart to match.
-- **Commercial ammo catalog** — ~1,260 entries across Remington, Winchester, Barnes,
+- **Commercial ammo catalog** — ~1,440 entries across Remington, Winchester, Nosler, Barnes,
   Federal, Hornady, Weatherby, and Berger (`src/data/commercialAmmo.js`), picked via a cascading Caliber ->
   Manufacturer -> Load selector (`src/components/CommercialLoadPicker.jsx`). BC is
   published where the manufacturer states one; where they don't (Hornady entirely,
@@ -125,7 +125,7 @@ src/
     angular.js             inches -> MOA/MIL
   components/            presentational React only, no physics
   data/
-    commercialAmmo.js  ~1,260-entry commercial ammo catalog
+    commercialAmmo.js  ~1,440-entry commercial ammo catalog
   storage/
     savedLoads.js         localStorage get/save/delete
   App.jsx, Calculator.jsx, Compare.jsx, OptimalZero.jsx    the three tabs

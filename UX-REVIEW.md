@@ -10,21 +10,32 @@ values, unit switching, sign-in modal), cross-checked against the source in this
 ## Status as of 2026-09-09
 
 Worked through collaboratively (this session + `ballistics-2a`, several rounds of live
-verification each), landed in three commits:
+verification each). **The whole priority list is now done.** Commits, oldest first:
 
 - `2d5288c` — mobile overflow (#1), guarded BC/drag-model control (#4), metric energy (half
-  of #8 — see note there), catalog picker smallest-viable-version + amber-warning bug +
-  duplicate-data cleanup (#7, at the scope Jake chose — see #7 below), "no saved datasets"
-  placeholder (§3)
-- `54d637a` — idle-state catalog explainer split: G1/G7 fact moved to Help, derived-BC note
-  made just-in-time in the confirmation line instead of a standing paragraph (not its own
-  priority-list item, but the same "progressive disclosure vs. losing the explanation"
-  tension called out in "How to read this doc")
-- `80c08f6` — Step-N headers given real visual hierarchy (not its own priority-list item
-  either — a follow-on request, mocked first, three rounds of live review before commit)
+  of #8), catalog picker smallest-viable-version + amber-warning bug + duplicate-data
+  cleanup (#7, at the scope Jake chose — see #7 below), "no saved datasets" placeholder (§3)
+- `54d637a` — idle-state catalog explainer split: G1/G7 fact to Help, derived-BC note made
+  just-in-time (not a priority-list item, same tension as "How to read this doc")
+- `80c08f6` — Step-N headers given real visual hierarchy (a follow-on request, not on the
+  list; mocked first)
+- `ffb1e7a` — Edit link on saved datasets (a Jake idea, not on the list)
+- `e5b0a16` — sticky results on Calculator desktop (#2); metric step/range preset remap, the
+  other half of #8
+- `fe075ad` — input sanity bounds + the Infinity hole in the required check (#5)
+- `bff4c7a` — `C.muted` darkened to clear AA, explicit base font (part of #3)
+- `60c7128` — forms pass: palette → CSS custom properties, `Field` → bordered box matching
+  the selects with the unit inside it, label token 10→12px (#3 remainder + #6)
+- `29454a5` — dark mode via `prefers-color-scheme`, purely additive token restatement (#10)
+- `c1b5be5` — dark-review follow-ups: recessed `--c-input-bg` fill, helper prose to 12px
+  (closes #3), modal border softened
+- `a827ab7` — shared "My rig" between Calculator and Optimal Zero (#9)
 
-Priority-list items **2, 3, 5, 6, 9, 10** are still open — see the table below for per-item
-status and what's actually shipped vs. deferred.
+All local commits — not pushed / not deployed as of this writing.
+
+Known deferred, not blocking: the sticky column's empty-space-below-content (gets folded
+into a future "collapse filled sections" pass — see §3's last bullet); a signed-in cloud
+copy of "My rig" (localStorage-only for now, same as saved loads / recoil setups started).
 
 ---
 
@@ -74,15 +85,15 @@ that's the interesting conversation — have it.
 | # | Change | Why | Effort | Status |
 |---|--------|-----|--------|--------|
 | 1 | **Responsive: kill mobile horizontal overflow** | Site is unusable on a phone — ~135px of overflow at 375px; helper text and table columns clip | M | ✅ Done — `.bif-grid > * { min-width: 0 }`, verified 0px overflow at 375px |
-| 2 | **Sticky results column on desktop** | Inputs and the chart they drive are never on screen together after the first viewport | S | ⬜ Open |
-| 3 | **Text size + contrast pass** | Helper/label/nav text is 10–11.5px at 3.15:1 — fails WCAG AA, and it's where all the guidance lives | S–M | ⬜ Open — Step-N headers got a separate, unrelated size/weight pass (not this item); body/hint contrast untouched |
+| 2 | **Sticky results column on desktop** | Inputs and the chart they drive are never on screen together after the first viewport | S | ✅ Done — identity + summary + chart pin at `top:12` on ≥861px; column stretched for travel; off on mobile. Empty-space-below is deferred to the collapse-sections pass. |
+| 3 | **Text size + contrast pass** | Helper/label/nav text is 10–11.5px at 3.15:1 — fails WCAG AA, and it's where all the guidance lives | S–M | ✅ Done — `C.muted` #5E6357→#40453B (~3.2:1→5:1 on the page bg, ~8:1 on card); base body font set; `label` token 10→12px; Field hints + the standalone guidance paragraphs 10.5→12px. Table-row metadata and axis/legend text left dense (same category as table headers). |
 | 4 | **Bind drag-model + BC into one guarded control** | The only wrong-answer-not-error input pairing | S | ✅ Done — catalog loads lock to a read-only summary with Override; mismatch guard moved to the drag-model toggle (not the BC field) with an inline confirm, not `window.confirm` (silently no-ops when dialogs are suppressed) |
-| 5 | **Input validation / sanity bounds** | 50,000 fps silently computes a Mach 44 trajectory today | M | ⬜ Open — agreed direction (soft bounds everywhere, hard-guard only BC/weight/MV ≤ 0 against NaN/Infinity) but not built |
-| 6 | **Consistent, obviously-editable input styling** | Underline-only 19px mono fields read as display values, not inputs | M | ⬜ Open |
-| 7 | **Catalog picker → one searchable picker** | Three native selects over 130 calibers; no type-ahead, poor on mobile, can't compare loads while choosing | M–L | 🟡 Partial, by explicit choice — Jake picked the "smallest viable version" (§5) over the full flattened-search rebuild: kept the three-select cascade, swapped native `<select>` for a filterable combobox (substring match, keyboard nav, full ARIA). The stuck amber-warning bug and the duplicate-load data issue (both called out under this item) are fully fixed. |
-| 8 | **Metric mode: convert energy, re-map step/range presets** | Energy still shows `ft·lb` in metric; table lands on 91/183/274 | S | 🟡 Partial — energy unit conversion done (new `energy` category in `units.js`, wired through every display); the step/range-preset re-mapping to clean metric values is not |
-| 9 | **Per-tab form duplication + empty-state dead ends** | Compare/Recoil/Optimal Zero each rebuild a rig form; Compare/Recoil open to "go do something on another tab first" | L | ⬜ Open — discussed (see Q3 below), not built |
-| 10 | **Dark mode** | Outdoor / low-light tool, `color-scheme` is hardcoded `light` (`styles.css:1`) | M | ⬜ Open |
+| 5 | **Input validation / sanity bounds** | 50,000 fps silently computes a Mach 44 trajectory today | M | ✅ Done — wide soft SANITY ranges (a .17 varmint and a .50 BMG both pass) → non-blocking brass "Double-check these values" notice above the results, value echoed in the user's units; still solves. `Number.isFinite` added to the required check so Infinity/NaN land in "Nothing to plot yet". |
+| 6 | **Consistent, obviously-editable input styling** | Underline-only 19px mono fields read as display values, not inputs | M | ✅ Done — `Field` is a full 1.5px `C.rule` bordered box on a recessed `--c-input-bg` fill, matching the selects exactly; unit suffix moved inside (fixes the mobile clipping); value 19→16px; focus border→ink; auth modal fields use the same component. |
+| 7 | **Catalog picker → one searchable picker** | Three native selects over 130 calibers; no type-ahead, poor on mobile, can't compare loads while choosing | M–L | 🟡 Partial, by explicit choice — Jake picked the "smallest viable version" (§5) over the full flattened-search rebuild: kept the three-select cascade, swapped native `<select>` for a filterable combobox (substring match, keyboard nav, full ARIA). The stuck amber-warning bug and the duplicate-load data issue (both called out under this item) are fully fixed. The full flattened-search rebuild is still on the table if the minimal version doesn't hold up. |
+| 8 | **Metric mode: convert energy, re-map step/range presets** | Energy still shows `ft·lb` in metric; table lands on 91/183/274 | S | ✅ Done — energy conversion (new `energy` category in `units.js`, wired through every display); and on a unit switch, "distance out to" / "table every" keep the number and reinterpret it in the new units (500yd/every-100 → 500m/every-100), so the table lands on clean intervals. |
+| 9 | **Per-tab form duplication + empty-state dead ends** | Compare/Recoil/Optimal Zero each rebuild a rig form; Compare/Recoil open to "go do something on another tab first" | L | ✅ Done (the shared-rig half) — `storage/myRig.js` + `RigDriftBar`; Calculator and Optimal Zero share the 5 rig fields (sight/vitals/atmosphere), each with its own editable copy and a Save/Reset bar when they drift. Recoil/Compare turned out not to be rig-form consumers (see Q3 below). The empty-state-dead-end half ("add a round directly from Compare/Recoil") is not built — Recoil already half-does it; Compare still opens to "save something first". |
+| 10 | **Dark mode** | Outdoor / low-light tool, `color-scheme` is hardcoded `light` (`styles.css:1`) | M | ✅ Done — honours `prefers-color-scheme` (no in-app toggle, per the review's "at least honour the OS setting"). Additive `@media` block restating the `--c-*` tokens; military-sage taken to night, accents lifted, contrast checked on the pairs that fail a naive invert. Reviewed both-themes by `ballistics-2a`. |
 
 ---
 

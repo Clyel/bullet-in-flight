@@ -1,13 +1,8 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { C } from "./components/theme.js";
-import { UnitField, StepHead, ChartFallback, Notice } from "./components/ui.jsx";
+import { UnitField, StepHead, Notice } from "./components/ui.jsx";
+import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
-
-// Shares the lazy recharts chunk with Calculator's TrajectoryChart — see
-// the note there. This whole tab is already lazy, but keeping the chart a
-// separate dynamic import means the two chart components pull one shared
-// recharts chunk rather than baking a copy into each tab.
-const CompareChart = lazy(() => import("./components/CompareChart.jsx"));
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, solveFromForm } from "./solveFromForm.js";
 
@@ -102,9 +97,7 @@ export default function Compare() {
           </Notice>
         ) : (
           <>
-            <Suspense fallback={<ChartFallback height={360} />}>
-              <CompareChart results={results} atYd={atYdNum} />
-            </Suspense>
+            <CompareChart results={results} atYd={atYdNum} />
             {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
           </>
         )}

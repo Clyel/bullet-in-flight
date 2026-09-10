@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, ReferenceLine,
-} from "recharts";
+import Plot from "./Plot.jsx";
 import { C, label } from "./theme.js";
 import { sampleAt } from "../ballistics/solver.js";
 import { toDisplay } from "../units.js";
@@ -18,55 +15,54 @@ export default function CompareChart({ results, atYd }) {
   const [showVitals, setShowVitals] = useState(false);
 
   // The whole sample grid is rebuilt only when the loads, the "Compare at"
-  // distance, or the unit system actually change — not on the local
-  // `showVitals` toggle or any unrelated parent re-render. It's
-  // SAMPLES * results * sampleAt(~3000-pt path) of work; unmemoised it ran
-  // every render.
-  const { data, yDomain, distinctRadii, maxRangeCanonical } = useMemo(() => {
+  // distance, or the unit system change — not on the local `showVitals`
+  // toggle or an unrelated re-render. It's SAMPLES * results *
+  // sampleAt(~3000-pt path) of work.
+  const { series, xs, yDomain, distinctRadii, maxRangeCanonical } = useMemo(() => {
     const distc = (yd) => toDisplay(yd, "distance", system);
     const lenc = (inches) => toDisplay(inches, "length", system);
 
     // Compared loads carry their own vitals radius (a deer load and a moose
-    // load saved separately can genuinely differ) — draw one band per
-    // distinct value present. Loads saved before this field existed have no
-    // radius and just don't get a band.
+    // load saved separately can genuinely differ) — one band per distinct
+    // value present. Loads saved before this field existed have none.
     const distinctRadii = [...new Set(
       results.map((r) => r.vitalsRadiusIn).filter((r) => Number.isFinite(r) && r > 0)
     )].sort((a, b) => a - b);
 
-    // The chart zooms to whatever "Compare at" is set to. Falls back to the
-    // longest selected load's own range if it's empty/invalid, so the chart
-    // never collapses to nothing.
+    // The chart zooms to "Compare at"; falls back to the longest selected
+    // load's own range if it's empty/invalid so it never collapses.
     const maxRangeCanonical = Number.isFinite(atYd) && atYd > 0
       ? atYd
       : Math.max(...results.map((r) => r.solution.last.range));
 
-    // One shared x-grid so every line's series lives in a single recharts
-    // `data` array (needed for the tooltip/crosshair across series) — each
-    // load's path is re-sampled onto it via sampleAt in canonical yards,
-    // then converted to display units. A load's line stops (null) past its
-    // own charted distance rather than holding flat.
-    const data = [];
+    // A shared x-grid; each load re-sampled onto it (in canonical yards —
+    // sampleAt only knows canonical), then converted to display units. A
+    // load's line goes null past its own charted distance rather than
+    // holding flat, so a shorter-range load doesn't imply data it lacks.
+    const xs = [];
+    for (let i = 0; i <= SAMPLES; i++) xs.push(+distc((maxRangeCanonical * i) / SAMPLES).toFixed(2));
+
     let minH = Infinity;
     let maxH = -Infinity;
-    for (let i = 0; i <= SAMPLES; i++) {
-      const dCanonical = (maxRangeCanonical * i) / SAMPLES;
-      const row = { d: +distc(dCanonical).toFixed(2) };
-      for (const r of results) {
-        if (dCanonical <= r.solution.last.range) {
-          const p = sampleAt(r.solution.path, dCanonical);
-          row[r.id] = +lenc(p.y).toFixed(2);
-          if (p.y < minH) minH = p.y;
-          if (p.y > maxH) maxH = p.y;
-        } else {
-          row[r.id] = null;
-        }
-      }
-      data.push(row);
-    }
+    const series = results.map((r, idx) => ({
+      key: r.id,
+      name: r.name,
+      color: PALETTE[idx % PALETTE.length],
+      points: xs.map((dDisplay, i) => {
+        const dCanonical = (maxRangeCanonical * i) / SAMPLES;
+        if (dCanonical > r.solution.last.range) return null;
+        const p = sampleAt(r.solution.path, dCanonical);
+        if (p.y < minH) minH = p.y;
+        if (p.y > maxH) maxH = p.y;
+        return { x: dDisplay, y: +lenc(p.y).toFixed(2) };
+      }),
+    }));
+
     const yDomain = Number.isFinite(minH) ? [lenc(minH - 12), lenc(maxH + 12)] : [lenc(-12), lenc(12)];
-    return { data, yDomain, distinctRadii, maxRangeCanonical };
+    return { series, xs, yDomain, distinctRadii, maxRangeCanonical };
   }, [results, atYd, system]);
+
+  const atInRange = Number.isFinite(atYd) && atYd > 0 && atYd <= maxRangeCanonical;
 
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`,
@@ -79,59 +75,38 @@ export default function CompareChart({ results, atYd }) {
         </label>
       </div>
 
-      <div style={{ width: "100%", height: 340 }}>
-        <ResponsiveContainer>
-          <LineChart data={data} margin={{ top: 8, right: 20, bottom: 30, left: 6 }}>
-            <CartesianGrid stroke={C.rule} strokeDasharray="2 4" />
-            <ReferenceLine y={0} stroke={C.ink} strokeWidth={1.4} strokeDasharray="6 3" />
-
-            {Number.isFinite(atYd) && atYd > 0 && atYd <= maxRangeCanonical && (
-              <ReferenceLine x={+dist(atYd).toFixed(2)} stroke={C.brass} strokeWidth={1.4} strokeDasharray="3 3"
-                             label={{ value: "COMPARE AT", position: "insideTopRight",
-                                      fill: C.brass, fontSize: 10, letterSpacing: "0.1em",
-                                      fontFamily: "'Oswald',sans-serif" }} />
-            )}
-
-            {showVitals && distinctRadii.map((radiusIn) => (
-              <React.Fragment key={radiusIn}>
-                <ReferenceLine y={len(radiusIn)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3"
-                               label={{ value: `${radiusIn}${lSuf.toUpperCase()} VITALS`, position: "insideBottomRight",
-                                        fill: C.vitals, fontSize: 10, letterSpacing: "0.1em",
-                                        fontFamily: "'Oswald',sans-serif" }} />
-                <ReferenceLine y={len(-radiusIn)} stroke={C.vitals} strokeWidth={1.4} strokeDasharray="3 3" />
-              </React.Fragment>
-            ))}
-
-            <XAxis dataKey="d" type="number" domain={[0, dist(maxRangeCanonical)]}
-              tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}
-              stroke={C.rule}
-              label={{ value: `DISTANCE (${dSuf.toUpperCase()})`, position: "bottom", offset: 8,
-                       fill: C.muted, fontSize: 10, letterSpacing: "0.14em",
-                       fontFamily: "'Oswald',sans-serif" }} />
-            <YAxis width={54} domain={yDomain} allowDataOverflow
-              tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}
-              tickFormatter={(val) => Math.round(val)}
-              stroke={C.rule}
-              label={{ value: `HEIGHT (${lSuf.toUpperCase()})`, angle: -90, position: "insideLeft", offset: 14,
-                       fill: C.muted, fontSize: 10, letterSpacing: "0.14em",
-                       fontFamily: "'Oswald',sans-serif" }} />
-
-            <Tooltip
-              contentStyle={{ background: C.card, border: `1.5px solid ${C.ink}`,
-                              borderRadius: 0, font: "400 12px 'IBM Plex Mono',monospace" }}
-              labelFormatter={(d) => `${d} ${dSuf}`}
-              formatter={(val) => (val == null ? null : [`${val} ${lSuf}`, undefined])} />
-            <Legend verticalAlign="top" height={42}
-                    wrapperStyle={{ fontSize: 11, fontFamily: "'IBM Plex Sans',sans-serif", color: C.muted }} />
-
-            {results.map((r, i) => (
-              <Line key={r.id} type="monotone" dataKey={r.id} name={r.name}
-                    stroke={PALETTE[i % PALETTE.length]} strokeWidth={2.2}
-                    dot={false} connectNulls={false} isAnimationActive={false} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <Plot
+        height={340}
+        legend
+        series={series}
+        xDomain={[0, dist(maxRangeCanonical)]}
+        yDomain={yDomain}
+        xLabel={`DISTANCE (${dSuf.toUpperCase()})`}
+        yLabel={`HEIGHT (${lSuf.toUpperCase()})`}
+        xFormat={(v) => String(Math.round(v))}
+        yFormat={(v) => String(Math.round(v))}
+        refLines={[
+          { axis: "y", value: 0, color: C.ink, dash: "6 3" },
+          ...(atInRange
+            ? [{ axis: "x", value: dist(atYd), color: C.brass, label: "COMPARE AT" }]
+            : []),
+          ...(showVitals
+            ? distinctRadii.flatMap((radiusIn) => [
+                { axis: "y", value: len(radiusIn), color: C.vitals, label: `${radiusIn}${lSuf.toUpperCase()} VITALS` },
+                { axis: "y", value: len(-radiusIn), color: C.vitals },
+              ])
+            : []),
+        ]}
+        tooltipRows={(xVal) => {
+          const i = xs.indexOf(xVal);
+          return series
+            .map((s) => {
+              const p = i >= 0 ? s.points[i] : null;
+              return p ? { label: s.name, value: `${p.y} ${lSuf}`, color: s.color } : null;
+            })
+            .filter(Boolean);
+        }}
+      />
     </div>
   );
 }

@@ -7,9 +7,9 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import AuthPanel from "./components/AuthPanel.jsx";
 
 // Calculator is the landing tab — keep it in the initial bundle. The other
-// four are split out and fetched on first visit to each: Compare pulls in
-// the second recharts consumer, Help + its DopeChart-adjacent weight are
-// dead code for anyone who never opens them.
+// four are split out and fetched on first visit to each, so their code
+// (and the catalog data Recoil/Optimal Zero pull in) isn't parsed for a
+// visitor who never opens them.
 import Calculator from "./Calculator.jsx";
 const Compare = lazy(() => import("./Compare.jsx"));
 const OptimalZero = lazy(() => import("./OptimalZero.jsx"));

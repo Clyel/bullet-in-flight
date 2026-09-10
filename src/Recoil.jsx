@@ -260,8 +260,8 @@ export default function Recoil() {
 // A simple horizontal bar per setup keeps the energy comparison readable at
 // a glance once there are more than two or three rows — the table above has
 // the exact numbers, this is just for the "which of these kicks harder"
-// read. Plain SVG, no charting library: the app already reserves recharts
-// for the trajectory line charts, and a handful of static bars don't need it.
+// read. Plain inline SVG, like every chart in the app now (see
+// components/Plot.jsx) — a handful of static bars don't even need that.
 function RecoilBars({ results }) {
   const { energy, eSuf } = useUnitFormatters();
   // Bar width is a ratio (r.energy / max) -- unit-invariant, since both

@@ -5,10 +5,10 @@ import { C } from "./theme.js";
  * Catches render/lifecycle errors in its subtree and shows a contained
  * fallback instead of letting them blank the whole page. Used twice in
  * App.jsx: once around the whole shell, and once around the active tab's
- * body keyed by tab name — so a throw in Compare (bad saved record, recharts
- * on a degenerate domain, a solver edge case that NaNs a formatter) leaves
- * Calculator and the user's saved data reachable, and switching tabs clears
- * it. Must be a class — React only exposes error catching via
+ * body keyed by tab name — so a throw in Compare (a bad saved record, a
+ * solver edge case that NaNs a formatter, a chart on a degenerate domain)
+ * leaves Calculator and the user's saved data reachable, and switching
+ * tabs clears it. Must be a class — React only exposes error catching via
  * getDerivedStateFromError / componentDidCatch, both class-only.
  */
 export default class ErrorBoundary extends React.Component {

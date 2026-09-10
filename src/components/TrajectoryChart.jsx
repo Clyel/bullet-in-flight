@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceArea, ReferenceLine, ReferenceDot,
-} from "recharts";
+import Plot from "./Plot.jsx";
 import { C, label } from "./theme.js";
 import { toDisplay } from "../units.js";
 import { useUnitFormatters } from "../useUnitFormatters.js";
@@ -89,74 +86,50 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
         </div>
       </div>
 
-      <div style={{ width: "100%", height: 310 }}>
-        <ResponsiveContainer>
-          <LineChart data={data} margin={{ top: 8, right: 20, bottom: 24, left: 6 }}>
-            <CartesianGrid stroke={C.rule} strokeDasharray="2 4" />
-
-            {transonicYd != null && (
-              <ReferenceArea yAxisId="height" x1={dist(transonicYd)} x2={subsonicYd != null ? dist(subsonicYd) : dist(maxRangeYd)}
-                             fill={C.brass} fillOpacity={0.16} />
-            )}
-            {subsonicYd != null && (
-              <ReferenceArea yAxisId="height" x1={dist(subsonicYd)} x2={dist(maxRangeYd)} fill={C.ox} fillOpacity={0.16} />
-            )}
-
-            <ReferenceLine yAxisId="height" y={0} stroke={C.ink} strokeWidth={1.4} strokeDasharray="6 3" />
-
-            {showVitals && hasVitalsRadius && (
-              <>
-                <ReferenceLine yAxisId="height" y={len(vitalsRadiusIn)} stroke={C.vitals}
-                               strokeWidth={1.4} strokeDasharray="3 3"
-                               label={{ value: "VITALS ZERO", position: "insideBottomRight",
-                                        fill: C.vitals, fontSize: 10, letterSpacing: "0.1em",
-                                        fontFamily: "'Oswald',sans-serif" }} />
-                <ReferenceLine yAxisId="height" y={len(-vitalsRadiusIn)} stroke={C.vitals}
-                               strokeWidth={1.4} strokeDasharray="3 3" />
-              </>
-            )}
-
-            <XAxis dataKey="d" type="number" domain={[0, dist(maxRangeYd)]}
-              tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}
-              stroke={C.rule}
-              label={{ value: `DISTANCE (${dSuf.toUpperCase()})`, position: "insideBottom", offset: -14,
-                       fill: C.muted, fontSize: 10, letterSpacing: "0.14em",
-                       fontFamily: "'Oswald',sans-serif" }} />
-            <YAxis yAxisId="height" width={54} domain={yDomain} allowDataOverflow
-              tick={{ fill: C.muted, fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" }}
-              tickFormatter={(val) => Math.round(val)}
-              stroke={C.rule}
-              label={{ value: `HEIGHT (${lSuf.toUpperCase()})`, angle: -90, position: "insideLeft", offset: 14,
-                       fill: C.muted, fontSize: 10, letterSpacing: "0.14em",
-                       fontFamily: "'Oswald',sans-serif" }} />
-            {/* Hidden axis for the velocity/mach tooltip-only series, so their much
-                larger range (fps, up to muzzle velocity) can't stretch the height axis. */}
-            <YAxis yAxisId="helper" hide domain={["auto", "auto"]} />
-
-            <Tooltip
-              contentStyle={{ background: C.card, border: `1.5px solid ${C.ink}`,
-                              borderRadius: 0, font: "400 12px 'IBM Plex Mono',monospace" }}
-              labelFormatter={(d) => `${d} ${dSuf}`}
-              formatter={(val, key) => {
-                if (key === "h") return [`${val} ${lSuf}`, "Height"];
-                if (key === "v") return [`${val} ${vSuf}`, "Velocity"];
-                return [val, "Mach"];
-              }} />
-
-            <Line yAxisId="height" type="monotone" dataKey="h" stroke={C.steel} strokeWidth={2.2}
-                  dot={false} isAnimationActive={false} />
-            <Line yAxisId="helper" dataKey="v" stroke="none" dot={false} legendType="none" isAnimationActive={false} />
-            <Line yAxisId="helper" dataKey="mach" stroke="none" dot={false} legendType="none" isAnimationActive={false} />
-
-            {crossings.map((x, i) => (
-              <ReferenceDot key={i} yAxisId="height" x={+dist(x).toFixed(2)} y={0} r={4}
-                            fill={C.card} stroke={C.ink} strokeWidth={1.6} />
-            ))}
-            <ReferenceDot yAxisId="height" x={+dist(apex.range).toFixed(2)} y={+len(apex.height).toFixed(2)} r={3.5}
-                          fill={C.brass} stroke={C.ink} strokeWidth={1.2} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <Plot
+        height={310}
+        series={[{ key: "h", color: C.steel, points: data.map((p) => ({ x: p.d, y: p.h })) }]}
+        xDomain={[0, dist(maxRangeYd)]}
+        yDomain={yDomain}
+        xLabel={`DISTANCE (${dSuf.toUpperCase()})`}
+        yLabel={`HEIGHT (${lSuf.toUpperCase()})`}
+        xFormat={(v) => String(Math.round(v))}
+        yFormat={(v) => String(Math.round(v))}
+        refAreas={[
+          transonicYd != null && {
+            x1: dist(transonicYd),
+            x2: subsonicYd != null ? dist(subsonicYd) : dist(maxRangeYd),
+            color: C.brass,
+          },
+          subsonicYd != null && { x1: dist(subsonicYd), x2: dist(maxRangeYd), color: C.ox },
+        ].filter(Boolean)}
+        refLines={[
+          { axis: "y", value: 0, color: C.ink, dash: "6 3" },
+          ...(showVitals && hasVitalsRadius
+            ? [
+                { axis: "y", value: len(vitalsRadiusIn), color: C.vitals, label: "VITALS ZERO" },
+                { axis: "y", value: len(-vitalsRadiusIn), color: C.vitals },
+              ]
+            : []),
+        ]}
+        refDots={[
+          ...crossings.map((x) => ({
+            x: dist(x), y: 0, r: 4, fill: C.card, stroke: C.ink, strokeWidth: 1.6,
+          })),
+          {
+            x: dist(apex.range), y: len(apex.height), r: 3.5,
+            fill: C.brass, stroke: C.ink, strokeWidth: 1.2,
+          },
+        ]}
+        tooltipRows={(xVal) => {
+          const p = data.find((row) => row.d === xVal) ?? data[data.length - 1];
+          return [
+            { label: "Height", value: `${p.h} ${lSuf}`, color: C.steel },
+            { label: "Velocity", value: `${p.v} ${vSuf}` },
+            { label: "Mach", value: String(p.mach) },
+          ];
+        }}
+      />
 
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", padding: "4px 6px 8px",
                     font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>

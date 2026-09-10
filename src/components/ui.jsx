@@ -63,22 +63,6 @@ export function UnitField({ label: text, hint, category, value, onChange }) {
 }
 
 /**
- * Placeholder shown while a lazy-loaded chart component (recharts is split
- * into its own async chunk — see Calculator.jsx / Compare.jsx) is in
- * flight. Fixed height so the sticky results column and the page below it
- * don't jump when the real chart swaps in.
- */
-export function ChartFallback({ height = 340 }) {
-  return (
-    <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, marginBottom: 16, height,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  font: "400 12px 'IBM Plex Sans',sans-serif", color: C.muted }}>
-      Rendering chart…
-    </div>
-  );
-}
-
-/**
  * The bordered, left-accented callout used for every "nothing to plot yet",
  * "couldn't solve", "double-check these values" message across Calculator,
  * Compare, Optimal Zero and Recoil. `tone` is a C.* colour (C.ox for

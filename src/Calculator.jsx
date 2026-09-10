@@ -1,16 +1,11 @@
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
+import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
-import { ImportActions, ChartFallback, Notice } from "./components/ui.jsx";
-
-// recharts + its d3-* deps (~78 KB gzip) are the app's heaviest single
-// piece and are used only by this chart and Compare's. Loading it lazily
-// keeps it off the initial parse; the summary strip and range table below
-// are the numeric source of truth and render immediately regardless.
-const TrajectoryChart = lazy(() => import("./components/TrajectoryChart.jsx"));
+import { ImportActions, Notice } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
@@ -306,13 +301,11 @@ export default function Calculator() {
             <div className="bif-results">
               <LoadIdentity v={v} />
               <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
-              <Suspense fallback={<ChartFallback height={420} />}>
-                <TrajectoryChart
-                  solution={solution} maxRangeYd={maxRangeYd}
-                  vitalsRadiusIn={num(v.vitalsRadiusIn)}
-                  baseBallisticParams={baseParams}
-                />
-              </Suspense>
+              <TrajectoryChart
+                solution={solution} maxRangeYd={maxRangeYd}
+                vitalsRadiusIn={num(v.vitalsRadiusIn)}
+                baseBallisticParams={baseParams}
+              />
             </div>
 
             <div style={{ display: "flex", gap: 18, marginBottom: 8 }}>

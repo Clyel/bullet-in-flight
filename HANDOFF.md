@@ -70,9 +70,10 @@ boundary — see `CODE-REVIEW.md`).
 
 **Features, roughly in priority order:**
 1. **More ammo manufacturers.** Winchester (PR #7, +252), Barnes (PR #8, +137),
-   Berger (PR #9, +34, all G7) and Nosler (PR #10, +174, derived BC) landed
-   2026-09-10. Research done on the rest — next: **Browning** → Norma. CCI is
-   rimfire-only, out of scope unless a rimfire section is added.
+   Berger (PR #9, +34, all G7), Nosler (PR #10, +174, derived BC) and Browning
+   (PR #11, +50) landed 2026-09-10 — nine manufacturers, ~1,490 loads. Next:
+   **Norma**; after that the big gaps are filled (Lapua/Sig/PPU etc. are small
+   or need OCR). CCI is rimfire-only — out of scope without a rimfire section.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
    derive script, then the cartridge-name normalization pass before merge.
 2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"

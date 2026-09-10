@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
@@ -9,6 +9,8 @@ import { ImportActions } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
+import { useUnits } from "./UnitsContext.jsx";
+import { toDisplay, toCanonical } from "./units.js";
 
 // 30-06 Springfield, Remington Premier Long Range 172gr (Speer Impact).
 // MV/BC published directly by Remington: remington.com/rifle/premier-long-range/29-R21344.html
@@ -62,10 +64,35 @@ export default function Calculator() {
   }
 
   const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
+  const { system } = useUnits();
   const [saveName, setSaveName] = useState("");
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
   const [printing, setPrinting] = useState(false);
+
+  // "Distance out to" and "table every" are chart-display preferences, not
+  // physical properties of the load -- a metric shooter wants "out to
+  // 500 m, every 100 m", not the yard values mechanically converted to
+  // 457 / 91 (the review's "table lands on 91/183/274"). So on a unit
+  // switch, keep the number the user is looking at and reinterpret it in
+  // the new units -- the same thing the step presets have always done (25/
+  // 50/100 mean that in whichever system). Rounding to 2 decimals lands
+  // exactly on stepCanonicalValue()'s output, so a selected preset stays
+  // selected. Every other field is a real quantity and converts normally.
+  const prevSystem = useRef(system);
+  useEffect(() => {
+    const from = prevSystem.current;
+    if (from === system) return;
+    prevSystem.current = system;
+    setState((s) => {
+      const keepNumber = (canonical) => {
+        const shown = toDisplay(num(canonical), "distance", from);
+        if (!Number.isFinite(shown)) return canonical;
+        return String(Math.round(toCanonical(shown, "distance", system) * 100) / 100);
+      };
+      return { ...s, maxRangeYd: keepNumber(s.maxRangeYd), tableStepYd: keepNumber(s.tableStepYd) };
+    });
+  }, [system]);
   // Whether the BC/drag-model guard is unlocked for the *current* catalog
   // load. Lives here (not as an effect keyed on v.cartridge in InputPanel)
   // because a cartridge string alone can't tell "still the same pick" from
@@ -175,7 +202,7 @@ export default function Calculator() {
         bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
       />
 
-      <div>
+      <div className="bif-results-col">
         {importCount > 0 && (
           <Notice tone={C.brass} title="Saved loads found on this device">
             {importCount} {importCount === 1 ? "load" : "loads"} saved locally, from before you signed in.
@@ -198,13 +225,15 @@ export default function Calculator() {
 
         {solution && (
           <>
-            <LoadIdentity v={v} />
-            <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
-            <TrajectoryChart
-              solution={solution} maxRangeYd={maxRangeYd}
-              vitalsRadiusIn={num(v.vitalsRadiusIn)}
-              baseBallisticParams={baseBallisticParams(v)}
-            />
+            <div className="bif-results">
+              <LoadIdentity v={v} />
+              <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
+              <TrajectoryChart
+                solution={solution} maxRangeYd={maxRangeYd}
+                vitalsRadiusIn={num(v.vitalsRadiusIn)}
+                baseBallisticParams={baseBallisticParams(v)}
+              />
+            </div>
 
             <div style={{ display: "flex", gap: 18, marginBottom: 8 }}>
               <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>

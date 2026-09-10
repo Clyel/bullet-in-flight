@@ -66,8 +66,8 @@ export default function Help({ scrollTarget }) {
         </P>
         <Sub>The load</Sub>
         <P>
-          Pick a round from the built-in catalog (~1,730 commercial loads across Remington, Winchester, Nosler, Norma, Barnes,
-          Federal, Hornady, Weatherby, Berger, and Browning) — it fills muzzle velocity, ballistic coefficient, drag model, and bullet weight. Or type your
+          Pick a round from the built-in catalog (~1,800 commercial loads across Remington, Winchester, Nosler, Norma, Barnes,
+          Federal, Hornady, Weatherby, Berger, Browning, and Lapua) — it fills muzzle velocity, ballistic coefficient, drag model, and bullet weight. Or type your
           own numbers directly, e.g. for a handload. Whichever drag model you pick (G1 or G7) has to match how
           your BC was published — mixing them gives wrong answers. G1 fits older flat-base bullets, G7 fits modern
           boat-tails more accurately; most manufacturers only publish G1 in bulk, which is why the catalog is G1

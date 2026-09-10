@@ -159,26 +159,40 @@ export function solveZeroAngle(params) {
   return a1;
 }
 
-/** Interpolates the path at an exact range. */
+/**
+ * Interpolates the path at an exact range. `path` is sorted ascending by x
+ * (downrange distance only ever increases), so this binary-searches for the
+ * bracketing pair rather than scanning from the start — the chart
+ * resamplers call it hundreds of times per render against a ~3000-point
+ * path, which made a linear scan O(samples * n).
+ */
 export function sampleAt(path, rangeYd) {
   if (!path.length) return null;
   if (rangeYd <= path[0].x) return path[0];
-  for (let i = 1; i < path.length; i++) {
-    if (path[i].x >= rangeYd) {
-      const a = path[i - 1];
-      const b = path[i];
-      const f = (rangeYd - a.x) / (b.x - a.x);
-      return {
-        x: rangeYd,
-        y: a.y + (b.y - a.y) * f,
-        z: a.z + (b.z - a.z) * f,
-        v: a.v + (b.v - a.v) * f,
-        t: a.t + (b.t - a.t) * f,
-        mach: a.mach + (b.mach - a.mach) * f,
-      };
-    }
+  const last = path.length - 1;
+  if (rangeYd >= path[last].x) return path[last];
+
+  // First index whose x is >= rangeYd. Guaranteed to exist in [1, last]
+  // given the two boundary checks above.
+  let lo = 1;
+  let hi = last;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (path[mid].x < rangeYd) lo = mid + 1;
+    else hi = mid;
   }
-  return path[path.length - 1];
+  const a = path[lo - 1];
+  const b = path[lo];
+  const span = b.x - a.x;
+  const f = span > 0 ? (rangeYd - a.x) / span : 0; // span 0 only if two samples coincide
+  return {
+    x: rangeYd,
+    y: a.y + (b.y - a.y) * f,
+    z: a.z + (b.z - a.z) * f,
+    v: a.v + (b.v - a.v) * f,
+    t: a.t + (b.t - a.t) * f,
+    mach: a.mach + (b.mach - a.mach) * f,
+  };
 }
 
 /** First range at which the bullet falls to or below a given Mach number. */

@@ -43,31 +43,34 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
   const lSuf = unitSuffix("length", system);
   const vSuf = unitSuffix("velocity", system);
 
-  // Thin the integration path down to something a chart can draw. Plotted
-  // in display units from the start, so everything downstream (domain,
-  // reference lines) can just work with what's already on-screen.
-  const stride = Math.max(1, Math.ceil(path.length / 400));
-  const data = path.filter((_, i) => i % stride === 0).map((p) => ({
-    d: +dist(p.x).toFixed(2),
-    h: +len(p.y).toFixed(2),
-    v: Math.round(toDisplay(p.v, "velocity", system)),
-    mach: +p.mach.toFixed(2),
-  }));
-  const tail = path[path.length - 1];
-  data.push({ d: +dist(tail.x).toFixed(2), h: +len(tail.y).toFixed(2),
-              v: Math.round(toDisplay(tail.v, "velocity", system)), mach: +tail.mach.toFixed(2) });
+  // Thin the integration path down to something a chart can draw, and find
+  // the y-extent for a tight domain (not recharts' auto-padded round
+  // numbers, which could balloon a +2/-432in path out to -900/+2700).
+  // Rebuilt only when the path or unit system changes — not on the local
+  // vitals/optimal toggles or an unrelated parent re-render.
+  const { data, yDomain } = useMemo(() => {
+    const distc = (yd) => toDisplay(yd, "distance", system);
+    const lenc = (inches) => toDisplay(inches, "length", system);
 
-  // Y domain: tight around the actual trajectory, not recharts' auto-padded
-  // "nice round numbers" (which could balloon a +2/-432in path out to a
-  // -900/+2700 axis). 12in of headroom (canonical, converted below) past
-  // whichever extreme it reaches.
-  let minH = Infinity;
-  let maxH = -Infinity;
-  for (const p of path) {
-    if (p.y < minH) minH = p.y;
-    if (p.y > maxH) maxH = p.y;
-  }
-  const yDomain = [len(minH - 12), len(maxH + 12)];
+    const stride = Math.max(1, Math.ceil(path.length / 400));
+    const data = path.filter((_, i) => i % stride === 0).map((p) => ({
+      d: +distc(p.x).toFixed(2),
+      h: +lenc(p.y).toFixed(2),
+      v: Math.round(toDisplay(p.v, "velocity", system)),
+      mach: +p.mach.toFixed(2),
+    }));
+    const tail = path[path.length - 1];
+    data.push({ d: +distc(tail.x).toFixed(2), h: +lenc(tail.y).toFixed(2),
+                v: Math.round(toDisplay(tail.v, "velocity", system)), mach: +tail.mach.toFixed(2) });
+
+    let minH = Infinity;
+    let maxH = -Infinity;
+    for (const p of path) {
+      if (p.y < minH) minH = p.y;
+      if (p.y > maxH) maxH = p.y;
+    }
+    return { data, yDomain: [lenc(minH - 12), lenc(maxH + 12)] };
+  }, [path, system]);
 
   const swatch = (color) => ({
     display: "inline-block", width: 10, height: 10,

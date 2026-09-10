@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { C, label } from "./theme.js";
+import { C } from "./theme.js";
 import { Field, Segmented } from "./ui.jsx";
 import { useAuth } from "../AuthContext.jsx";
 
@@ -72,7 +72,7 @@ function AuthModal({ initialMode, onClose, signUp, signIn }) {
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(26,28,24,0.5)",
+      style={{ position: "fixed", inset: 0, background: "var(--c-scrim)",
                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
     >
       <div
@@ -93,16 +93,7 @@ function AuthModal({ initialMode, onClose, signUp, signIn }) {
                    value={username} onChange={setUsername} />
           )}
           <Field label="Email" inputMode="email" value={email} onChange={setEmail} />
-          <label style={{ display: "block", marginBottom: 14 }}>
-            <span style={{ ...label, display: "block" }}>Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", border: "none", borderBottom: `1.5px solid ${C.rule}`, background: "transparent",
-                       outline: "none", padding: "2px 0 3px", font: "500 19px/1.2 'IBM Plex Mono',monospace", color: C.ink }}
-            />
-          </label>
+          <Field label="Password" type="password" inputMode="text" value={password} onChange={setPassword} />
 
           {error && (
             <div style={{ marginBottom: 12, font: "500 12px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>

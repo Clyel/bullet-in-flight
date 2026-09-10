@@ -82,9 +82,9 @@ export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
             const subsonic = r.mach < 1.0;
             const transonic = r.mach >= 1.0 && r.mach < 1.2;
             const bg = subsonic
-              ? "rgba(140,59,46,.10)"
+              ? "var(--c-shade-subsonic)"
               : transonic
-              ? "rgba(138,106,23,.12)"
+              ? "var(--c-shade-transonic)"
               : i % 2
               ? C.cardAlt
               : C.card;

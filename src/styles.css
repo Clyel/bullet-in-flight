@@ -1,10 +1,36 @@
-:root { color-scheme: light; }
+/* The palette lives here now, not as hex literals in theme.js -- theme.js's
+   `C` is a map of var() refs pointing at these, so every inline
+   `style={{ color: C.muted }}` themes itself with zero component changes.
+   Pass 2 adds a `prefers-color-scheme: dark` block that only redefines
+   these tokens. */
+:root {
+  color-scheme: light;
+  --c-field:    #B7BBAD;
+  --c-card:     #E9E7DC;
+  --c-card-alt: #DEDBCD;
+  --c-ink:      #1A1C18;
+  --c-muted:    #40453B; /* darkened from #5E6357 for AA on the sage bg */
+  --c-rule:     #A8AC9C;
+  --c-brass:    #8A6A17;
+  --c-ox:       #8C3B2E;
+  --c-steel:    #3E5A6E;
+  --c-vitals:   #4B6B3A;
+  /* low-alpha tints that were hardcoded rgba() at their call sites --
+     tokenised so the dark block can restate them */
+  --c-shade-transonic: rgba(138, 106, 23, 0.12);
+  --c-shade-subsonic:  rgba(140, 59, 46, 0.10);
+  --c-scrim:           rgba(26, 28, 24, 0.5);
+}
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 /* Without an explicit family the body falls back to the UA serif (Times
    on most browsers) -- every text container overrides it, but a base
    here is the safety net the review asked for. */
-body { background: #B7BBAD; color: #1A1C18; font: 400 14px/1.5 'IBM Plex Sans', system-ui, sans-serif; }
+body { background: var(--c-field); color: var(--c-ink); font: 400 14px/1.5 'IBM Plex Sans', system-ui, sans-serif; }
+
+/* Text fields (ui.jsx Field): the box border goes ink on focus, on top of
+   the global focus-visible outline below. */
+.bif-field:focus-within { border-color: var(--c-ink); }
 
 table { border-collapse: collapse; width: 100%; }
 
@@ -40,7 +66,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 button:focus-visible,
-input:focus-visible { outline: 2px solid #8A6A17; outline-offset: 2px; }
+input:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

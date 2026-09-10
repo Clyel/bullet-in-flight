@@ -1,23 +1,27 @@
 // Field-card palette: drab card stock, blued steel, cartridge brass, oxblood.
+// The actual values live in styles.css `:root` -- these are var() refs, so
+// an inline `style={{ color: C.muted }}` resolves through CSS and themes
+// itself when the dark block redefines the tokens. Nothing here does colour
+// math on the strings; if that's ever needed, read the computed value off
+// the element rather than parsing these.
 export const C = {
-  field:   "#B7BBAD",
-  card:    "#E9E7DC",
-  cardAlt: "#DEDBCD",
-  ink:     "#1A1C18",
-  // Darkened from #5E6357 (~3.15:1 on the sage page bg -- fails WCAG AA
-  // for the small sizes it's used at). #40453B lands ~5.3:1 and still
-  // sits well below ink, so the muted/primary hierarchy holds.
-  muted:   "#40453B",
-  rule:    "#A8AC9C",
-  brass:   "#8A6A17",
-  ox:      "#8C3B2E",
-  steel:   "#3E5A6E",
-  vitals:  "#4B6B3A",
+  field:   "var(--c-field)",
+  card:    "var(--c-card)",
+  cardAlt: "var(--c-card-alt)",
+  ink:     "var(--c-ink)",
+  muted:   "var(--c-muted)",
+  rule:    "var(--c-rule)",
+  brass:   "var(--c-brass)",
+  ox:      "var(--c-ox)",
+  steel:   "var(--c-steel)",
+  vitals:  "var(--c-vitals)",
 };
 
 export const label = {
-  font: "600 10px 'Oswald',sans-serif",
-  letterSpacing: ".14em",
+  // Bumped 10px -> 12px (review §2: 10px labels/hints fail the size floor).
+  // Tracking eased from .14em since the larger glyphs need less of it.
+  font: "600 12px 'Oswald',sans-serif",
+  letterSpacing: ".1em",
   textTransform: "uppercase",
   color: C.muted,
 };

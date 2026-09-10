@@ -4,29 +4,39 @@ import { useUnits } from "../UnitsContext.jsx";
 import { useAuth } from "../AuthContext.jsx";
 import { fieldDisplayValue, fieldCanonicalValue, unitSuffix } from "../units.js";
 
-export function Field({ label: text, hint, value, onChange, suffix, inputMode = "decimal" }) {
+// A full bordered box, matching the catalog selects (same 1.5px C.rule
+// border, same 7px 8px padding) so the form reads as one input system --
+// underline-only fields reliably test as "not editable", and a subtle
+// fill can't carry that signal on this sage/tan palette. The unit suffix
+// lives inside the box, right-aligned and pointer-events:none, so a tap
+// still lands on the field and it can't clip off the edge on mobile.
+// Focus takes the border to C.ink via .bif-field:focus-within in styles.css.
+export function Field({ label: text, hint, value, onChange, suffix, type, inputMode = "decimal" }) {
   return (
     <label style={{ display: "block", marginBottom: 14 }}>
-      <span style={{ ...label, display: "block" }}>{text}</span>
-      <span style={{ display: "flex", alignItems: "baseline", gap: 6,
-                     borderBottom: `1.5px solid ${C.rule}`, paddingBottom: 3 }}>
+      <span style={{ ...label, display: "block", marginBottom: 4 }}>{text}</span>
+      <span className="bif-field"
+            style={{ display: "flex", alignItems: "center", gap: 6,
+                     border: `1.5px solid ${C.rule}`, background: C.card, padding: "7px 8px" }}>
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          type={type}
           inputMode={inputMode}
           style={{ flex: 1, minWidth: 0, border: "none", background: "transparent",
-                   outline: "none", padding: "2px 0",
-                   font: "500 19px/1.2 'IBM Plex Mono',monospace", color: C.ink }}
+                   outline: "none", padding: 0,
+                   font: "500 16px/1.2 'IBM Plex Mono',monospace", color: C.ink }}
         />
         {suffix && (
-          <span style={{ font: "400 11px 'IBM Plex Mono',monospace", color: C.muted }}>
+          <span style={{ flex: "none", font: "400 11px 'IBM Plex Mono',monospace",
+                         color: C.muted, pointerEvents: "none" }}>
             {suffix}
           </span>
         )}
       </span>
       {hint && (
-        <span style={{ display: "block", marginTop: 3,
-                       font: "400 10.5px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        <span style={{ display: "block", marginTop: 4,
+                       font: "400 12px/1.4 'IBM Plex Sans',sans-serif", color: C.muted }}>
           {hint}
         </span>
       )}

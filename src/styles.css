@@ -84,23 +84,42 @@ table { border-collapse: collapse; width: 100%; }
    forcing the whole page wider than the screen. */
 .bif-grid > * { min-width: 0; }
 
-/* Desktop only: pin the load identity + summary strip + chart to the top
-   of the right column so they stay on screen while you scroll the long
-   left form or the range table below it -- the review's "biggest single
-   feel improvement for the effort". The column itself has to stretch to
-   the grid row height (it's `align-items: start`, so it defaults to only
-   as tall as its content) or the sticky element has nothing to travel
-   within. Opaque page-colored background so range-table rows scrolling
-   under it don't bleed through. Below 861px the grid is single-column and
-   a pinned chart would just cover the form, so it's off there. */
-@media (min-width: 861px) {
-  .bif-results-col { align-self: stretch; }
-  .bif-results {
+/* Desktop, tall enough to be worth it: the whole results column becomes
+   its own scroll region -- sticky-pinned beside the form and capped to the
+   viewport, so the load identity + summary + chart stay on screen while
+   you scroll the long left form, and the range table + notes scroll
+   *inside* this panel rather than in the page. Everything here shares one
+   flow, so the chart can never cover the table (the earlier bug: the chart
+   alone was `position: sticky` with an opaque background and the table
+   scrolled underneath it -- once the pinned block grew past the viewport
+   height, e.g. with the Leupold BAS readout on, the table was hidden at
+   every scroll position). Nothing nested is pinned now.
+
+   `max-height` not `height`: on viewports tall enough to fit the whole
+   results block it just sizes to content, no internal scrollbar and no
+   dead space. Gated on min-height 700 too -- a capped, internally
+   scrolling panel on a short laptop is more cramped than it's worth, so
+   below that it falls back to plain page flow. Below 861px the grid is
+   single-column and none of this applies. */
+@media (min-width: 861px) and (min-height: 700px) {
+  .bif-results-col {
     position: sticky;
     top: 12px;
-    z-index: 2;
-    background: var(--c-field);
-    padding-bottom: 8px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    /* Always reserve the scrollbar gutter. In the viewport-height band
+       where the results content is about the same height as the panel
+       (~930-1010px tall -- a lot of 1080p monitors), toggling a chart
+       readout on/off flips the internal scrollbar, and without a reserved
+       gutter that shifts the content width ~15px: the chart redraws
+       narrower and the table columns jump. */
+    scrollbar-gutter: stable;
+    /* Don't chain overscroll into the page: the page scroll is the left
+       form, so bouncing off the bottom of this panel and scrolling the
+       form instead is disorienting. */
+    overscroll-behavior: contain;
+    /* small visual inset from the gutter */
+    padding-right: 4px;
   }
 }
 

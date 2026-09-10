@@ -69,9 +69,9 @@ boundary — see `CODE-REVIEW.md`).
 ## What remains
 
 **Features, roughly in priority order:**
-1. **More ammo manufacturers.** Winchester landed 2026-09-10 (PR #7, +252). Research
+1. **More ammo manufacturers.** Winchester (PR #7, +252) and Barnes (PR #8, +137) landed 2026-09-10. Research
    done on the rest (data availability, format, effort) — recommended order:
-   **Barnes** (VOR-TX ballistics-chart PDF, published BC) → **Berger** (publishes
+   **Berger** (publishes
    G1 *and* G7 — would be the catalog's first real G7 data) → Nosler → Browning /
    Norma. CCI is rimfire-only, out of scope unless a rimfire section is added.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a

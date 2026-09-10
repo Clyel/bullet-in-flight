@@ -9,7 +9,7 @@ import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
 
 // Cycled by index when comparing more loads than named theme colors.
-const PALETTE = [C.steel, C.ox, C.brass, "#5B6B41", "#5B4B6E", "#A45A2A"];
+const PALETTE = [C.steel, C.ox, C.brass, "var(--c-series-a)", "var(--c-series-b)", "var(--c-series-c)"];
 const SAMPLES = 250;
 
 /** results: [{ id, name, vitalsRadiusIn, solution }]. atYd: the "Compare at" distance (canonical yards) driving the chart's scale. */

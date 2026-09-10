@@ -15,11 +15,43 @@
   --c-ox:       #8C3B2E;
   --c-steel:    #3E5A6E;
   --c-vitals:   #4B6B3A;
+  /* extra series colours for the Compare chart (first three come from C) */
+  --c-series-a: #5B6B41;
+  --c-series-b: #5B4B6E;
+  --c-series-c: #A45A2A;
   /* low-alpha tints that were hardcoded rgba() at their call sites --
      tokenised so the dark block can restate them */
   --c-shade-transonic: rgba(138, 106, 23, 0.12);
   --c-shade-subsonic:  rgba(140, 59, 46, 0.10);
   --c-scrim:           rgba(26, 28, 24, 0.5);
+}
+
+/* Dark palette -- honours the OS setting, no in-app toggle (the review
+   asked for "at least honour prefers-color-scheme"). Purely a token
+   restatement: same military-sage identity taken to night, accents
+   lifted so they carry on a dark ground, contrast checked on the pairs
+   that actually fail if you naively invert (muted-on-card, ox error
+   text). No component or structural change. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --c-field:    #1B1D18;
+    --c-card:     #26281F;
+    --c-card-alt: #2E3127;
+    --c-ink:      #E6E4D7;
+    --c-muted:    #A9AD98;
+    --c-rule:     #6B7059; /* lifted well above the card/field darks so field boxes and panel edges read */
+    --c-brass:    #CBA352;
+    --c-ox:       #D67B62;
+    --c-steel:    #7EA9C4;
+    --c-vitals:   #7CA35E;
+    --c-series-a: #8AA063;
+    --c-series-b: #9483AC;
+    --c-series-c: #C88A5C;
+    --c-shade-transonic: rgba(203, 163, 82, 0.15);
+    --c-shade-subsonic:  rgba(214, 123, 98, 0.15);
+    --c-scrim:           rgba(0, 0, 0, 0.62);
+  }
 }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
@@ -60,7 +92,7 @@ table { border-collapse: collapse; width: 100%; }
     position: sticky;
     top: 12px;
     z-index: 2;
-    background: #B7BBAD;
+    background: var(--c-field);
     padding-bottom: 8px;
   }
 }

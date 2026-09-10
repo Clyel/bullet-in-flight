@@ -63,12 +63,16 @@ wrong with the environment, not the code.
 
 ## What remains
 
-**Known rough edges, low priority:**
-1. `solveZeroAngle` re-integrates the whole trajectory on every secant pass.
-   Invisible at these ranges, but wasteful if we ever batch-solve.
-2. Production bundle is ~745KB (183KB gzipped) in a single chunk — recharts and the
-   catalog data are the main weight. Not broken, worth revisiting with code-splitting
-   if it ever becomes a real complaint.
+**Known rough edges — both addressed in the 2026-09-10 code-review pass
+(PR #1); see `CODE-REVIEW.md`:**
+1. ~~`solveZeroAngle` re-integrates the whole trajectory on every secant pass.~~
+   Done — `integrate({ visit })` + `heightAtRange` make the zeroing loop
+   allocation-free; `optimalSightIn` also moved to a Web Worker.
+2. ~~Production bundle is ~745KB in a single chunk — recharts and the catalog
+   data are the main weight.~~ Done — recharts replaced by a ~220-line
+   hand-rolled SVG plot (`components/Plot.jsx`), supabase + catalog split
+   into their own chunks, tabs lazy-loaded. ~256 KB gzip single chunk →
+   ~160 KB gzip total, ~83 KB critical path.
 
 **Features, roughly in priority order:**
 3. **Leupold Boone & Crockett ballistic group classification** — fully scoped, not

@@ -107,7 +107,18 @@ table { border-collapse: collapse; width: 100%; }
     top: 12px;
     max-height: calc(100vh - 24px);
     overflow-y: auto;
-    /* keep the internal scrollbar off the content */
+    /* Always reserve the scrollbar gutter. In the viewport-height band
+       where the results content is about the same height as the panel
+       (~930-1010px tall -- a lot of 1080p monitors), toggling a chart
+       readout on/off flips the internal scrollbar, and without a reserved
+       gutter that shifts the content width ~15px: the chart redraws
+       narrower and the table columns jump. */
+    scrollbar-gutter: stable;
+    /* Don't chain overscroll into the page: the page scroll is the left
+       form, so bouncing off the bottom of this panel and scrolling the
+       form instead is disorienting. */
+    overscroll-behavior: contain;
+    /* small visual inset from the gutter */
     padding-right: 4px;
   }
 }

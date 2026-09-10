@@ -36,8 +36,10 @@ const CARTRIDGE_ALIASES = {
   "7.62 x 51mm NATO": "7.62x51mm",
   "7mm Mauser (7 x 57)": "7mm Mauser (7x57)",
   "8mm Mauser (8 x 57)": "8x57",
-  "357 Magnum": "357 Mag",
-  "44 Remington Magnum": "44 Rem Mag",
+  // Handgun cartridges Winchester also loads for lever rifles -- kept, but
+  // tagged so the caliber dropdown makes clear these are the rifle loads.
+  "357 Magnum": "357 Mag (rifle)",
+  "44 Remington Magnum": "44 Rem Mag (rifle)",
 };
 
 function normalizeCartridge(name) {

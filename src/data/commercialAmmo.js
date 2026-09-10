@@ -1171,8 +1171,8 @@ export const COMMERCIAL_AMMO = [
   { id: "SUP350", cartridge: "350 Legend", bullet: "Super Suppressed — Open Tip Range", grains: 255, muzzleVelocity: 1060, ballisticCoefficient: 0.325, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "USA3501", cartridge: "350 Legend", bullet: "USA — Full Metal Jacket", grains: 145, muzzleVelocity: 2250, ballisticCoefficient: 0.183, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X3561", cartridge: "356 Win", bullet: "Super X — Power-Point", grains: 200, muzzleVelocity: 2460, ballisticCoefficient: 0.238, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
-  { id: "X3574P", cartridge: "357 Mag", bullet: "Super X — Jacketed Hollow Point", grains: 158, muzzleVelocity: 1830, ballisticCoefficient: 0.163, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
-  { id: "X3575P", cartridge: "357 Mag", bullet: "Super X — Jacketed Soft Point", grains: 158, muzzleVelocity: 1830, ballisticCoefficient: 0.163, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
+  { id: "X3574P", cartridge: "357 Mag (rifle)", bullet: "Super X — Jacketed Hollow Point", grains: 158, muzzleVelocity: 1830, ballisticCoefficient: 0.163, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
+  { id: "X3575P", cartridge: "357 Mag (rifle)", bullet: "Super X — Jacketed Soft Point", grains: 158, muzzleVelocity: 1830, ballisticCoefficient: 0.163, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X3582", cartridge: "358 Win", bullet: "Power-Point", grains: 200, muzzleVelocity: 2490, ballisticCoefficient: 0.195, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X375W", cartridge: "375 Win", bullet: "Power-Point", grains: 200, muzzleVelocity: 2200, ballisticCoefficient: 0.214, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X3840", cartridge: "38-40 Win", bullet: "Super X — Power-Point", grains: 180, muzzleVelocity: 1160, ballisticCoefficient: 0.172, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
@@ -1180,7 +1180,7 @@ export const COMMERCIAL_AMMO = [
   { id: "X400DS", cartridge: "400 Legend", bullet: "Deer Season XP — Extreme Point", grains: 190, muzzleVelocity: 2400, ballisticCoefficient: 0.198, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X4001", cartridge: "400 Legend", bullet: "Power-Point — Jacketed Soft Point", grains: 215, muzzleVelocity: 2250, ballisticCoefficient: 0.206, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "SUP400", cartridge: "400 Legend", bullet: "Super Suppressed — Open Tip Range", grains: 300, muzzleVelocity: 1060, ballisticCoefficient: 0.318, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
-  { id: "X44MHSP2", cartridge: "44 Rem Mag", bullet: "Super X — Hollow Soft Point", grains: 240, muzzleVelocity: 1760, ballisticCoefficient: 0.158, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
+  { id: "X44MHSP2", cartridge: "44 Rem Mag (rifle)", bullet: "Super X — Hollow Soft Point", grains: 240, muzzleVelocity: 1760, ballisticCoefficient: 0.158, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X4440", cartridge: "44-40 Win", bullet: "Super X — Power-Point", grains: 200, muzzleVelocity: 1190, ballisticCoefficient: 0.161, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X450DS", cartridge: "450 Bushmaster", bullet: "Deer Season XP — Extreme Point", grains: 250, muzzleVelocity: 2200, ballisticCoefficient: 0.21, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X4501", cartridge: "450 Bushmaster", bullet: "Power-Point", grains: 260, muzzleVelocity: 2110, ballisticCoefficient: 0.191, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
@@ -1241,5 +1241,4 @@ export const COMMERCIAL_AMMO = [
   { id: "B192107082", cartridge: "7mm-08 Rem", bullet: "Max Point — Polymer Tip", grains: 140, muzzleVelocity: 2800, ballisticCoefficient: 0.484, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X708", cartridge: "7mm-08 Rem", bullet: "Power-Point", grains: 140, muzzleVelocity: 2800, ballisticCoefficient: 0.36, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
   { id: "X8MM", cartridge: "8x57", bullet: "Power-Point", grains: 170, muzzleVelocity: 2360, ballisticCoefficient: 0.205, dragModel: "G1", manufacturer: "Winchester", bcSource: "published" },
-
 ];

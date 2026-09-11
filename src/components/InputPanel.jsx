@@ -7,6 +7,7 @@ import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
 import { mToYd, formatDisplay, unitSuffix } from "../units.js";
+import { describeLoad } from "../describeLoad.js";
 
 const STEP_PRESETS = ["25", "50", "100"];
 
@@ -24,24 +25,36 @@ const stepCanonicalValue = (presetLabel, system) =>
 const SECTION_IDS = ["load", "sights", "target", "shot", "air", "wind"];
 const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
 
+// A first-ever visitor starts with everything BUT the load collapsed --
+// six fully-expanded sections of mostly-default physics fields (1.5in
+// sight height, 3in vitals, 59F/29.92inHg) was a busy first impression for
+// the one section (the load) anybody actually needs to engage with. Only
+// seeds the very first visit; any later change (including re-expanding
+// everything) persists from then on, same as always.
+const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind"];
+
 export default function InputPanel({
-  v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
+  v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
   rigDrifted, onSaveRig, onResetRig,
 }) {
   const { system } = useUnits();
-  const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS);
+  const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS, DEFAULT_COLLAPSED);
 
-  // A catalog pick's BC and drag model are a manufacturer-vetted pair --
-  // editing either invalidates the pairing (see IDENTITY_FIELDS in
-  // Calculator.jsx), so they start locked to a read-only summary whenever
-  // a catalog load is active. "Override" reveals the editable controls for
-  // *this* catalog load; picking a new one re-locks -- bcOverridden lives in
-  // Calculator and is reset directly by the handlers that actually change
-  // which load is active, not inferred from v.cartridge changing (which
-  // missed re-picking a different load within the same cartridge).
+  // A catalog pick's muzzle velocity, weight, BC, and drag model are a
+  // manufacturer-vetted set -- editing any of them invalidates the pairing
+  // (see IDENTITY_FIELDS in Calculator.jsx), so all four start locked to one
+  // read-only summary line whenever a catalog load is active. "Override"
+  // reveals the editable fields for *this* catalog load; picking a new one
+  // re-locks -- bcOverridden lives in Calculator and is reset directly by
+  // the handlers that actually change which load is active, not inferred
+  // from v.cartridge changing (which missed re-picking a different load
+  // within the same cartridge). The state itself is still named
+  // bcOverridden/onBcOverride in Calculator.jsx (it started out gating only
+  // the BC/drag-model fieldset) -- not renamed there, since it's the exact
+  // same guard just wired to more UI, not a new concept.
   const hasCartridge = v.cartridge.trim().length > 0;
-  const showEditableBc = !hasCartridge || bcOverridden;
+  const showEditableLoad = !hasCartridge || bcOverridden;
 
   // The BC field can't tell on its own whether its value still matches the
   // drag model -- G1 and G7 BCs are both just decimals -- so the guard sits
@@ -84,6 +97,15 @@ export default function InputPanel({
   // there via the Edit link or the user just typed a colliding name.
   const trimmedName = saveName.trim();
   const isNameUpdate = savedLoads.some((l) => l.name === trimmedName);
+  // The suggested name can coincide with an existing saved dataset's name
+  // (re-picking the same catalog entry weeks later, say) without the user
+  // ever having looked at it -- Save is clickable the instant a load
+  // resolves now, so a stray click would silently overwrite that dataset's
+  // rig/conditions with today's. Caution styling only, no blocking dialog
+  // (the BC/drag-model guard already tried window.confirm and found it
+  // silently no-ops where dialogs are suppressed) -- state it, give the
+  // escape hatch.
+  const isUnreviewedOverwrite = isNameUpdate && !nameTouched;
 
   // ---- collapsed-section summaries -----------------------------------------
   // A field's value in the current unit system, e.g. "1.5 in" / "200 yd",
@@ -224,12 +246,12 @@ export default function InputPanel({
             </>
           )}
 
-          <span style={sub}>Or enter your own</span>
-          <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
-          <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
-          <span style={sub}>Ballistic coefficient</span>
-          {showEditableBc ? (
+          {showEditableLoad ? (
             <div style={{ marginBottom: 14, padding: 10, border: `1.5px solid ${C.rule}` }}>
+              <span style={sub}>Or enter your own</span>
+              <UnitField label="Muzzle velocity" category="velocity" value={v.muzzleVelocity} onChange={set.muzzleVelocity} />
+              <Field label="Bullet weight" value={v.grains} onChange={set.grains} suffix="gr" />
+              <span style={sub}>Ballistic coefficient</span>
               <Segmented options={["G1", "G7"]} value={v.dragModel} onChange={handleDragModelChange} />
               <div style={{ margin: "5px 0 12px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
                 {v.dragModel === "G1"
@@ -273,7 +295,7 @@ export default function InputPanel({
             <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
                           display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <span style={{ font: "500 12px 'IBM Plex Mono',monospace", color: C.ink }}>
-                {v.dragModel} {v.ballisticCoefficient}
+                {describeLoad(v, system, { separator: " · " })}
                 <span style={{ marginLeft: 6, font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
                   {" "}— {v.bcSource === "published" ? `${v.manufacturer}'s published data` : `derived from ${v.manufacturer}'s data`}
                 </span>
@@ -290,19 +312,28 @@ export default function InputPanel({
 
           {/* Saving is its own action, not a fourth way to get a load, but it
               only makes sense once a load's actually put together above --
-              keeping it inside Step 1 instead of its own numbered step. */}
+              keeping it inside Step 1 instead of its own numbered step.
+              Suggested rather than left blank once a load resolves (see
+              Calculator.jsx's suggestion effect) -- still just a starting
+              value in a normal editable field, typing over it works exactly
+              as it always has. */}
           <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
           <SyncStatusHint signedIn={signedIn} noun="saves" />
           <button
             onClick={onSave}
             disabled={!trimmedName}
-            style={{ width: "100%", padding: 9, marginBottom: 16,
-                     background: trimmedName ? C.ink : C.rule, color: C.card,
-                     border: "none", cursor: trimmedName ? "pointer" : "default",
+            style={{ width: "100%", padding: 9, marginBottom: isUnreviewedOverwrite ? 4 : 16,
+                     background: !trimmedName ? C.rule : isUnreviewedOverwrite ? C.brass : C.ink,
+                     color: C.card, border: "none", cursor: trimmedName ? "pointer" : "default",
                      font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
           >
             {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
           </button>
+          {isUnreviewedOverwrite && (
+            <div style={{ marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.brass }}>
+              This will overwrite your saved “{trimmedName}” — edit the name to save this as new instead.
+            </div>
+          )}
           {saveError && (
             <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
               Couldn't save: {saveError}

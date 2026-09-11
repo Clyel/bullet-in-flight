@@ -9,8 +9,11 @@ import { reticleGroups } from "../ballistics/reticleGroups.js";
 export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, baseBallisticParams }) {
   const { system, dist, len, dSuf, lSuf, vSuf } = useUnitFormatters();
   const { path, transonicYd, subsonicYd, apex, crossings } = solution;
-  const [showVitals, setShowVitals] = useState(false);
-  const [showOptimal, setShowOptimal] = useState(false);
+  // Vitals Zero and Optimal Sight-in default on -- the two overlays most
+  // people actually want to see on first paint. Leupold BAS stays opt-in
+  // (a minority run a BAS scope; deliberately not touched).
+  const [showVitals, setShowVitals] = useState(true);
+  const [showOptimal, setShowOptimal] = useState(true);
   const [showBas, setShowBas] = useState(false);
 
   const hasVitalsRadius = Number.isFinite(vitalsRadiusIn) && vitalsRadiusIn > 0;
@@ -136,7 +139,8 @@ export default function TrajectoryChart({ solution, maxRangeYd, vitalsRadiusIn, 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap",
                     gap: 10, paddingLeft: 6, marginBottom: 8 }}>
         <div style={{ ...label, color: C.ink }}>Flight path relative to line of sight</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px 14px" }}>
+          <span style={{ ...label, color: C.muted }}>Chart overlays</span>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
             <input type="checkbox" checked={showVitals} onChange={(e) => setShowVitals(e.target.checked)} />
             <span style={{ ...label, color: C.ink }}>Vitals zero</span>

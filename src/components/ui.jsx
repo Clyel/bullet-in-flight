@@ -249,18 +249,23 @@ export function StepHead({ n, eyebrow, name, first, open, onToggle }) {
 /**
  * Per-section collapse state for a numbered-step panel, persisted in
  * localStorage under `storageKey` as an array of the *collapsed* section
- * ids. Nothing collapses on its own -- a section is open unless the user
- * folded it -- so a first-ever visitor (no stored key) gets everything
- * open. `ids` is the full ordered id list, used by the expand/collapse-all
- * control (`anyOpen` / `setAll`).
+ * ids. Nothing collapses on its own once that key exists -- a section stays
+ * however the user last left it, forever, including an explicit "everything
+ * open" from Expand All. `defaultCollapsed` only seeds the very first visit,
+ * before any key has ever been written (`localStorage.getItem` returning
+ * `null`, not merely an empty array) -- a smarter starting value, not new
+ * persistence logic. `ids` is the full ordered id list, used by the
+ * expand/collapse-all control (`anyOpen` / `setAll`).
  */
-export function useCollapsibleSteps(storageKey, ids) {
+export function useCollapsibleSteps(storageKey, ids, defaultCollapsed = []) {
   const [collapsed, setCollapsed] = useState(() => {
     try {
-      const arr = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      const raw = localStorage.getItem(storageKey);
+      if (raw == null) return new Set(defaultCollapsed);
+      const arr = JSON.parse(raw);
       return new Set(Array.isArray(arr) ? arr : []);
     } catch {
-      return new Set();
+      return new Set(defaultCollapsed);
     }
   });
 

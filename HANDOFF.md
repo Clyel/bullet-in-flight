@@ -81,25 +81,23 @@ boundary — see `CODE-REVIEW.md`).
    derive script, then the cartridge-name normalization pass before merge.
 2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
    — it is now. Needs independent fixtures like wind did.
-3. Deferred UX items (from the 2026-09-09 UX pass). **Shipped 2026-09-10:**
-   collapse-filled-sections pass (PR #15) and "add a round to Compare" from the
-   empty state (PR #14). **Still open:** cloud sync for the shared "My rig"
-   (localStorage-only, unlike saved loads / recoil setups) — plan below; and a
-   fully flattened/searchable catalog picker (Jake chose to keep the 3 cascading
-   dropdowns with typeahead for now).
+3. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**
+   collapse-filled-sections pass (PR #15), "add a round to Compare" from the
+   empty state (PR #14), and cloud sync for the shared "My rig" (PR #16).
+   **Still open:** a fully flattened/searchable catalog picker (Jake chose to
+   keep the 3 cascading dropdowns with typeahead for now).
 4. React 18 → 19.
 
-**"My rig" cloud sync — planned, migration is Jake's to run:**
-Add 5 nullable `text` columns to `user_settings` — `sight_height`,
-`vitals_radius_in`, `temp_f`, `press_in_hg`, `altitude_ft` (text to match how
-`myRig.js` stores canonical-imperial strings). Then `src/storage/myRigCloud.js`
-+ a `useMyRig()` hook that swaps local ↔ cloud on auth state like
-`useSavedLoads`, pushes the local rig up on first sign-in when the cloud row is
-empty, and replaces the direct `getMyRig`/`setMyRig` calls in `Calculator.jsx`
-and `OptimalZero.jsx`. The client PR holds until the migration is confirmed — a
-`select` of columns that don't exist errors.
-
 **Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+- **"My rig" cloud sync** (PR #16) — the shared rig (sight height, vitals radius,
+  temperature, station pressure, altitude) now syncs through `user_settings`
+  (5 nullable `text` columns, migration run against prod) when signed in, instead
+  of staying localStorage-only. `storage/myRigCloud.js` + `storage/useMyRig.js`
+  (same cache/listener pattern as `useSavedLoads`); first sign-in with an empty
+  cloud rig seeds it from local, silently. Calculator/OptimalZero/Compare all go
+  through the hook now. Verified live against the real Supabase DB: empty-rig
+  seed, edit+save round-trips to the cloud, a second signed-in context adopts the
+  cloud rig without re-seeding, sign-out keeps the synced value locally.
 - **Compare: add a round from the catalog** (PR #14) — `CommercialLoadPicker` in
   every Compare state including the empty one; the pick is saved as an ammo-only
   dataset (your saved rig, 200 yd zero, 500 yd) and auto-selected into the overlay.

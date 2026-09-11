@@ -25,6 +25,31 @@ const HELP_SECTION_BY_TAB = {
   Recoil: "recoil",
 };
 
+// Landing-page deep links -- `#tab/compare` opens straight to a tab,
+// `#help/faq` opens Help scrolled to a section (any TOC id from Help.jsx:
+// calculator/compare/optimal-zero/recoil/faq/submit). Slugs, not the tab
+// switcher's own display strings, so a URL never has to carry a space.
+// This is NOT a router: read once on first mount only, for a link landing
+// from the user guide or a shared URL -- navigating inside the app never
+// touches the hash again, and there's no back-button/history integration.
+// An unrecognized or missing hash falls back to today's default (silently
+// -- a stale/typo'd link should still open the app, not show an error).
+const TAB_SLUG = {
+  calculator: "Calculator",
+  compare: "Compare",
+  "optimal-zero": "Optimal Zero",
+  recoil: "Recoil",
+  help: "Help",
+};
+
+function initialRouteFromHash() {
+  const [kind, ...rest] = window.location.hash.replace(/^#/, "").split("/");
+  const arg = rest.join("/");
+  if (kind === "help") return { tab: "Help", helpTarget: arg ? { id: arg, key: Date.now() } : null };
+  if (kind === "tab" && TAB_SLUG[arg]) return { tab: TAB_SLUG[arg], helpTarget: null };
+  return { tab: "Calculator", helpTarget: null };
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -38,8 +63,8 @@ export default function App() {
 }
 
 function AppShell() {
-  const [tab, setTab] = useState("Calculator");
-  const [helpTarget, setHelpTarget] = useState(null);
+  const [tab, setTab] = useState(() => initialRouteFromHash().tab);
+  const [helpTarget, setHelpTarget] = useState(() => initialRouteFromHash().helpTarget);
   const { system, setSystem } = useUnits();
 
   // `key` (not just `id`) so clicking the same help link twice in a row

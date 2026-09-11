@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { C } from "./components/theme.js";
+import { Notice } from "./components/ui.jsx";
 
 // Every page routes here through App.jsx's `goToHelp(id)` rather than a
 // router — this app has never used one (see App.jsx's own tab-switch
@@ -46,6 +47,19 @@ export default function Help({ scrollTarget }) {
 
   return (
     <div>
+      {/* The per-tab link row elsewhere in the app (App.jsx) links to the
+          Field Guide too, but it's hidden on this tab -- this is Help's own
+          equivalent. A Notice callout, not a TOC entry: every TOC item
+          scrolls in-page, and a link that navigates away would break that
+          pattern. */}
+      <Notice tone={C.brass} title="Prefer one long read?">
+        The Field Guide walks every tab start to finish with real screenshots — a companion to the
+        how-tos below.{" "}
+        <a href="/guide/" target="_blank" rel="noopener" style={{ color: C.steel, textDecoration: "underline" }}>
+          Open the Field Guide ↗
+        </a>
+      </Notice>
+
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px", marginBottom: 18 }}>
         {TOC.map(({ id, label }) => (
           <a

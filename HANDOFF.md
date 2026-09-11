@@ -89,6 +89,19 @@ boundary — see `CODE-REVIEW.md`).
 4. React 18 → 19.
 
 **Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Field Guide** (PR #18) — a standalone companion page to the in-app Help tab,
+  live at `ballisticnerd.com/guide/`: every tool with real screenshots, a jargon
+  glossary, common trip-ups, an FAQ. Plain HTML+CSS+JS in `public/guide/`, no
+  framework/build step/dependency beyond the Google Fonts CDN the app already
+  uses — Vite copies `public/` verbatim, so it needed zero `vite.config.js` or
+  routing changes. Content built by the "UserGuide" session (reviewed in full
+  before merge — technical claims fact-checked against this repo's own README,
+  e.g. the accuracy-table FAQ answer matches README's Accuracy table exactly).
+  Linked from the app two ways (placement per the UX Review session): "Field
+  Guide ↗" as a 4th item in the per-tab link row on every non-Help tab, and a
+  `Notice` callout above Help's own TOC (which hides that row). Both real
+  `<a target="_blank">`s, not in-app navigation — a same-tab click would unmount
+  the whole SPA.
 - **Hash-based deep links** (PR #17) — `#tab/<slug>` opens straight to a tab
   (`calculator`/`compare`/`optimal-zero`/`recoil`/`help`), `#help/<id>` opens
   Help scrolled to a TOC section (`calculator`/`compare`/`optimal-zero`/`recoil`/

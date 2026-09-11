@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
 import { UnitField, StepHead, RigDriftBar, Notice } from "./components/ui.jsx";
 import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
-import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
+import { rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
+import { useMyRig } from "./storage/useMyRig.js";
 import { standardAtmosphere } from "./ballistics/atmosphere.js";
 import { energyFtLb } from "./ballistics/solver.js";
 import { useOptimalZeroRows } from "./useOptimalZeroRows.js";
@@ -43,7 +44,9 @@ const fromSaved = (load) => ({
 });
 
 export default function OptimalZero() {
-  const [storedRig, setStoredRig] = useState(getMyRig);
+  // "My rig" -- synchronous local value on first paint, then kept in step
+  // with the cloud copy when signed in (see useMyRig.js).
+  const { rig: storedRig, saveRig } = useMyRig();
   const [rig, setRig] = useState(() => ({ ...storedRig }));
   // Only show the drift bar once the user deliberately edits a rig field --
   // symmetric with Calculator, where the same flag also guards against a
@@ -54,11 +57,17 @@ export default function OptimalZero() {
     RIG_FIELDS.map((k) => [k, (val) => { setRigTouched(true); setRig((s) => ({ ...s, [k]: val })); }])
   );
 
+  // Adopt the stored rig if it arrives/changes from the cloud (or another
+  // tab) while the user hasn't edited a field -- same guard and equality
+  // check as Calculator's.
+  useEffect(() => {
+    if (rigTouched) return;
+    setRig((s) => (RIG_FIELDS.every((k) => s[k] === storedRig[k]) ? s : { ...s, ...storedRig }));
+  }, [storedRig, rigTouched]);
+
   const rigDrifted = rigTouched && rigDiffers(rig, storedRig);
   const handleSaveRig = () => {
-    const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, rig[k]]));
-    setMyRig(next);
-    setStoredRig(next);
+    saveRig(Object.fromEntries(RIG_FIELDS.map((k) => [k, rig[k]])));
     setRigTouched(false);
   };
   const handleResetRig = () => {

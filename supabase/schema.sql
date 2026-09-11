@@ -27,13 +27,31 @@ create policy "Users can update their own profile" on public.profiles
 grant select, update on public.profiles to authenticated;
 
 -- ── user_settings ─────────────────────────────────────────────────────
--- PROVISIONED, NOT YET WIRED: no client code reads or writes this table.
--- UnitsContext.jsx keeps the unit_system in localStorage only. This exists
--- so cross-device unit-preference sync is a pure additive change (add a
--- read on sign-in + a write on toggle) whenever it's wanted.
+-- One row per user, created by the handle_new_user() trigger below. The
+-- rig columns (sight_height .. altitude_ft) ARE wired: storage/myRigCloud.js
+-- + useMyRig.js sync the shared "My rig" here when signed in, mirroring it
+-- to localStorage for offline/signed-out use. They're `text`, not numeric,
+-- because myRig.js stores canonical-imperial values as strings (this app's
+-- form-state convention) and the rig is a straight passthrough with no
+-- parsing either way. All nullable — a fresh row has them null, which the
+-- client reads as "no cloud rig yet, use the local one".
+-- unit_system is still localStorage-only (UnitsContext.jsx); syncing it
+-- here stays a pure additive change whenever it's wanted.
+--   Migration for an existing project (run once in the SQL editor):
+--     alter table public.user_settings
+--       add column if not exists sight_height     text,
+--       add column if not exists vitals_radius_in text,
+--       add column if not exists temp_f           text,
+--       add column if not exists press_in_hg      text,
+--       add column if not exists altitude_ft      text;
 create table public.user_settings (
   user_id uuid primary key references auth.users(id) on delete cascade,
   unit_system text not null default 'imperial' check (unit_system in ('imperial', 'metric')),
+  sight_height text,
+  vitals_radius_in text,
+  temp_f text,
+  press_in_hg text,
+  altitude_ft text,
   updated_at timestamptz not null default now()
 );
 alter table public.user_settings enable row level security;

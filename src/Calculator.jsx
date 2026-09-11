@@ -13,7 +13,8 @@ import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFr
 import { inclinedEquivalentRange } from "./ballistics/inclineComp.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
-import { toDisplay, toCanonical, unitSuffix, formatDisplay } from "./units.js";
+import { toDisplay, toCanonical, unitSuffix } from "./units.js";
+import { describeLoad } from "./describeLoad.js";
 
 // 30-06 Springfield, Remington Premier Long Range 172gr (Speer Impact).
 // MV/BC published directly by Remington: remington.com/rifle/premier-long-range/29-R21344.html
@@ -106,6 +107,14 @@ export default function Calculator() {
   const { savedLoads, saveError, save, remove, importCount, runImport, dismissImport, signedIn } = useSavedLoads();
   const { system } = useUnits();
   const [saveName, setSaveName] = useState("");
+  // Whether the user has deliberately claimed the name field -- typed into
+  // it, cleared it, or (via handleEditSaved) it was pre-filled with a real
+  // saved name that must not be silently replaced by a fresher suggestion.
+  // Only while this is false does the suggestion effect below touch
+  // saveName at all; re-armed on a genuinely new catalog pick, same pattern
+  // as bcOverridden/rigTouched.
+  const [nameTouched, setNameTouched] = useState(false);
+  const handleSaveNameChange = (val) => { setNameTouched(true); setSaveName(val); };
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -199,15 +208,28 @@ export default function Calculator() {
     setRigTouched(false);
     return name;
   };
-  const handleLoadSaved = (id) => { loadSavedEntry(id); };
+  // Load deliberately blanks the name field rather than suggesting one --
+  // the obvious suggestion (the loaded ammo's "bullet — manufacturer") likely
+  // *isn't* this dataset's real saved name (nothing requires the two to
+  // match), and leaving whatever was in the field from before the Load is
+  // just as wrong (a stale name describing a completely different round).
+  // With Save now clickable the instant a name is present, either mistake is
+  // a real path to silently saving a near-duplicate under a misleading name.
+  // Blank + nameTouched=true reproduces exactly what Load has always done --
+  // Save stays disabled until you type a name yourself.
+  const handleLoadSaved = (id) => { loadSavedEntry(id); setNameTouched(true); setSaveName(""); };
   // Edit differs from Load by one thing: it carries the dataset's name into
   // the name field. Saving overwrites by name in both backends (see
   // savedLoads.js / savedLoadsCloud.js), so with the name pre-filled, Save
   // updates this dataset in place instead of making a copy -- and the Save
   // button relabels itself to "Update ..." whenever the name matches.
+  // nameTouched=true here for the same reason as Load above -- the real
+  // saved name must not be clobbered by the suggestion effect on the very
+  // next render.
   const handleEditSaved = (id) => {
     const name = loadSavedEntry(id);
     if (name != null) setSaveName(name);
+    setNameTouched(true);
   };
   const handleDeleteSaved = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -234,6 +256,10 @@ export default function Calculator() {
       bcSource: ammo.bcSource,
     }));
     setBcOverridden(false);
+    // A genuinely new pick re-arms the name suggestion (the effect above
+    // fills in the actual string once v updates) -- matches bcOverridden's
+    // own reset right above.
+    setNameTouched(false);
   };
 
   const missing = REQUIRED.filter(([k]) => {
@@ -242,6 +268,32 @@ export default function Calculator() {
     return k === "sightHeight" ? n < 0 : n <= 0;
   }).map(([, name]) => name);
   if (!Number.isFinite(num(v.tempF))) missing.push("temperature");
+
+  // Suggests "Name this load" from the load's own identity instead of
+  // leaving it blank -- Save used to need a name typed first no matter
+  // what; now it's usable the instant a load resolves. Hand-typed loads
+  // (no cartridge) only get a suggestion once solved (missing.length===0),
+  // so it's never built from half-entered numbers, and it live-updates as
+  // those numbers keep changing -- same as LoadIdentity's own subtitle,
+  // including clearing back to blank if a further edit makes the load
+  // unsolvable again (e.g. Override then blanking muzzle velocity --
+  // verified live this doesn't leave a stale catalog-derived name sitting
+  // over a now-broken load). Stops touching saveName the moment
+  // nameTouched flips true (a direct edit, or handleEditSaved's real saved
+  // name); this effect never runs for that case in practice since
+  // nameTouched is already true by the time it would fire.
+  const hasCartridge = v.cartridge.trim().length > 0;
+  useEffect(() => {
+    if (nameTouched) return;
+    if (hasCartridge) {
+      setSaveName(`${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`);
+    } else if (missing.length === 0) {
+      setSaveName(describeLoad(v, system));
+    } else {
+      setSaveName("");
+    }
+  }, [nameTouched, hasCartridge, v.bullet, v.manufacturer, v.grains,
+      v.muzzleVelocity, v.dragModel, v.ballisticCoefficient, missing.length, system]);
 
   // Non-blocking: these still feed the solve, they just get flagged.
   const cautions = SANITY.flatMap(({ k, cat, low, high, name }) => {
@@ -277,7 +329,7 @@ export default function Calculator() {
     <div className="bif-grid">
       <InputPanel
         v={v} set={set}
-        savedLoads={savedLoads} saveName={saveName} onSaveNameChange={setSaveName}
+        savedLoads={savedLoads} saveName={saveName} onSaveNameChange={handleSaveNameChange} nameTouched={nameTouched}
         onSave={handleSave} onLoadSaved={handleLoadSaved} onEditSaved={handleEditSaved}
         onDeleteSaved={handleDeleteSaved}
         onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
@@ -410,10 +462,7 @@ function LoadIdentity({ v }) {
       <div style={{ font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted, marginTop: 2 }}>
         {hasCartridge
           ? `${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`
-          // Unit-aware -- was hardcoded "fps" regardless of Metric, the one
-          // spot that claim didn't hold (only visible on a hand-typed load
-          // in Metric mode).
-          : `${v.grains}gr @ ${formatDisplay(parseFloat(v.muzzleVelocity), "velocity", system)} ${unitSuffix("velocity", system)}, ${v.dragModel} ${v.ballisticCoefficient}`}
+          : describeLoad(v, system)}
       </div>
     </div>
   );

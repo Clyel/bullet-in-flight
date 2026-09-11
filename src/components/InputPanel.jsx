@@ -7,6 +7,7 @@ import CommercialLoadPicker from "./CommercialLoadPicker.jsx";
 import { standardAtmosphere } from "../ballistics/atmosphere.js";
 import { useUnits } from "../UnitsContext.jsx";
 import { mToYd, formatDisplay, unitSuffix } from "../units.js";
+import { describeLoad } from "../describeLoad.js";
 
 const STEP_PRESETS = ["25", "50", "100"];
 
@@ -33,7 +34,7 @@ const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
 const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind"];
 
 export default function InputPanel({
-  v, set, savedLoads, saveName, onSaveNameChange, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
+  v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
   rigDrifted, onSaveRig, onResetRig,
 }) {
@@ -96,6 +97,15 @@ export default function InputPanel({
   // there via the Edit link or the user just typed a colliding name.
   const trimmedName = saveName.trim();
   const isNameUpdate = savedLoads.some((l) => l.name === trimmedName);
+  // The suggested name can coincide with an existing saved dataset's name
+  // (re-picking the same catalog entry weeks later, say) without the user
+  // ever having looked at it -- Save is clickable the instant a load
+  // resolves now, so a stray click would silently overwrite that dataset's
+  // rig/conditions with today's. Caution styling only, no blocking dialog
+  // (the BC/drag-model guard already tried window.confirm and found it
+  // silently no-ops where dialogs are suppressed) -- state it, give the
+  // escape hatch.
+  const isUnreviewedOverwrite = isNameUpdate && !nameTouched;
 
   // ---- collapsed-section summaries -----------------------------------------
   // A field's value in the current unit system, e.g. "1.5 in" / "200 yd",
@@ -285,8 +295,7 @@ export default function InputPanel({
             <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
                           display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <span style={{ font: "500 12px 'IBM Plex Mono',monospace", color: C.ink }}>
-                {v.grains}gr @ {formatDisplay(parseFloat(v.muzzleVelocity), "velocity", system)} {unitSuffix("velocity", system)}
-                {" · "}{v.dragModel} {v.ballisticCoefficient}
+                {describeLoad(v, system, { separator: " · " })}
                 <span style={{ marginLeft: 6, font: "400 10.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
                   {" "}— {v.bcSource === "published" ? `${v.manufacturer}'s published data` : `derived from ${v.manufacturer}'s data`}
                 </span>
@@ -303,19 +312,28 @@ export default function InputPanel({
 
           {/* Saving is its own action, not a fourth way to get a load, but it
               only makes sense once a load's actually put together above --
-              keeping it inside Step 1 instead of its own numbered step. */}
+              keeping it inside Step 1 instead of its own numbered step.
+              Suggested rather than left blank once a load resolves (see
+              Calculator.jsx's suggestion effect) -- still just a starting
+              value in a normal editable field, typing over it works exactly
+              as it always has. */}
           <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
           <SyncStatusHint signedIn={signedIn} noun="saves" />
           <button
             onClick={onSave}
             disabled={!trimmedName}
-            style={{ width: "100%", padding: 9, marginBottom: 16,
-                     background: trimmedName ? C.ink : C.rule, color: C.card,
-                     border: "none", cursor: trimmedName ? "pointer" : "default",
+            style={{ width: "100%", padding: 9, marginBottom: isUnreviewedOverwrite ? 4 : 16,
+                     background: !trimmedName ? C.rule : isUnreviewedOverwrite ? C.brass : C.ink,
+                     color: C.card, border: "none", cursor: trimmedName ? "pointer" : "default",
                      font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
           >
             {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
           </button>
+          {isUnreviewedOverwrite && (
+            <div style={{ marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.brass }}>
+              This will overwrite your saved “{trimmedName}” — edit the name to save this as new instead.
+            </div>
+          )}
           {saveError && (
             <div style={{ marginTop: -10, marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
               Couldn't save: {saveError}

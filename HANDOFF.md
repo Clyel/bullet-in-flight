@@ -89,6 +89,15 @@ boundary — see `CODE-REVIEW.md`).
 4. React 18 → 19.
 
 **Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Hash-based deep links** (PR #17) — `#tab/<slug>` opens straight to a tab
+  (`calculator`/`compare`/`optimal-zero`/`recoil`/`help`), `#help/<id>` opens
+  Help scrolled to a TOC section (`calculator`/`compare`/`optimal-zero`/`recoil`/
+  `faq`/`submit`). `App.jsx`'s `initialRouteFromHash()` reads the hash once, as
+  the `tab`/`helpTarget` `useState` initializers — a landing-page deep link, not
+  a router; nothing inside the app ever writes the hash. Missing/unrecognized
+  hash falls back to the default (Calculator) silently. Built for the in-progress
+  user guide (a separate session, "UserGuide") so its tool cards and glossary
+  entries can link straight into the live app.
 - **"My rig" cloud sync** (PR #16) — the shared rig (sight height, vitals radius,
   temperature, station pressure, altitude) now syncs through `user_settings`
   (5 nullable `text` columns, migration run against prod) when signed in, instead

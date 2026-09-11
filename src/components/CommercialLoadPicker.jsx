@@ -20,9 +20,12 @@ const DERIVED_BC_NOTE = " (derived BC — approximated from published velocity d
  *
  * resetLoadAfterSelect: if true, the Load select snaps back to blank right
  * after firing onSelect (Caliber/Manufacturer stay put) — for a picker used
- * to build up a list of several loads one at a time. If false (default),
- * the selection and its "Filled in: ..." confirmation stay visible — for a
- * picker that's filling a single form's fields.
+ * to build up a list of several loads one at a time, confirmed here with
+ * "Added: ...". If false (default), the selection stays visible in the Load
+ * field itself and nothing renders below it — for a picker that's filling a
+ * single form's fields, which shows its own confirmation elsewhere (see
+ * InputPanel.jsx's locked-load summary; this component used to duplicate it
+ * with a "Filled in: ..." chip here, dropped once that summary existed).
  */
 export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = false }) {
   const [caliber, setCaliber] = useState("");
@@ -135,14 +138,7 @@ export default function CommercialLoadPicker({ onSelect, resetLoadAfterSelect = 
         disabled={!manufacturer}
       />
 
-      {selectedLoad ? (
-        <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
-                      font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
-          Filled in: {selectedLoad.muzzleVelocity} fps · {selectedLoad.grains}gr · {selectedLoad.dragModel}{" "}
-          {selectedLoad.ballisticCoefficient}
-          {selectedLoad.bcSource !== "published" ? DERIVED_BC_NOTE : ""}
-        </div>
-      ) : lastApplied ? (
+      {selectedLoad ? null : lastApplied ? (
         <div style={{ marginBottom: 16, padding: "7px 9px", background: C.field, border: `1px solid ${C.rule}`,
                       font: "500 11px/1.4 'IBM Plex Mono',monospace", color: C.ink }}>
           Added: {lastApplied.muzzleVelocity} fps · {lastApplied.grains}gr · {lastApplied.dragModel}{" "}

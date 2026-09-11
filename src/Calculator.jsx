@@ -13,7 +13,7 @@ import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFr
 import { inclinedEquivalentRange } from "./ballistics/inclineComp.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
-import { toDisplay, toCanonical, unitSuffix } from "./units.js";
+import { toDisplay, toCanonical, unitSuffix, formatDisplay } from "./units.js";
 
 // 30-06 Springfield, Remington Premier Long Range 172gr (Speer Impact).
 // MV/BC published directly by Remington: remington.com/rifle/premier-long-range/29-R21344.html
@@ -324,15 +324,22 @@ export default function Calculator() {
               />
             </div>
 
-            <div style={{ display: "flex", gap: 18, marginBottom: 8 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="checkbox" checked={showMOA} onChange={(e) => setShowMOA(e.target.checked)} />
-                <span style={{ ...label, color: C.ink }}>Show MOA</span>
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="checkbox" checked={showMIL} onChange={(e) => setShowMIL(e.target.checked)} />
-                <span style={{ ...label, color: C.ink }}>Show MIL</span>
-              </label>
+            {/* Mirrors the chart's own title-left/toggles-right row above --
+                the range table never had a heading of its own, just this
+                floating pair of checkboxes. */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                          flexWrap: "wrap", gap: 10, marginBottom: 8 }}>
+              <div style={{ ...label, color: C.ink }}>Range</div>
+              <div style={{ display: "flex", gap: 18 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input type="checkbox" checked={showMOA} onChange={(e) => setShowMOA(e.target.checked)} />
+                  <span style={{ ...label, color: C.ink }}>Show MOA</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input type="checkbox" checked={showMIL} onChange={(e) => setShowMIL(e.target.checked)} />
+                  <span style={{ ...label, color: C.ink }}>Show MIL</span>
+                </label>
+              </div>
             </div>
 
             <RangeTable rows={solution.rows} showWindage={windActive} showMOA={showMOA} showMIL={showMIL} />
@@ -393,6 +400,7 @@ function InclineNote({ maxRangeYd, shotAngleDeg, system }) {
  *  cartridge attached — never blank, never a stale name left over from
  *  before the load's numbers were edited (see IDENTITY_FIELDS above). */
 function LoadIdentity({ v }) {
+  const { system } = useUnits();
   const hasCartridge = v.cartridge.trim().length > 0;
   return (
     <div style={{ marginBottom: 10 }}>
@@ -402,7 +410,10 @@ function LoadIdentity({ v }) {
       <div style={{ font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted, marginTop: 2 }}>
         {hasCartridge
           ? `${v.bullet}${v.manufacturer ? ` — ${v.manufacturer}` : ""}`
-          : `${v.grains}gr @ ${v.muzzleVelocity} fps, ${v.dragModel} ${v.ballisticCoefficient}`}
+          // Unit-aware -- was hardcoded "fps" regardless of Metric, the one
+          // spot that claim didn't hold (only visible on a hand-typed load
+          // in Metric mode).
+          : `${v.grains}gr @ ${formatDisplay(parseFloat(v.muzzleVelocity), "velocity", system)} ${unitSuffix("velocity", system)}, ${v.dragModel} ${v.ballisticCoefficient}`}
       </div>
     </div>
   );

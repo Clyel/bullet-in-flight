@@ -88,7 +88,33 @@ boundary — see `CODE-REVIEW.md`).
    keep the 3 cascading dropdowns with typeahead for now).
 4. React 18 → 19.
 
-**Shipped 2026-09-10 (in `main`, deployed, verified on ballisticnerd.com):**
+**Shipped 2026-09-11 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Calculator Step 1 declutter + sensible defaults** (PR #19, 5 changes from a UX
+  Review spec, confirmed with Jake before each batch):
+  1. Fused load lock — muzzle velocity + bullet weight + BC/drag-model collapse
+     into one locked summary line once a catalog/saved load resolves ("172gr @
+     2825 fps · G7 0.265 — Remington's published data [Override]"), replacing
+     4 redundant places that used to show the same numbers. `CommercialLoadPicker`'s
+     "Filled in:" chip dropped (was only ever shown by InputPanel). Collateral fix:
+     `LoadIdentity`'s "Custom load" subtitle no longer hardcodes "fps" in Metric.
+  2. First-time visitors get Steps 2-6 collapsed, Step 1 open — `useCollapsibleSteps`
+     gains a `defaultCollapsed` param, seeded only when the storage key has never
+     been written.
+  3. Chart's 3 toggles get a "Chart overlays" label; Vitals Zero + Optimal Sight-in
+     default on (Leupold BAS stays off).
+  4. MOA/MIL toggle row above the range table gets a "Range" header, mirroring the
+     chart's own title+toggles pattern.
+  5. "Name this load" suggests a name instead of starting blank — the catalog
+     identity string, or (once solved) `describeLoad(v, system)` for a hand-typed
+     load, live-updating, stopping the moment you type your own (`nameTouched`,
+     same pattern as `chargeTouched`/`rigTouched`). Caution styling + escape-hatch
+     note if an unreviewed suggestion would silently overwrite an existing saved
+     name. New shared `src/describeLoad.js` (was 3 copies of the same unit-aware
+     formatting). Real footgun caught during live-testing, not shipped as specced:
+     letting plain "Load a saved dataset" re-arm the suggester would auto-fill a
+     name that doesn't have to match the dataset's real saved name — fixed by
+     having plain Load blank the name instead (matching its pre-existing behavior),
+     while Edit still pre-fills the real name, guarded.
 - **Field Guide** (PR #18) — a standalone companion page to the in-app Help tab,
   live at `ballisticnerd.com/guide/`: every tool with real screenshots, a jargon
   glossary, common trip-ups, an FAQ. Plain HTML+CSS+JS in `public/guide/`, no

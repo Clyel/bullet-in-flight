@@ -7,16 +7,21 @@
 // Each tab reads this on mount and works from its own editable copy --
 // editing a rig field never writes back here on its own, since that would
 // silently change a comparison you'd set up on the other tab. It's only
-// written when the user explicitly hits "Save as my rig". localStorage
-// only for now (same as saved loads / recoil setups when they started); a
-// signed-in cloud copy is a later add.
+// written when the user explicitly hits "Save as my rig".
+//
+// This module is the LOCAL (localStorage) backend. When signed in, the rig
+// also syncs to Supabase -- see storage/myRigCloud.js and storage/useMyRig.js,
+// which layer cloud read/write on top of these functions (same split as
+// savedLoads.js / savedLoadsCloud.js / useSavedLoads.js). Page components
+// go through the useMyRig() hook; these are the offline-safe fallback it
+// reads and mirrors to.
 
 const STORAGE_KEY = "bullet-in-flight:myRig";
 
 export const RIG_FIELDS = ["sightHeight", "vitalsRadiusIn", "tempF", "pressInHg", "altitudeFt"];
 
 // Same values the two tabs used as their hardcoded defaults before this.
-const RIG_DEFAULTS = {
+export const RIG_DEFAULTS = {
   sightHeight: "1.5",
   vitalsRadiusIn: "3",
   tempF: "59",

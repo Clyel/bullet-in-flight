@@ -5,7 +5,7 @@ import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import CompareChart from "./components/CompareChart.jsx";
 import CompareTable from "./components/CompareTable.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
-import { getMyRig } from "./storage/myRig.js";
+import { useMyRig } from "./storage/useMyRig.js";
 import { num, solveFromForm } from "./solveFromForm.js";
 
 // Everything solveFromForm/CompareChart need that isn't ammo: the shared
@@ -13,8 +13,7 @@ import { num, solveFromForm } from "./solveFromForm.js";
 // Calculator starts a fresh load at. Wind stays out — Compare has no wind
 // input, and a saved dataset with no wind is what the rest of the tab
 // already expects.
-function datasetFromAmmo(ammo) {
-  const rig = getMyRig();
+function datasetFromAmmo(ammo, rig) {
   return {
     cartridge: ammo.cartridge,
     bullet: `${ammo.grains}gr ${ammo.bullet}${ammo.bcSource !== "published" ? " (derived BC)" : ""}`,
@@ -40,6 +39,7 @@ export default function Compare() {
   // useSavedLoads re-fetches on mount, which is when a load saved on the
   // Calculator tab (or synced from the cloud) should show up here.
   const { savedLoads, save } = useSavedLoads();
+  const { rig } = useMyRig();
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [atYd, setAtYd] = useState("500");
   const [atYdTouched, setAtYdTouched] = useState(false);
@@ -65,7 +65,7 @@ export default function Compare() {
     // update can flush and run the effect below before this line would
     // otherwise reach it.
     pendingSelectName.current = name;
-    const ok = await save(name, datasetFromAmmo(ammo));
+    const ok = await save(name, datasetFromAmmo(ammo, rig));
     if (!ok) {
       pendingSelectName.current = null;
       setAddError("Couldn't add that round.");

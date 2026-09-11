@@ -7,7 +7,8 @@ import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
 import { ImportActions, Notice } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
-import { getMyRig, setMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
+import { useMyRig } from "./storage/useMyRig.js";
+import { getMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
 import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
 import { inclinedEquivalentRange } from "./ballistics/inclineComp.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
@@ -76,9 +77,11 @@ export default function Calculator() {
   // The 5 shared rig fields start from "My rig" (set on either this tab or
   // Optimal Zero) rather than the hardcoded DEFAULTS; everything else is
   // still DEFAULTS. `storedRig` is what's currently saved -- the drift bar
-  // compares the live form against it.
-  const [storedRig, setStoredRig] = useState(getMyRig);
-  const [v, setState] = useState(() => ({ ...DEFAULTS, ...storedRig }));
+  // compares the live form against it. When signed in it can arrive/change
+  // asynchronously from the cloud (see the effect below); the initial form
+  // still seeds synchronously from this device's local rig.
+  const { rig: storedRig, saveRig } = useMyRig();
+  const [v, setState] = useState(() => ({ ...DEFAULTS, ...getMyRig() }));
   // The drift bar shows only after the user *deliberately* touches a rig
   // field -- not when a rig field changes because a saved dataset was
   // loaded (that dataset carries its own conditions, and both "Save as my
@@ -139,11 +142,21 @@ export default function Calculator() {
   // active (below) fixes that for both cases at once.
   const [bcOverridden, setBcOverridden] = useState(false);
 
+  // Fold the stored rig into the form when it changes out from under us --
+  // a cloud fetch landing after first paint, or another tab's save -- but
+  // only while the user hasn't deliberately edited a rig field (same guard
+  // as the drift bar). The equality check keeps this from looping on the
+  // new-object identity useMyRig hands back each publish.
+  useEffect(() => {
+    if (rigTouched) return;
+    setState((s) => (RIG_FIELDS.every((k) => s[k] === storedRig[k])
+      ? s
+      : { ...s, ...storedRig }));
+  }, [storedRig, rigTouched]);
+
   const rigDrifted = rigTouched && rigDiffers(v, storedRig);
   const handleSaveRig = () => {
-    const next = Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]]));
-    setMyRig(next);
-    setStoredRig(next);
+    saveRig(Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]])));
     setRigTouched(false);
   };
   const handleResetRig = () => {

@@ -116,6 +116,18 @@ function AppShell() {
             <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>How does {tab} work?</HelpLink>
             <HelpLink onClick={() => goToHelp("faq")}>FAQ</HelpLink>
             <HelpLink onClick={() => goToHelp("submit")}>Suggest an idea</HelpLink>
+            {/* Real navigation (a static page at /guide/, not app state), so
+                an <a> here instead of the in-app HelpLink button -- opens in
+                its own tab rather than replacing the app. */}
+            <a
+              href="/guide/"
+              target="_blank"
+              rel="noopener"
+              style={{ color: C.steel, textDecoration: "underline",
+                       font: "500 11.5px 'IBM Plex Sans',sans-serif" }}
+            >
+              Field Guide ↗
+            </a>
           </div>
         )}
 

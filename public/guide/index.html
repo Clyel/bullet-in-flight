@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ballistic Nerd Field Guide</title>
+    <meta name="description" content="A field guide to Ballistic Nerd: quick start, a tool-by-tool walkthrough, a jargon glossary, common trip-ups, and an FAQ." />
+    <link rel="canonical" href="https://ballisticnerd.com/guide/" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --field:#B7BBAD; --card:#E9E7DC; --card-alt:#DEDBCD; --ink:#1A1C18; --muted:#40453B;
+    --rule:#A8AC9C; --input-bg:#DAD8C6; --brass:#8A6A17; --ox:#8C3B2E; --steel:#3E5A6E; --vitals:#4B6B3A;
+    --shade-t:rgba(138,106,23,.14); --shade-s:rgba(140,59,46,.11);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --field:#1B1D18; --card:#26281F; --card-alt:#2E3127; --ink:#E6E4D7; --muted:#A9AD98;
+      --rule:#6B7059; --input-bg:#20221B; --brass:#CBA352; --ox:#D67B62; --steel:#7EA9C4; --vitals:#7CA35E;
+      --shade-t:rgba(203,163,82,.16); --shade-s:rgba(214,123,98,.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    --field:#1B1D18; --card:#26281F; --card-alt:#2E3127; --ink:#E6E4D7; --muted:#A9AD98;
+    --rule:#6B7059; --input-bg:#20221B; --brass:#CBA352; --ox:#D67B62; --steel:#7EA9C4; --vitals:#7CA35E;
+    --shade-t:rgba(203,163,82,.16); --shade-s:rgba(214,123,98,.16);
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--field); color:var(--ink); font:400 15px/1.65 'IBM Plex Sans',system-ui,sans-serif;}
+  h1,h2,h3{font-family:'Oswald',sans-serif; text-transform:uppercase; text-wrap:balance; margin:0;}
+  a{color:var(--steel);}
+  code, .mono{font-family:'IBM Plex Mono',monospace;}
+  .eyebrow{font:600 11px/1 'Oswald',sans-serif; letter-spacing:.16em; text-transform:uppercase; color:var(--brass);}
+  .label{font:600 11px 'Oswald',sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);}
+
+  .wrap{max-width:760px; margin:0 auto; padding:28px 20px 80px;}
+
+  /* ---- sticky index bar ---- */
+  .idxbar{position:sticky; top:0; z-index:20; background:var(--field); border-bottom:1.5px solid var(--rule);
+    padding:10px 20px; display:flex; gap:4px 16px; flex-wrap:wrap; justify-content:center;}
+  .idxbar a{font:600 10.5px 'Oswald',sans-serif; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); text-decoration:none; padding:4px 2px; border-bottom:2px solid transparent;}
+  .idxbar a:hover, .idxbar a.active{color:var(--ink); border-bottom-color:var(--brass);}
+
+  /* ---- hero ---- */
+  .hero{padding:34px 0 10px;}
+  .hero h1{font-size:34px; line-height:1.05; margin:8px 0 10px;}
+  .hero p.lede{font:400 16px/1.6 'IBM Plex Sans',sans-serif; color:var(--muted); max-width:56ch; margin:0 0 20px;}
+  .cta{display:inline-block; padding:11px 22px; background:var(--ink); color:var(--card); text-decoration:none;
+    font:600 11px 'Oswald',sans-serif; letter-spacing:.12em; text-transform:uppercase;}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1px; background:var(--rule);
+    border:1.5px solid var(--rule); margin:22px 0 4px;}
+  .stats div{background:var(--card); padding:10px 12px;}
+  .stats .v{font:500 17px 'IBM Plex Mono',monospace; margin-top:3px;}
+
+  /* ---- generic section/card ---- */
+  section{margin:44px 0;}
+  section > h2{font-size:20px; letter-spacing:.02em; padding-bottom:10px; border-bottom:2px solid var(--ink); margin-bottom:16px;}
+  .card{background:var(--card); border:1.5px solid var(--rule); padding:18px 20px;}
+  .muted{color:var(--muted);}
+  p{margin:0 0 12px;}
+
+  /* ---- screenshots ---- */
+  .shot{border:1.5px solid var(--rule); background:var(--card); padding:8px; margin:0;}
+  .shot img{display:block; width:100%; height:auto;}
+  .shot figcaption{margin-top:9px; font:500 12.5px/1.5 'IBM Plex Sans',sans-serif; color:var(--muted);}
+  .shot figcaption b{color:var(--ink);}
+  .shots{display:flex; flex-direction:column; gap:34px;}
+  .shots .pair{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+  @media (max-width:620px){.shots .pair{grid-template-columns:1fr;}}
+
+  /* ---- quick start ---- */
+  .steps{display:flex; flex-direction:column; gap:1px; background:var(--rule); border:1.5px solid var(--rule);}
+  .step{background:var(--card); padding:14px 16px; display:grid; grid-template-columns:34px 1fr; gap:12px; align-items:start;}
+  .step .n{width:26px; height:26px; border:1.5px solid var(--brass); color:var(--brass); display:flex;
+    align-items:center; justify-content:center; font:600 13px 'IBM Plex Mono',monospace;}
+  .step h3{font:600 13px 'Oswald',sans-serif; letter-spacing:.03em; text-transform:none; margin-bottom:3px; color:var(--ink);}
+  .step p{margin:0; font-size:13.5px; color:var(--muted);}
+
+  /* ---- tool cards ---- */
+  .tools{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px;}
+  .tool{background:var(--card); border:1.5px solid var(--rule); padding:18px 18px 16px; display:flex; flex-direction:column; gap:10px;}
+  .tool-head{display:flex; align-items:center; gap:12px;}
+  .badge{flex:0 0 auto; width:40px; height:40px; border:1.5px solid var(--brass); color:var(--brass);
+    display:flex; align-items:center; justify-content:center; font:600 13px 'IBM Plex Mono',monospace; letter-spacing:.02em;}
+  .tool h3{font-size:15px; letter-spacing:.02em;}
+  .tool h3 a{color:inherit; text-decoration:none; border-bottom:1.5px dotted var(--steel);}
+  .tool h3 a:hover{border-bottom-style:solid;}
+  .gloss td:first-child a{color:inherit; text-decoration:none; border-bottom:1.5px dotted var(--brass);}
+  .gloss td:first-child a:hover{border-bottom-style:solid;}
+  .tool ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--muted);}
+  .tool li{margin-bottom:4px;}
+  .watch{margin-top:auto; padding-top:10px; border-top:1px dashed var(--rule); font-size:12.5px; color:var(--ox);}
+  .watch b{font:600 10.5px 'Oswald',sans-serif; letter-spacing:.08em; text-transform:uppercase; display:block; margin-bottom:3px;}
+
+  /* ---- chart legend explainer ---- */
+  .legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px 20px; margin-top:10px;}
+  .legend .li{display:flex; gap:10px; align-items:flex-start; font-size:13px;}
+  .swatch{flex:0 0 auto; width:18px; height:12px; margin-top:4px; border:1px solid var(--rule);}
+  .swatch.line{background:none; border:none; border-top:2px dashed var(--muted); height:0; margin-top:9px;}
+  .swatch.dot{width:10px; height:10px; border-radius:50%; border:2px solid var(--ink); background:var(--card); margin-top:5px;}
+  .swatch.dotfill{width:10px; height:10px; border-radius:50%; background:var(--brass); border:none; margin-top:5px;}
+  .swatch.t{background:var(--shade-t);}
+  .swatch.s{background:var(--shade-s);}
+  .swatch.vit{background:none; border:2px solid var(--vitals);}
+
+  /* ---- glossary ---- */
+  .gloss{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .gloss tr:nth-child(odd) td{background:var(--card-alt);}
+  .gloss td{padding:10px 12px; border-bottom:1px solid var(--rule); vertical-align:top;}
+  .gloss td:first-child{width:34%; font:600 12.5px 'IBM Plex Mono',monospace; color:var(--brass); white-space:nowrap;}
+  .gloss-wrap{overflow-x:auto; border:1.5px solid var(--rule);}
+  /* Below ~560px the two-column table is the cause of the empty space:
+     white-space:nowrap on the term column forces table-layout:auto to size
+     it off the longest unwrapped term ("Vitals radius / window") across
+     the WHOLE table, not just each row -- so every term cell gets that same
+     wide column regardless of its own length, while the definition column
+     is squeezed narrow and wraps to many lines. A short term ("BC", "Zero")
+     then sits top-aligned in a cell that's tall (sized by its neighbor's
+     wrapped text) and wide (sized by an unrelated row's term) -- almost all
+     of that cell is blank. Stacking term-over-definition removes both axes
+     of the mismatch: each row is exactly as tall as its own content, and
+     nothing is reserving width a short term doesn't use. */
+  @media (max-width:560px){
+    .gloss, .gloss tbody, .gloss tr, .gloss td{display:block; width:auto;}
+    .gloss tr{padding:10px 12px; border-bottom:1px solid var(--rule);}
+    .gloss tr:nth-child(odd){background:var(--card-alt);}
+    .gloss tr:nth-child(odd) td{background:none;}
+    .gloss td{padding:0; border-bottom:none; white-space:normal;}
+    /* .gloss td:first-child (base rule above) carries width:34% and
+       white-space:nowrap at higher specificity than the plain `.gloss td`
+       overrides above -- a pseudo-class beats a bare element selector
+       regardless of media-query order, so both have to be re-stated here
+       against the same :first-child selector or the term column keeps its
+       fixed width and single-line text, which was the actual bug on the
+       first pass (confirmed live: text overflowed its box instead of
+       wrapping). */
+    .gloss td:first-child{width:auto; white-space:normal; margin-bottom:4px;}
+    .gloss-wrap{overflow-x:visible;}
+  }
+
+  /* ---- trip-ups ---- */
+  .trip{border-left:3px solid var(--ox); background:var(--card); padding:12px 16px; margin-bottom:10px;}
+  .trip .t{font:600 12.5px 'IBM Plex Sans',sans-serif; margin-bottom:3px;}
+  .trip .d{font-size:13px; color:var(--muted);}
+
+  /* ---- accounts ---- */
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:620px){.split{grid-template-columns:1fr;}}
+  .split .card h3{font-size:13px; letter-spacing:.04em; margin-bottom:8px; color:var(--ink);}
+  .split .card p{font-size:13px; color:var(--muted); margin-bottom:0;}
+  .tag{display:inline-block; font:600 10px 'Oswald',sans-serif; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 8px; border:1px solid var(--steel); color:var(--steel); margin-bottom:8px;}
+  .tag.on{border-color:var(--vitals); color:var(--vitals);}
+
+  /* ---- faq accordion ---- */
+  details{background:var(--card); border:1.5px solid var(--rule); padding:12px 16px; margin-bottom:8px;}
+  summary{cursor:pointer; font:600 13.5px 'IBM Plex Sans',sans-serif; list-style:none; display:flex; justify-content:space-between; gap:12px;}
+  summary::-webkit-details-marker{display:none;}
+  summary::after{content:"+"; font:600 16px 'IBM Plex Mono',monospace; color:var(--brass); flex:0 0 auto;}
+  details[open] summary::after{content:"–";}
+  details p{margin:10px 0 0; font-size:13.5px; color:var(--muted);}
+
+  footer{margin-top:56px; padding-top:18px; border-top:2px solid var(--ink); font-size:12.5px; color:var(--muted);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  @media (prefers-reduced-motion: reduce){ * { scroll-behavior:auto !important; } }
+  html{scroll-behavior:smooth;}
+  section{scroll-margin-top:52px;}
+</style>
+  </head>
+  <body>
+<div class="idxbar" id="idxbar">
+  <a href="#quickstart">Quick start</a>
+  <a href="#tools">The tools</a>
+  <a href="#screenshots">Screenshots</a>
+  <a href="#chart">Chart &amp; table</a>
+  <a href="#glossary">Glossary</a>
+  <a href="#tripups">Trip-ups</a>
+  <a href="#accounts">Your data</a>
+  <a href="#faq">FAQ</a>
+</div>
+
+<div class="wrap">
+
+  <div class="hero" id="top">
+    <div class="eyebrow">Field Guide</div>
+    <h1>How to use Ballistic Nerd</h1>
+    <p class="lede">
+      A free point-mass ballistics calculator: zero your rifle, chart the real drop, compare loads
+      side by side, and find exactly how far you can hold dead-on. This guide walks the form,
+      decodes the jargon, and flags the handful of places people get tripped up.
+    </p>
+    <a class="cta" href="https://ballisticnerd.com" target="_blank" rel="noopener">Open Ballistic Nerd →</a>
+
+    <div class="stats">
+      <div><div class="label">Tools</div><div class="v">5</div></div>
+      <div><div class="label">Catalog loads</div><div class="v">1,800+</div></div>
+      <div><div class="label">Manufacturers</div><div class="v">11</div></div>
+      <div><div class="label">Cost</div><div class="v">Free</div></div>
+      <div><div class="label">Sign-in required</div><div class="v">No</div></div>
+    </div>
+  </div>
+
+  <section id="quickstart">
+    <h2>Quick start</h2>
+    <p>The Calculator tab walks the same order every time — pick a load, describe your rifle and
+      target, tell it about the air, then read the chart. Four moves get you a real trajectory:</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <div><h3>Pick your round</h3><p>Use the caliber → manufacturer → load picker to pull real muzzle
+          velocity, weight, and BC from the catalog — or type your own numbers for a handload.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div><h3>Set your rig</h3><p>Sight height over bore, zero range, and vitals radius describe
+          <em>your</em> rifle and target — the catalog can't fill these in for you.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div><h3>Read the chart</h3><p>The summary strip and flight-path chart update live: velocity
+          and energy at distance, where it goes subsonic, and how far you can hold dead-on.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <div><h3>Name and save it</h3><p>One save reuses the whole setup in Compare and Optimal Zero —
+          no retyping the same load twice.</p></div>
+      </div>
+    </div>
+    <figure class="shot" style="max-width:420px;">
+      <img src="images/sidebar-collapsed.png" alt="Calculator's input form, collapsed to one-line summaries after a first pass through all six sections.">
+      <figcaption>Every section folds to a one-line summary once you've filled it in — real state from the live app, not a mockup.</figcaption>
+    </figure>
+  </section>
+
+  <section id="tools">
+    <h2>The five tools</h2>
+    <p>One tab per question. Nothing here is sequential — jump straight to whichever answers what
+      you actually walked in asking.</p>
+    <div class="tools">
+
+      <div class="tool">
+        <div class="tool-head"><div class="badge">CA</div><h3><a href="https://ballisticnerd.com/#tab/calculator" target="_blank" rel="noopener">Calculator</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">The main tool — one load, one full trajectory,
+          zeroed at a distance you choose.</p>
+        <ul>
+          <li>Chart shows drop <em>from your line of sight</em>, not the bore — matches what you'd
+            actually see through a scope.</li>
+          <li>Optional overlays: Vitals Zero band, Optimal Sight-in, Leupold BAS reticle group.</li>
+          <li>Range table toggles MOA/MIL columns; "Print dope chart" builds a clean printable card.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>Sight height, vitals radius, and the air fields are your shared
+          <em>rig</em> — a drift bar offers to save or reset them the moment you change one.</div>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><div class="badge">CM</div><h3><a href="https://ballisticnerd.com/#tab/compare" target="_blank" rel="noopener">Compare</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">Overlays two or more saved loads on one
+          chart and one table, so different rounds or rifles actually stack up against each other.</p>
+        <ul>
+          <li>Needs at least one saved dataset from Calculator first — or add straight from the catalog.</li>
+          <li>"Compare at" sets the one distance the table reads out at.</li>
+          <li>Draws one Vitals band per distinct radius among the loads you've picked.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>If a load's own chart doesn't reach your "Compare at" distance,
+          its row says so and its line just stops — that's correct, not broken.</div>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><div class="badge">OZ</div><h3><a href="https://ballisticnerd.com/#tab/optimal-zero" target="_blank" rel="noopener">Optimal Zero</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">For a whole list of rounds at once, finds
+          the zero that keeps you inside the vitals for the longest possible stretch.</p>
+        <ul>
+          <li>One shared rig on the left applies to every round on the right — the same physical
+            setup, compared across ammo.</li>
+          <li>Surfaces both a practical <em>near</em> zero and the true <em>optimal</em> zero.</li>
+          <li>Add rounds from your saved loads or the catalog picker; remove any row.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>This rig is the same one Calculator uses — change it in
+          either tab and the other picks it up.</div>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><div class="badge">RC</div><h3><a href="https://ballisticnerd.com/#tab/recoil" target="_blank" rel="noopener">Recoil</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">Compares <strong>Free Recoil Energy</strong>
+          across rifle-and-cartridge setups, straight from SAAMI's own published formula.</p>
+        <ul>
+          <li>Each setup gets its own rifle-plus-optics weight — that's the actual variable worth comparing.</li>
+          <li>Picking a cartridge auto-fills an estimated powder charge (always marked "est.").</li>
+          <li>Results show as a table and a live bar chart as you add or remove setups.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>This is <em>free</em> recoil energy, not what a rifle feels
+          like to shoot — stock, pad, and muzzle device aren't modeled. See the FAQ.</div>
+      </div>
+
+      <div class="tool">
+        <div class="tool-head"><div class="badge">HP</div><h3><a href="https://ballisticnerd.com/#tab/help" target="_blank" rel="noopener">Help</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">In-app how-tos, an FAQ, and a direct line
+          to send an idea or report something wrong.</p>
+        <ul>
+          <li>Every tab links straight to its own section here — "How does {tab} work?"</li>
+          <li>"Suggest an idea" opens a prefilled email — no account or form to fill out.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>This guide covers the same ground in more depth — the in-app
+          Help tab is the faster lookup while you're mid-form.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="screenshots">
+    <h2>See it in action</h2>
+    <p>Real state pulled straight from the live app — not mockups.</p>
+    <div class="shots">
+      <figure class="shot">
+        <img src="images/calculator.png" alt="Calculator tab showing a 30-06 Springfield trajectory: summary strip, flight-path chart, and range table with MOA/MIL toggles.">
+        <figcaption><b>Calculator</b> — the summary strip, flight-path chart, and range table for one load. This one's zeroed at 200yd and stays supersonic the whole way to 500.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/compare.png" alt="Compare tab overlaying two 30-06 loads zeroed at 200yd and 300yd, with a table of muzzle velocity, energy, and downrange figures.">
+        <figcaption><b>Compare</b> — the same load saved twice with different zeros, overlaid. The 300yd zero (red) rides higher through mid-range and lands flatter at 500.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/optimal-zero.png" alt="Optimal Zero tab showing a shared rig on the left and a results table on the right with near zero, optimal zero, and vitals window for two rounds.">
+        <figcaption><b>Optimal Zero</b> — one rig, several rounds. Near zero, optimal (far) zero, and the vitals window each round holds inside a 3in radius.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/recoil.png" alt="Recoil tab comparing free recoil energy for the same cartridge in an 8lb rifle versus a 6.5lb rifle, as a table and a bar chart.">
+        <figcaption><b>Recoil</b> — same cartridge, two rifle weights. Dropping from an 8lb rifle to a 6.5lb mountain rifle adds about 5 ft&middot;lb of free recoil energy.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="chart">
+    <h2>Reading the chart &amp; table</h2>
+    <p>Every chart in the app draws the same convention, so once you can read one you can read all of them.</p>
+    <div class="card">
+      <div class="legend">
+        <div class="li"><span class="swatch line"></span><span><strong>Dashed line</strong> — your line
+          of sight. The bullet starts below it, rises through it at the near zero, and falls back
+          through it at the far zero.</span></div>
+        <div class="li"><span class="swatch dot"></span><span><strong>Open dot</strong> — a zero
+          crossing (near or far).</span></div>
+        <div class="li"><span class="swatch dotfill"></span><span><strong>Filled dot</strong> — max
+          ordinate, the highest point above the line of sight.</span></div>
+        <div class="li"><span class="swatch t"></span><span><strong>Brass shading</strong> — transonic
+          band, Mach 1.2 down to 1.0, where drag gets unpredictable.</span></div>
+        <div class="li"><span class="swatch s"></span><span><strong>Ox shading</strong> — subsonic,
+          past Mach 1.0.</span></div>
+        <div class="li"><span class="swatch vit"></span><span><strong>Vitals band</strong> (toggle) —
+          the span where impact stays within your vitals radius of point of aim.</span></div>
+      </div>
+    </div>
+    <p style="margin-top:14px;">The range table underneath lists velocity, energy, drop, and windage at
+      every step distance you set. Turn on the <strong>MOA</strong> / <strong>MIL</strong> columns to
+      get holdover in scope-click units instead of inches. <strong>Print dope chart</strong> opens your
+      browser's print dialog with a clean printable card — pick "Save as PDF" as the destination to
+      keep one in your range bag.</p>
+  </section>
+
+  <section id="glossary">
+    <h2>Jargon, decoded</h2>
+    <div class="gloss-wrap">
+      <table class="gloss">
+        <tbody>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">BC</a></td><td>Ballistic coefficient — how well a bullet resists drag. Higher means
+            it sheds velocity more slowly downrange.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">G1 / G7</a></td><td>Two different reference drag shapes a BC can be measured against.
+            G1 fits older flat-base bullets; G7 fits modern boat-tails more accurately. A BC has to
+            be paired with the model it was published under — mixing them isn't a small error, it's
+            the wrong calculation.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Muzzle velocity</a></td><td>Bullet speed the instant it leaves the barrel, in fps (or
+            m/s in Metric).</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Sight height</a></td><td>Distance from bore centerline to scope (or iron sight)
+            centerline — typically 1.5–2.0in for a scope, about 0.8in for irons.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Zero</a></td><td>The distance where your point of impact crosses your line of sight.
+            A trajectory usually has two: a near zero (rising) and a far zero (falling back through).</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Max ordinate</a></td><td>The highest point the bullet reaches above your line of sight —
+            the top of the arc.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Vitals radius / window</a></td><td>Radius is the half-width of the vital zone you're
+            trying to stay inside (smaller for varmints, bigger for elk or moose). The window is how
+            far out you can hold dead-on and still land inside it, given your current zero.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/optimal-zero" target="_blank" rel="noopener">Optimal zero</a></td><td>The zero distance that makes the vitals window as long as
+            possible — the ballistics-nerd version of "how far can I just hold center."</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">MOA / MIL</a></td><td>Angular units scopes dial in. 1 MOA ≈ 1.047in per 100yd; 1 MIL =
+            3.6in per 100yd. Letting the table show holdover in these instead of raw inches matches
+            what's printed on your turret.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Transonic / subsonic</a></td><td>Transonic is the messy zone around Mach 1.2–1.0, where
+            drag behavior gets less predictable as the bullet slows through the sound barrier.
+            Subsonic is everything past Mach 1.0.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Station pressure</a></td><td>The actual, un-adjusted air pressure where you're standing
+            — not the sea-level-corrected number a weather report usually gives you.</td></tr>
+          <tr><td>Shot angle</td><td>Steep uphill or downhill shots carry less effective drop than the
+            slant range suggests — this advisory line converts your slant distance to what it holds
+            like on a flat shot (the "rifleman's rule").</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Free recoil energy</a></td><td>Exact physics — conservation of momentum and kinetic
+            energy, from SAAMI's own published formula. Not the same as how a rifle <em>feels</em> to
+            shoot, which also depends on stock, pad, and muzzle device.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Derived BC</a></td><td>A load's own manufacturer didn't publish a BC, so one was
+            back-solved from that manufacturer's own published downrange velocity numbers. Grounded in
+            real data, but an approximation — always labeled, never presented as an official figure.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tripups">
+    <h2>Where people get tripped up</h2>
+    <div class="trip">
+      <div class="t">Picking a caliber and manufacturer isn't enough</div>
+      <div class="d">Nothing fills in until you pick an actual <em>load</em>, the third dropdown. A
+        status line under the picker always confirms exactly what changed — if it still says "pick a
+        load above," nothing's been applied yet.</div>
+    </div>
+    <div class="trip">
+      <div class="t">G1 and G7 BCs aren't interchangeable</div>
+      <div class="d">Switching the drag model without updating the BC value gives you a wrong answer,
+        not a slightly-off one. The app warns before letting the switch go through — read that prompt
+        rather than dismissing it.</div>
+    </div>
+    <div class="trip">
+      <div class="t">A short line on the Compare chart isn't a bug</div>
+      <div class="d">If a saved load's own charted range is shorter than your "Compare at" distance,
+        its line simply stops where its own data ends and its table row says so. That's the load's
+        actual scope, not something broken.</div>
+    </div>
+    <div class="trip">
+      <div class="t">Saved loads live in your browser only — unless you sign in</div>
+      <div class="d">Without an account, everything is local to the browser you're using. Clearing
+        site data or switching devices starts you over. Sign in to sync saved loads and your rig
+        across devices instead.</div>
+    </div>
+    <div class="trip">
+      <div class="t">Loading a saved dataset doesn't touch your rig</div>
+      <div class="d">A saved dataset carries its own sight height, zero, and conditions from whenever
+        you saved it. Your shared "rig" (used by Calculator and Optimal Zero) only changes when you
+        explicitly save or reset it.</div>
+    </div>
+    <div class="trip">
+      <div class="t">"Fill from standard atmosphere" doesn't stack</div>
+      <div class="d">It sets temperature and pressure directly from the altitude you entered — it
+        doesn't add to whatever you already typed. Enter altitude first, then click it.</div>
+    </div>
+  </section>
+
+  <section id="accounts">
+    <h2>Your data</h2>
+    <div class="split">
+      <div class="card">
+        <span class="tag">Default</span>
+        <h3>Signed out</h3>
+        <p>Every saved load and your shared rig live only in this browser's local storage. Nothing is
+          uploaded anywhere. Convenient and completely private — but tied to this one browser on this
+          one device.</p>
+      </div>
+      <div class="card">
+        <span class="tag on">Optional</span>
+        <h3>Signed in</h3>
+        <p>An email + password account (confirm the email link to activate) syncs your saved loads and
+          rig to the cloud, so the same setups follow you to another device or browser. Nothing beyond
+          those two things is ever collected.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <details>
+      <summary>Why is trajectory height measured from my line of sight, not the bore?</summary>
+      <p>Because that's what you actually aim with and read on a reticle. The bullet starts one sight
+        height below your line of sight, rises through it at the near zero, and falls back through it
+        at the far zero — matching what you'd see at the range.</p>
+    </details>
+    <details>
+      <summary>Does it support metric?</summary>
+      <p>Yes — the Imperial/Metric toggle at the top applies everywhere. Everything is computed
+        internally in imperial units and converted only for display and input, so switching back and
+        forth never loses precision.</p>
+    </details>
+    <details>
+      <summary>Where does the estimated powder charge on the Recoil tab come from?</summary>
+      <p>Manufacturers don't publish it for factory ammo. When a cartridge has known case capacity,
+        the estimate comes from published case-capacity figures at a conservative ~90% load density —
+        always labeled as an estimate, always overridable if you know your real charge weight.</p>
+    </details>
+    <details>
+      <summary>Is Free Recoil Energy what a rifle "feels" like to shoot?</summary>
+      <p>No. It's exact physics — conservation of momentum and kinetic energy, straight from SAAMI's
+        published formula. What a rifle actually feels like also depends on stock geometry, recoil
+        pads, and muzzle devices, none of which reduce to one formula — so "felt" recoil is
+        deliberately not estimated.</p>
+    </details>
+    <details>
+      <summary>What isn't modeled yet?</summary>
+      <p>Spin drift, the Coriolis effect, aerodynamic jump, and powder-temperature sensitivity aren't
+        in the solver yet. Everything currently implemented — drag, wind deflection, atmosphere — is a
+        full point-mass integration, not a simplified approximation, and is checked against an
+        independent solver: worst-case deviation is under 1 fps on velocity and 0.15in on height, out
+        to 1000yd.</p>
+    </details>
+    <details>
+      <summary>Does the wind field use compass or clock directions?</summary>
+      <p>Clock face, relative to you: 12 is straight into your face, 3 is your right cheek, 6 is at
+        your back, 9 is your left cheek. Leave wind speed blank for a no-wind trajectory.</p>
+    </details>
+  </section>
+
+  <footer>
+    <span>Written against the live app at <a href="https://ballisticnerd.com" target="_blank" rel="noopener">ballisticnerd.com</a>.</span>
+    <span>Something missing or wrong? Use "Suggest an idea" on the in-app Help tab.</span>
+  </footer>
+
+</div>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('#idxbar a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    if (!('IntersectionObserver' in window) || !sections.length) return;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (!entry.isIntersecting) return;
+        var id = '#' + entry.target.id;
+        links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === id); });
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(function(s){ io.observe(s); });
+  })();
+</script>
+  </body>
+</html>

@@ -181,9 +181,10 @@ export default function Help({ scrollTarget }) {
           Calculator's range table instead.
         </P>
         <P>
-          Add rows to compare a few weight/velocity combinations side by side — a bar chart appears once there
-          are two or more to compare. Nothing here is saved; it's a scratch pad, not another place your loads
-          live.
+          Type your own numbers into a row, or pull them from the catalog picker — a pick fills the first empty
+          row (or adds a new one once every row already has something in it). Add rows to compare a few
+          weight/velocity combinations side by side — a bar chart appears once there are two or more to compare.
+          Nothing here is saved; it's a scratch pad, not another place your loads live.
         </P>
       </Section>
 

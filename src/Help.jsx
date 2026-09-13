@@ -13,6 +13,7 @@ const TOC = [
   { id: "optimal-zero", label: "Optimal Zero" },
   { id: "recoil", label: "Recoil" },
   { id: "bullet-energy", label: "Bullet Energy" },
+  { id: "handloader-tools", label: "Handloader's Tools" },
   { id: "faq", label: "FAQ" },
   { id: "submit", label: "Suggest an idea" },
 ];
@@ -190,6 +191,26 @@ export default function Help({ scrollTarget }) {
         </P>
       </Section>
 
+      <Section id="handloader-tools" title="Handloader's Tools">
+        <P>
+          A hub for tools aimed at handloaders and anyone chasing more than a factory-published
+          number — kept off the main tab bar so it doesn't crowd things for everyone else. Opening
+          the tab always lands on a grid of tool cards; picking one opens it, with a link back to the
+          grid at the top.
+        </P>
+        <Sub>BC from Chronograph</Sub>
+        <P>
+          Back-solves a bullet's real ballistic coefficient from your own chronograph data instead of
+          the box's published number, which is often optimistic. Enter your muzzle velocity, the
+          distance to a second reading, and whichever of downrange velocity or time of flight you
+          actually measured — the tool finds the BC (under whichever drag model you pick) that makes
+          this app's own trajectory math reproduce that number. Atmosphere defaults to a standard
+          59&deg;F/29.92inHg assumption (collapsed, optional) since most people chronographing don't
+          also have a Kestrel running — the result always states which atmosphere it assumed. See the
+          FAQ below for how the result is labeled and how it's checked for accuracy.
+        </P>
+      </Section>
+
       <Section id="faq" title="FAQ">
         <QA q="What's a ballistic coefficient (BC), and why does the drag model (G1/G7) matter?">
           BC measures how well a bullet resists drag — higher means less velocity lost over distance. G1 and G7 are
@@ -204,6 +225,15 @@ export default function Help({ scrollTarget }) {
           manufacturer's own published downrange velocity numbers. It's grounded in real published data, not
           guessed — but it's still an approximation, not an official manufacturer figure, which is why it's always
           labeled.
+        </QA>
+        <QA q="Is a 'chrono-measured' BC the same kind of thing as a catalog's 'derived BC'?">
+          No — deliberately different words for opposite situations. &ldquo;Derived BC&rdquo; means the
+          manufacturer never published a real figure, so this app approximated one from their other published
+          data — lower confidence than a real published BC. A &ldquo;chrono-measured&rdquo; BC, from the
+          Handloader's Tools BC-from-Chronograph tool, is empirical — solved from your own rifle, your own ammo,
+          shot under your own conditions — which is arguably higher confidence than a generic catalog figure, not
+          lower. Same root-finding method underneath (back-solving a BC that reproduces a real measurement), but
+          the two labels intentionally don't share a word so they're never mistaken for each other.
         </QA>
         <QA q="Why are trajectory heights measured from the line of sight instead of the bore?">
           Because that's how you actually aim and read a scope's reticle. The bullet starts one sight-height below

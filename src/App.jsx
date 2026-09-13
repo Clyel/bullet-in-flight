@@ -15,43 +15,63 @@ const Compare = lazy(() => import("./Compare.jsx"));
 const OptimalZero = lazy(() => import("./OptimalZero.jsx"));
 const Recoil = lazy(() => import("./Recoil.jsx"));
 const BulletEnergy = lazy(() => import("./BulletEnergy.jsx"));
+const HandloaderTools = lazy(() => import("./HandloaderTools.jsx"));
 const Help = lazy(() => import("./Help.jsx"));
 
 // Maps the main tab switcher's value to the Help tab's matching section id,
 // for the contextual "How does this page work?" link below the switcher.
+// Handloader's Tools points at one shared section covering the hub and its
+// one tool together -- split into per-tool sections once there's enough
+// content on that page that sharing it reads as cluttered (UX Review/
+// UserGuide's call), same "grow with content" logic as the hub's own nav.
 const HELP_SECTION_BY_TAB = {
   Calculator: "calculator",
   Compare: "compare",
   "Optimal Zero": "optimal-zero",
   Recoil: "recoil",
   "Bullet Energy": "bullet-energy",
+  "Handloader's Tools": "handloader-tools",
 };
 
 // Landing-page deep links -- `#tab/compare` opens straight to a tab,
 // `#help/faq` opens Help scrolled to a section (any TOC id from Help.jsx:
-// calculator/compare/optimal-zero/recoil/bullet-energy/faq/submit). Slugs,
-// not the tab switcher's own display strings, so a URL never has to carry
-// a space. This is NOT a router: read once on first mount only, for a link
-// landing from the user guide or a shared URL -- navigating inside the app
-// never touches the hash again, and there's no back-button/history
-// integration. An unrecognized or missing hash falls back to today's
-// default (silently -- a stale/typo'd link should still open the app, not
-// show an error).
+// calculator/compare/optimal-zero/recoil/bullet-energy/handloader-tools/
+// faq/submit). Slugs, not the tab switcher's own display strings, so a URL
+// never has to carry a space. This is NOT a router: read once on first
+// mount only, for a link landing from the user guide or a shared URL --
+// navigating inside the app never touches the hash again, and there's no
+// back-button/history integration. An unrecognized or missing hash falls
+// back to today's default (silently -- a stale/typo'd link should still
+// open the app, not show an error).
+//
+// Handloader's Tools nests one optional extra segment for its own hub --
+// `#tab/handloader-tools` lands on the tool grid, `#tab/handloader-tools/
+// bc-from-chrono` opens a specific tool directly. Still read-once-on-mount,
+// still silently falls back (an unrecognized tool id just lands on the
+// grid) -- a minimal, consistent extension of the same scheme rather than a
+// new one (UX Review's call).
 const TAB_SLUG = {
   calculator: "Calculator",
   compare: "Compare",
   "optimal-zero": "Optimal Zero",
   recoil: "Recoil",
   "bullet-energy": "Bullet Energy",
+  "handloader-tools": "Handloader's Tools",
   help: "Help",
 };
 
 function initialRouteFromHash() {
   const [kind, ...rest] = window.location.hash.replace(/^#/, "").split("/");
-  const arg = rest.join("/");
-  if (kind === "help") return { tab: "Help", helpTarget: arg ? { id: arg, key: Date.now() } : null };
-  if (kind === "tab" && TAB_SLUG[arg]) return { tab: TAB_SLUG[arg], helpTarget: null };
-  return { tab: "Calculator", helpTarget: null };
+  if (kind === "help") {
+    const arg = rest.join("/");
+    return { tab: "Help", helpTarget: arg ? { id: arg, key: Date.now() } : null, handloaderTool: null };
+  }
+  if (kind === "tab" && TAB_SLUG[rest[0]]) {
+    const tab = TAB_SLUG[rest[0]];
+    const handloaderTool = tab === "Handloader's Tools" && rest[1] ? rest[1] : null;
+    return { tab, helpTarget: null, handloaderTool };
+  }
+  return { tab: "Calculator", helpTarget: null, handloaderTool: null };
 }
 
 export default function App() {
@@ -69,6 +89,7 @@ export default function App() {
 function AppShell() {
   const [tab, setTab] = useState(() => initialRouteFromHash().tab);
   const [helpTarget, setHelpTarget] = useState(() => initialRouteFromHash().helpTarget);
+  const [handloaderTool, setHandloaderTool] = useState(() => initialRouteFromHash().handloaderTool);
   const { system, setSystem } = useUnits();
 
   // `key` (not just `id`) so clicking the same help link twice in a row
@@ -99,16 +120,23 @@ function AppShell() {
         </header>
 
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: tab === "Help" ? 16 : 8 }}>
-          {/* 580, not the original 460 -- 6 tabs now share this row (was 5),
-              and at 460 "Optimal Zero" and "Bullet Energy" both wrapped to
-              two lines while the other four stayed single-line, an uneven
-              row height. 580 keeps every label on one line down to this
-              container's own minWidth. */}
-          <div style={{ maxWidth: 580, flex: 1, minWidth: 300 }}>
+          {/* 720, not 580 -- 7 tabs now share this row (was 6), and 580 was
+              already sized for 6. Bumped again the same way it was bumped to
+              580 last time -- see UX Review's own heads-up when Handloader's
+              Tools was scoped that this would need another pass eventually
+              (flagged non-blocking, not a reason to change that plan -- the
+              whole point of the hub is keeping tools like this OFF the bar,
+              which still holds; the count just keeps growing on its own
+              regardless). */}
+          <div style={{ maxWidth: 720, flex: 1, minWidth: 300 }}>
             <Segmented
-              options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Bullet Energy", "Help"]}
+              options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Bullet Energy", "Handloader's Tools", "Help"]}
               value={tab}
-              onChange={(v) => { if (v === "Help") setHelpTarget(null); setTab(v); }}
+              onChange={(v) => {
+                if (v === "Help") setHelpTarget(null);
+                if (v === "Handloader's Tools") setHandloaderTool(null);
+                setTab(v);
+              }}
             />
           </div>
           <div style={{ maxWidth: 200 }}>
@@ -151,6 +179,13 @@ function AppShell() {
               : tab === "Optimal Zero" ? <OptimalZero />
               : tab === "Recoil" ? <Recoil />
               : tab === "Bullet Energy" ? <BulletEnergy />
+              : tab === "Handloader's Tools" ? (
+                  <HandloaderTools
+                    tool={handloaderTool}
+                    onOpenTool={setHandloaderTool}
+                    onBackToHub={() => setHandloaderTool(null)}
+                  />
+                )
               : <Help scrollTarget={helpTarget} />}
           </Suspense>
         </ErrorBoundary>

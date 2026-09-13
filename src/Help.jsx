@@ -238,8 +238,9 @@ export default function Help({ scrollTarget }) {
           loses precision.
         </QA>
         <QA q="What isn't modeled yet?">
-          Everything implemented — drag, wind deflection, atmosphere, spin drift, Coriolis — is real physics, not a
-          simplified approximation. Aerodynamic jump and powder-temperature sensitivity aren't modeled.
+          Drag, wind deflection, atmosphere, spin drift, and Coriolis are all modeled now — spin drift and Coriolis
+          are standard closed-form approximations layered on top of the full point-mass integration, not read off
+          it; see the next question for how. Aerodynamic jump and powder-temperature sensitivity aren't modeled.
         </QA>
         <QA q="How do spin drift and Coriolis work?">
           Both live in the Advanced section at the very bottom of the Calculator form, below the wind section,

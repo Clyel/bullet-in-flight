@@ -464,7 +464,7 @@ export default function InputPanel({
                   suffix="in"
                 />
               </div>
-              <div style={{ flex: 1, paddingTop: 20 }}>
+              <div style={{ flex: 1, paddingTop: 30 }}>
                 <Segmented options={["Right", "Left"]} value={v.twistDirection} onChange={set.twistDirection} />
               </div>
             </div>

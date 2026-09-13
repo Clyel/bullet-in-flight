@@ -85,6 +85,16 @@ boundary — see `CODE-REVIEW.md`).
    **Still open:** a fully flattened/searchable catalog picker (Jake chose to
    keep the 3 cascading dropdowns with typeahead for now).
 3. React 18 → 19.
+4. **Main tab switcher's mobile scaling has a ceiling.** PR #25 (Handloader's
+   Tools) fixed a real 375px overflow by shrinking the switcher's font below
+   a 400px breakpoint (`.bif-main-tabs` in styles.css) — the third size-based
+   patch to this switcher after the 460→580 and 580→720 `maxWidth` bumps
+   before it. UX Review's read when this was fixed: another one-off patch
+   like this probably won't hold once an 8th tab lands — worth a real
+   responsive nav pattern at that point (e.g. wrapping to two rows, an
+   overflow/"more" menu) instead of chasing it with another number. Not
+   urgent — flagging it now so it's a planned decision next time, not one
+   made under time pressure.
 
 The original roadmap's last physics item (spin drift + Coriolis) shipped
 2026-09-13 — see below. What's left after that is genuinely small: the

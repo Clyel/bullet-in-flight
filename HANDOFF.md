@@ -23,8 +23,8 @@ zeroing), wind deflection (3D relative-velocity), Imperial/Metric unit switching
 MOA/MIL correction columns, Saved Datasets (localStorage per device, plus Supabase
 cloud sync when signed in), Compare tab.
 
-Built since: a ~1,800-entry commercial ammo catalog across eleven manufacturers
-(Remington, Winchester, Nosler, Norma, Barnes, Federal, Hornady, Weatherby, Berger, Browning, Lapua; BC back-calculated from the
+Built since: a ~1,850-entry commercial ammo catalog across twelve manufacturers
+(Remington, Winchester, Nosler, Norma, Barnes, Federal, Hornady, Weatherby, Berger, Browning, Lapua, Sig Sauer; BC back-calculated from the
 manufacturer's own published data where they don't state one — see
 `scripts/deriveBC.mjs`), a cascading Caliber -> Manufacturer -> Load picker,
 per-load vitals-zone radius + a "vitals window" readout and an "Optimal Zero" solve
@@ -71,13 +71,13 @@ boundary — see `CODE-REVIEW.md`).
 
 **Features, roughly in priority order:**
 1. **More ammo manufacturers — essentially done.** PRs #7-13 (Winchester,
-   Barnes, Berger, Nosler, Browning, Norma, Lapua) all landed 2026-09-10 —
-   eleven manufacturers, ~1,800 loads, 127 of them G7. What's left is tiny or
-   hard: Sig Sauer (image-only PDF, needs OCR), budget brands (PPU/Fiocchi/
-   S&B) with thin BC data. Buffalo Bore was checked and skipped (publishes no
-   BC anywhere). CCI is rimfire-only — out of scope without a rimfire
-   section. Catalog chunk is ~354 KB / 33 KB gzip; a compact encoding or
-   lazy-load is the move if it keeps growing much.
+   Barnes, Berger, Nosler, Browning, Norma, Lapua) all landed 2026-09-10; Sig
+   Sauer landed 2026-09-13 (PR #27, see below) — twelve manufacturers, ~1,850
+   loads. What's left is tiny or hard: budget brands (PPU/Fiocchi/S&B) with
+   thin BC data. Buffalo Bore was checked and skipped (publishes no BC
+   anywhere). CCI is rimfire-only — out of scope without a rimfire section.
+   Catalog chunk is ~360 KB / 33 KB gzip; a compact encoding or lazy-load is
+   the move if it keeps growing much.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
    derive script, then the cartridge-name normalization pass before merge.
 2. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**

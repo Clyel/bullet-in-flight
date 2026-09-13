@@ -22,7 +22,7 @@ const stepCanonicalValue = (presetLabel, system) =>
 
 // The Step headers fold their section down to this one-liner. Ordered id
 // list drives the expand/collapse-all control and the persistence key.
-const SECTION_IDS = ["load", "sights", "target", "shot", "air", "wind"];
+const SECTION_IDS = ["load", "sights", "target", "shot", "air", "wind", "advanced"];
 const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
 
 // A first-ever visitor starts with everything BUT the load collapsed --
@@ -30,8 +30,10 @@ const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
 // sight height, 3in vitals, 59F/29.92inHg) was a busy first impression for
 // the one section (the load) anybody actually needs to engage with. Only
 // seeds the very first visit; any later change (including re-expanding
-// everything) persists from then on, same as always.
-const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind"];
+// everything) persists from then on, same as always. "advanced" (spin
+// drift/Coriolis) is included here too -- most shooters will never touch
+// it, per Jake's own call when this was scoped.
+const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind", "advanced"];
 
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
@@ -143,6 +145,12 @@ export default function InputPanel({
     wind: windSpeed
       ? joinDot(windSpeed, v.windClock.trim() ? `${v.windClock} o'clock` : null)
       : "no wind entered",
+    advanced: joinDot(
+      parseFloat(v.twistIn) > 0 ? `1:${v.twistIn} ${v.twistDirection.toLowerCase()}-hand` : null,
+      disp(v.bulletLengthIn, "length") && `${disp(v.bulletLengthIn, "length")} bullet`,
+      disp(v.bulletDiameterIn, "length") && `${disp(v.bulletDiameterIn, "length")} diameter`,
+      Number.isFinite(parseFloat(v.latitudeDeg)) ? `${v.latitudeDeg}° latitude` : null,
+    ) || "not entered",
   };
 
   const summaryStyle = {
@@ -429,6 +437,58 @@ export default function InputPanel({
             value={v.windClock}
             onChange={set.windClock}
             suffix="o'clock"
+          />
+        </>
+      ))}
+
+      {/* Spin drift and Coriolis -- both real physics (see spinDrift.js/
+          coriolis.js), both deliberately manual-entry-only: bullet length
+          isn't published anywhere in this app's catalog, and Coriolis's
+          "flat-fire" approximation only needs a latitude, not a full
+          compass heading. Collapsed by default even on a first visit
+          (DEFAULT_COLLAPSED above) -- most shooters will never open this,
+          per Jake's own call when this was scoped. Each of the three
+          effects' inputs is independently optional; leaving any of them
+          blank just leaves that effect off, same as wind. */}
+      {section("advanced", { eyebrow: "Advanced", name: "Spin drift & Coriolis" }, (
+        <>
+          <div style={{ marginBottom: 14 }}>
+            <span style={sub}>Barrel twist rate</span>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <div style={{ flex: 1 }}>
+                <Field
+                  label="1 turn in"
+                  hint="Leave blank (with bullet length and diameter) to turn spin drift off."
+                  value={v.twistIn}
+                  onChange={set.twistIn}
+                  suffix="in"
+                />
+              </div>
+              <div style={{ flex: 1, paddingTop: 20 }}>
+                <Segmented options={["Right", "Left"]} value={v.twistDirection} onChange={set.twistDirection} />
+              </div>
+            </div>
+          </div>
+          <UnitField
+            label="Bullet length"
+            hint="Not in the catalog for any load -- from the box, the manufacturer's spec sheet, or your own calipers."
+            category="length"
+            value={v.bulletLengthIn}
+            onChange={set.bulletLengthIn}
+          />
+          <UnitField
+            label="Bullet diameter"
+            hint="Bore/groove diameter, e.g. .308 for most 30-caliber rounds, .224 for .223 Rem/22-250."
+            category="length"
+            value={v.bulletDiameterIn}
+            onChange={set.bulletDiameterIn}
+          />
+          <Field
+            label="Latitude"
+            hint="Positive for the Northern Hemisphere, negative for the Southern. Leave blank to turn Coriolis off."
+            value={v.latitudeDeg}
+            onChange={set.latitudeDeg}
+            suffix="deg"
           />
         </>
       ))}

@@ -141,6 +141,17 @@ catalog-picker item above, and the toolchain bump.
   lines were stale after the Step 1 declutter shipped (fused load lock, default
   collapse, default-on chart overlays, the Range header). Content-only, no app
   code — recaptured by the "UserGuide" session, reviewed and merged by this one.
+- **Field Guide refresh for Bullet Energy + spin drift/Coriolis** (PR #24) —
+  hero stat 5→6 tools, new Bullet Energy tool card + screenshot, glossary
+  entries for twist rate/spin drift/Coriolis, a trip-up note on the Advanced
+  section's three-field requirement (leave any one of twist/length/diameter
+  blank and spin drift silently stays off), a new FAQ entry on how both
+  effects work, and a fix to "What isn't modeled yet?" (previously still
+  claimed spin drift/Coriolis weren't modeled). The FAQ's accuracy claim
+  (worst-case deviation within 0.01in, tighter than the core trajectory's own
+  0.15in) was checked against `node test/solver.test.mjs`'s actual output
+  before merging, not just asserted. Content-only, no app code — recaptured by
+  the "UserGuide" session, reviewed and merged by this one.
 
 **Shipped 2026-09-11 (in `main`, deployed, verified on ballisticnerd.com):**
 - **Calculator Step 1 declutter + sensible defaults** (PR #19, 5 changes from a UX

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { C, label, numeric } from "./components/theme.js";
 import { StepHead } from "./components/ui.jsx";
+import CommercialLoadPicker from "./components/CommercialLoadPicker.jsx";
 import { energyFtLb } from "./ballistics/solver.js";
 import { num } from "./solveFromForm.js";
 import { fieldDisplayValue, fieldCanonicalValue } from "./units.js";
@@ -30,6 +31,26 @@ export default function BulletEnergy() {
   const addRow = () => setRows((rs) => [...rs, makeRow()]);
   const removeRow = (id) => setRows((rs) => rs.filter((r) => r.id !== id));
 
+  // A catalog pick fills the first still-blank row rather than always
+  // appending -- the common case is picking a round or two right after
+  // landing on the tab, while the two starter rows are still empty, and
+  // appending there would leave those two sitting unused above the pick.
+  // Once every row has something in it, it appends, same as "+ Add row".
+  // Mirrors Compare/OptimalZero's own "picker adds to the list" pattern,
+  // not a per-row picker -- keeps every row's entry mechanism identical
+  // (type the numbers, or let a pick fill them in) instead of cluttering
+  // every row with its own cascading picker.
+  const handleAddCatalogRow = (ammo) => {
+    const filled = { grains: String(ammo.grains), muzzleVelocity: String(ammo.muzzleVelocity) };
+    setRows((rs) => {
+      const blankIdx = rs.findIndex((r) => !r.grains.trim() && !r.muzzleVelocity.trim());
+      if (blankIdx === -1) return [...rs, { id: nextRowId++, ...filled }];
+      const next = [...rs];
+      next[blankIdx] = { ...next[blankIdx], ...filled };
+      return next;
+    });
+  };
+
   // grains/muzzleVelocity stay canonical strings in state (this app's usual
   // form-state convention) -- num() + energyFtLb() happen at render, same as
   // every other live-computed value in this app.
@@ -48,6 +69,7 @@ export default function BulletEnergy() {
   };
   const th = { padding: "9px 12px", textAlign: "left", font: "600 10px 'Oswald',sans-serif",
                letterSpacing: ".12em", textTransform: "uppercase", color: C.card, whiteSpace: "nowrap" };
+  const sub = { ...label, display: "block", marginBottom: 5 };
 
   return (
     <div>
@@ -57,6 +79,13 @@ export default function BulletEnergy() {
         (the Calculator's range table already shows that for one specific load). Enter a bullet weight and
         velocity per row to compare a few at once.
       </p>
+
+      <span style={sub}>Add from the catalog</span>
+      <CommercialLoadPicker onSelect={handleAddCatalogRow} resetLoadAfterSelect />
+      <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+        Fills weight and muzzle velocity into a row below — edit the numbers afterward if you like, or
+        just type your own in a row instead.
+      </div>
 
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto", marginBottom: 12 }}>
         <table>

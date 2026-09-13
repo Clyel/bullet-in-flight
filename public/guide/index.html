@@ -212,7 +212,9 @@
       <div class="step">
         <div class="n">1</div>
         <div><h3>Pick your round</h3><p>Use the caliber → manufacturer → load picker to pull real muzzle
-          velocity, weight, and BC from the catalog — or type your own numbers for a handload.</p></div>
+          velocity, weight, and BC from the catalog — or type your own numbers for a handload. A catalog
+          pick locks into one summary line ("172gr @ 2825 fps · G7 0.265") with an Override link if you
+          need to edit it.</p></div>
       </div>
       <div class="step">
         <div class="n">2</div>
@@ -226,13 +228,14 @@
       </div>
       <div class="step">
         <div class="n">4</div>
-        <div><h3>Name and save it</h3><p>One save reuses the whole setup in Compare and Optimal Zero —
-          no retyping the same load twice.</p></div>
+        <div><h3>Name and save it</h3><p>The name field suggests one for you (from the catalog pick, or
+          from grains/velocity/BC for a custom load) — keep it or rename it. One save reuses the whole
+          setup in Compare and Optimal Zero, no retyping the same load twice.</p></div>
       </div>
     </div>
     <figure class="shot" style="max-width:420px;">
-      <img src="images/sidebar-collapsed.png" alt="Calculator's input form, collapsed to one-line summaries after a first pass through all six sections.">
-      <figcaption>Every section folds to a one-line summary once you've filled it in — real state from the live app, not a mockup.</figcaption>
+      <img src="images/sidebar-collapsed.png" alt="Calculator's input form on a first visit: Step 1 (The load) open with a locked catalog-pick summary and Override link, Steps 2 through 6 already folded to one-line summaries.">
+      <figcaption>What you actually see on a first visit: Step 1 stays open, everything below it starts folded to a one-line summary. Expand any section, or hit "Expand all" — real state from the live app, not a mockup.</figcaption>
     </figure>
   </section>
 
@@ -249,7 +252,7 @@
         <ul>
           <li>Chart shows drop <em>from your line of sight</em>, not the bore — matches what you'd
             actually see through a scope.</li>
-          <li>Optional overlays: Vitals Zero band, Optimal Sight-in, Leupold BAS reticle group.</li>
+          <li>Chart overlays: Vitals Zero band and Optimal Sight-in are on by default; Leupold BAS is opt-in.</li>
           <li>Range table toggles MOA/MIL columns; "Print dope chart" builds a clean printable card.</li>
         </ul>
         <div class="watch"><b>Watch for</b>Sight height, vitals radius, and the air fields are your shared
@@ -316,8 +319,8 @@
     <p>Real state pulled straight from the live app — not mockups.</p>
     <div class="shots">
       <figure class="shot">
-        <img src="images/calculator.png" alt="Calculator tab showing a 30-06 Springfield trajectory: summary strip, flight-path chart, and range table with MOA/MIL toggles.">
-        <figcaption><b>Calculator</b> — the summary strip, flight-path chart, and range table for one load. This one's zeroed at 200yd and stays supersonic the whole way to 500.</figcaption>
+        <img src="images/calculator.png" alt="Calculator tab showing a 30-06 Springfield trajectory: summary strip, flight-path chart with the Vitals Zero band and Optimal Sight-in overlays on, and a range table.">
+        <figcaption><b>Calculator</b> — the summary strip, flight-path chart, and range table for one load. Vitals Zero and Optimal Sight-in are on by default, so the chart already shows the vitals band and the "optimal sight-in" readout (241yd zero → 283yd window) alongside this load's own 200yd-zero window (251yd).</figcaption>
       </figure>
       <figure class="shot">
         <img src="images/compare.png" alt="Compare tab overlaying two 30-06 loads zeroed at 200yd and 300yd, with a table of muzzle velocity, energy, and downrange figures.">
@@ -350,7 +353,7 @@
           band, Mach 1.2 down to 1.0, where drag gets unpredictable.</span></div>
         <div class="li"><span class="swatch s"></span><span><strong>Ox shading</strong> — subsonic,
           past Mach 1.0.</span></div>
-        <div class="li"><span class="swatch vit"></span><span><strong>Vitals band</strong> (toggle) —
+        <div class="li"><span class="swatch vit"></span><span><strong>Vitals band</strong> (on by default) —
           the span where impact stays within your vitals radius of point of aim.</span></div>
       </div>
     </div>
@@ -409,6 +412,12 @@
 
   <section id="tripups">
     <h2>Where people get tripped up</h2>
+    <div class="trip">
+      <div class="t">Sights, Target, Shot, Air, and Wind look empty on your first visit</div>
+      <div class="d">They're not missing, just collapsed — only "The load" starts open, so the form
+        doesn't read as a wall of fields the first time you land on Calculator. Click any header to
+        expand it (or "Expand all" at the top), and the app remembers your choice after that.</div>
+    </div>
     <div class="trip">
       <div class="t">Picking a caliber and manufacturer isn't enough</div>
       <div class="d">Nothing fills in until you pick an actual <em>load</em>, the third dropdown. A

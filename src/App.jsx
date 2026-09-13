@@ -14,6 +14,7 @@ import Calculator from "./Calculator.jsx";
 const Compare = lazy(() => import("./Compare.jsx"));
 const OptimalZero = lazy(() => import("./OptimalZero.jsx"));
 const Recoil = lazy(() => import("./Recoil.jsx"));
+const BulletEnergy = lazy(() => import("./BulletEnergy.jsx"));
 const Help = lazy(() => import("./Help.jsx"));
 
 // Maps the main tab switcher's value to the Help tab's matching section id,
@@ -23,22 +24,25 @@ const HELP_SECTION_BY_TAB = {
   Compare: "compare",
   "Optimal Zero": "optimal-zero",
   Recoil: "recoil",
+  "Bullet Energy": "bullet-energy",
 };
 
 // Landing-page deep links -- `#tab/compare` opens straight to a tab,
 // `#help/faq` opens Help scrolled to a section (any TOC id from Help.jsx:
-// calculator/compare/optimal-zero/recoil/faq/submit). Slugs, not the tab
-// switcher's own display strings, so a URL never has to carry a space.
-// This is NOT a router: read once on first mount only, for a link landing
-// from the user guide or a shared URL -- navigating inside the app never
-// touches the hash again, and there's no back-button/history integration.
-// An unrecognized or missing hash falls back to today's default (silently
-// -- a stale/typo'd link should still open the app, not show an error).
+// calculator/compare/optimal-zero/recoil/bullet-energy/faq/submit). Slugs,
+// not the tab switcher's own display strings, so a URL never has to carry
+// a space. This is NOT a router: read once on first mount only, for a link
+// landing from the user guide or a shared URL -- navigating inside the app
+// never touches the hash again, and there's no back-button/history
+// integration. An unrecognized or missing hash falls back to today's
+// default (silently -- a stale/typo'd link should still open the app, not
+// show an error).
 const TAB_SLUG = {
   calculator: "Calculator",
   compare: "Compare",
   "optimal-zero": "Optimal Zero",
   recoil: "Recoil",
+  "bullet-energy": "Bullet Energy",
   help: "Help",
 };
 
@@ -95,9 +99,14 @@ function AppShell() {
         </header>
 
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: tab === "Help" ? 16 : 8 }}>
-          <div style={{ maxWidth: 460, flex: 1, minWidth: 300 }}>
+          {/* 580, not the original 460 -- 6 tabs now share this row (was 5),
+              and at 460 "Optimal Zero" and "Bullet Energy" both wrapped to
+              two lines while the other four stayed single-line, an uneven
+              row height. 580 keeps every label on one line down to this
+              container's own minWidth. */}
+          <div style={{ maxWidth: 580, flex: 1, minWidth: 300 }}>
             <Segmented
-              options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Help"]}
+              options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Bullet Energy", "Help"]}
               value={tab}
               onChange={(v) => { if (v === "Help") setHelpTarget(null); setTab(v); }}
             />
@@ -141,6 +150,7 @@ function AppShell() {
               : tab === "Compare" ? <Compare />
               : tab === "Optimal Zero" ? <OptimalZero />
               : tab === "Recoil" ? <Recoil />
+              : tab === "Bullet Energy" ? <BulletEnergy />
               : <Help scrollTarget={helpTarget} />}
           </Suspense>
         </ErrorBoundary>

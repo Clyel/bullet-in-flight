@@ -12,6 +12,7 @@ const TOC = [
   { id: "compare", label: "Compare" },
   { id: "optimal-zero", label: "Optimal Zero" },
   { id: "recoil", label: "Recoil" },
+  { id: "bullet-energy", label: "Bullet Energy" },
   { id: "faq", label: "FAQ" },
   { id: "submit", label: "Suggest an idea" },
 ];
@@ -169,6 +170,20 @@ export default function Help({ scrollTarget }) {
           filled in between adds (trying several loads through the same gun is the common case); everything else
           resets so the next setup starts clean. Results show as both a table and a bar chart, updating live as
           you add or remove setups.
+        </P>
+      </Section>
+
+      <Section id="bullet-energy" title="Bullet Energy">
+        <P>
+          A quick multi-row calculator: enter a bullet weight and a velocity, read the energy — no rig, zero, or
+          conditions needed. This is <strong>muzzle energy</strong>, not energy at range — how hard a bullet hits
+          leaving the barrel, before drag has slowed it. For energy at a specific downrange distance, see the
+          Calculator's range table instead.
+        </P>
+        <P>
+          Add rows to compare a few weight/velocity combinations side by side — a bar chart appears once there
+          are two or more to compare. Nothing here is saved; it's a scratch pad, not another place your loads
+          live.
         </P>
       </Section>
 

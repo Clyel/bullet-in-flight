@@ -84,8 +84,9 @@ boundary — see `CODE-REVIEW.md`).
    collapse-filled-sections pass (PR #15), "add a round to Compare" from the
    empty state (PR #14), and cloud sync for the shared "My rig" (PR #16).
    **Still open:** a fully flattened/searchable catalog picker (Jake chose to
-   keep the 3 cascading dropdowns with typeahead for now).
-3. React 18 → 19.
+   keep the 3 cascading dropdowns with typeahead for now, a closed decision,
+   not pending work).
+3. React 18 → 19 — **shipped 2026-09-13 (PR #26, see below).**
 4. **Main tab switcher's mobile scaling has a ceiling.** PR #25 (Handloader's
    Tools) fixed a real 375px overflow by shrinking the switcher's font below
    a 400px breakpoint (`.bif-main-tabs` in styles.css) — the third size-based
@@ -102,6 +103,30 @@ The original roadmap's last physics item (spin drift + Coriolis) shipped
 catalog-picker item above, and the toolchain bump.
 
 **Shipped 2026-09-13 (in `main`, deployed, verified on ballisticnerd.com):**
+- **React 18 → 19** (PR #26) — the toolchain item from "What remains." No app code
+  changes needed (already on `createRoot`/`StrictMode`, zero `propTypes`/
+  `defaultProps`/`forwardRef`/`findDOMNode` usage anywhere), so none of React 19's
+  actual breaking changes applied here. `@vitejs/plugin-react` stayed on 5.x and vite
+  itself untouched, so this didn't drag in a vite major. Verified every tab live under
+  the new version, including a live BC-from-chronograph solve and the print-dope-chart
+  portal (`createPortal` onto `document.body`) — zero console warnings. One tradeoff on
+  the record: the main JS chunk grew ~23 KB gzip under React 19.
+- **Sig Sauer added to the commercial ammo catalog** (PR #27) — the last "more
+  manufacturers" item. 52 rifle entries across 12 cartridges (223 Rem, 5.56 NATO,
+  22-250 Rem, 243 Win, 6mm/6.5 Creedmoor, 270 Win, 277 SIG Fury — new to the catalog,
+  300 AAC Blackout, 308 Win, 30-06, 300 Win Mag, 7mm Rem Mag), all published G1 BC. The
+  2020 chart the original note pointed at really was image-only ("needs OCR"), but
+  sigsauer.com/ballistics now links a 2024 edition with a real text layer instead — no
+  OCR needed after all, just `scripts/sig_raw.py` (a line-based parser for its two
+  field orders) + `scripts/buildSig.mjs`. Two real bugs in Sig's own PDF were caught
+  and corrected rather than trusted: the VENARI (Soft Point) table's printed caliber
+  name is wrong for all 8 of its rows (confirmed via SKU prefix + embedded weight +
+  physical plausibility all agreeing), and one row's (5.56mm) summary velocity column
+  disagrees with its own detailed velocity table by 66fps (used the detailed table —
+  see `commercialAmmo.js`'s header comment for the full writeup). Cross-validated a
+  corrected row against Sig's own published downrange velocity: this app's solver
+  lands within 10fps of it, not just internally consistent with the correction.
+  Catalog now ~1,850 entries across twelve manufacturers; ~360 KB / 33.6 KB gzip.
 - **Handloader's Tools hub + BC from Chronograph** (PR #25) — a gap identified after
   JBM Ballistics shut down: back-solve a bullet's real ballistic coefficient from a
   shooter's own chronograph data (downrange velocity or time of flight) instead of

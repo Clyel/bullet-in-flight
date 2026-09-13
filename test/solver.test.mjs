@@ -6,6 +6,7 @@ import { inclinedEquivalentRange } from "../src/ballistics/inclineComp.js";
 import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
 import { millerStability, spinDriftIn } from "../src/ballistics/spinDrift.js";
 import { coriolisWindageIn } from "../src/ballistics/coriolis.js";
+import { bcFromVelocity, bcFromTimeOfFlight } from "../src/ballistics/bcFromChrono.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -382,6 +383,66 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   const rifleOk = charge > 0 && rifleFre > 18 && rifleFre < 25;
   if (!rifleOk) failures++;
   console.log(`${rifleOk ? "pass" : "FAIL"}  recoil sanity (30-06/172gr, 8lb)   charge ${charge.toFixed(1)}gr (estimated)  FRE ${rifleFre.toFixed(2)} ft-lb`);
+}
+
+// BC from chronograph data: not new trajectory physics (same integrate()/
+// sampleAt() as everywhere else, wrapped in a root-find) -- same category
+// as optimalSightIn above, so no independent fixture, but the root-finder
+// has its own way to be subtly wrong. Round-trip self-consistency: forward-
+// solve a known BC to get the velocity/time a chronograph would have
+// measured at a real distance, invert-solve those measurements, and confirm
+// the same BC comes back.
+{
+  const cases = [
+    { muzzleVelocity: 2825, ballisticCoefficient: 0.265, dragModel: "G7", distanceYd: 300 },
+    { muzzleVelocity: 3240, ballisticCoefficient: 0.243, dragModel: "G1", distanceYd: 200 },
+    { muzzleVelocity: 2700, ballisticCoefficient: 0.315, dragModel: "G7", distanceYd: 500 },
+  ];
+  const tempF = 59, pressInHg = 29.92;
+
+  for (const c of cases) {
+    const path = integrate({
+      muzzleVelocity: c.muzzleVelocity, ballisticCoefficient: c.ballisticCoefficient, dragModel: c.dragModel,
+      sightHeight: 0, launchAngleRad: 0, maxRangeYd: c.distanceYd * 1.02, tempF, pressInHg,
+    });
+    const p = sampleAt(path, c.distanceYd);
+
+    const vResult = bcFromVelocity({
+      muzzleVelocity: c.muzzleVelocity, targetVelocity: p.v, distanceYd: c.distanceYd,
+      dragModel: c.dragModel, tempF, pressInHg,
+    });
+    const tResult = bcFromTimeOfFlight({
+      muzzleVelocity: c.muzzleVelocity, targetTimeSec: p.t, distanceYd: c.distanceYd,
+      dragModel: c.dragModel, tempF, pressInHg,
+    });
+
+    const vErr = vResult.ok ? Math.abs(vResult.ballisticCoefficient - c.ballisticCoefficient) : Infinity;
+    const tErr = tResult.ok ? Math.abs(tResult.ballisticCoefficient - c.ballisticCoefficient) : Infinity;
+
+    const ok = vResult.ok && tResult.ok && vErr < 0.0005 && tErr < 0.0005;
+    if (!ok) failures++;
+    console.log(
+      `${ok ? "pass" : "FAIL"}  bcFromChrono round-trip  BC ${c.ballisticCoefficient} ${c.dragModel} @ ${c.distanceYd}yd  ` +
+      `via-velocity ${vResult.ok ? vResult.ballisticCoefficient.toFixed(4) : "unsolved"}  ` +
+      `via-time ${tResult.ok ? tResult.ballisticCoefficient.toFixed(4) : "unsolved"}`
+    );
+  }
+
+  // Physically impossible input must be reported, not crash or silently
+  // return a wrong number.
+  const fasterThanMuzzle = bcFromVelocity({
+    muzzleVelocity: 2800, targetVelocity: 3000, distanceYd: 300, dragModel: "G7", tempF, pressInHg,
+  });
+  const fasterThanMuzzleOk = fasterThanMuzzle.ok === false;
+  if (!fasterThanMuzzleOk) failures++;
+  console.log(`${fasterThanMuzzleOk ? "pass" : "FAIL"}  bcFromChrono rejects a downrange velocity higher than muzzle velocity`);
+
+  const fasterThanPossible = bcFromTimeOfFlight({
+    muzzleVelocity: 2800, targetTimeSec: 0.01, distanceYd: 300, dragModel: "G7", tempF, pressInHg,
+  });
+  const fasterThanPossibleOk = fasterThanPossible.ok === false;
+  if (!fasterThanPossibleOk) failures++;
+  console.log(`${fasterThanPossibleOk ? "pass" : "FAIL"}  bcFromChrono rejects a time of flight faster than physically possible`);
 }
 
 console.log(failures ? `\n${failures} FAILING` : "\nAll checks passed.");

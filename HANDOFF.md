@@ -88,6 +88,30 @@ boundary — see `CODE-REVIEW.md`).
    keep the 3 cascading dropdowns with typeahead for now).
 4. React 18 → 19.
 
+**Shipped 2026-09-13 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Bullet Energy tab** (PR #21) — 6th tab, between Recoil and Help. A simple
+  multi-row muzzle-energy calculator modeled on the *idea* of a reference site
+  Jake liked (larrywillis.com/bullet-energy.html), not its UI: live-calculating
+  (not button-triggered), 2 starter rows with add/×-remove (not a fixed grid),
+  session-only state (a scratch pad, no saved-loads overlap). Per row: bullet
+  weight (gr) + velocity (unit-aware) → energy (unit-aware), "—" while
+  incomplete. Zero new physics — calls the existing `energyFtLb()` from
+  `src/ballistics/solver.js` directly. Horizontal bar chart once 2+ rows have
+  valid data (mirrors Recoil's `RecoilBars` pattern, not shared as a component
+  yet — two call sites, not worth extracting). Catalog-picker-per-row deferred
+  to a Phase 2 (UX Review's call — fights the "keep it simple" ask). New
+  `src/BulletEnergy.jsx`; wired into `App.jsx`'s tab switcher + `HELP_SECTION_BY_TAB`
+  + the `#tab/#help` hash-routing slugs (PR #17), and a new Help.jsx section
+  (explicitly notes this is *muzzle* energy, not energy at range, per UX
+  Review's flagged ambiguity). Caught live before shipping: the tab switcher's
+  container (`maxWidth: 460`, sized for 5 tabs) made "Optimal Zero" and the new
+  "Bullet Energy" both wrap to two lines while the other four stayed
+  single-line — bumped to 580.
+- **Field Guide refresh for PR #19** (PR #20) — two screenshots + a few copy
+  lines were stale after the Step 1 declutter shipped (fused load lock, default
+  collapse, default-on chart overlays, the Range header). Content-only, no app
+  code — recaptured by the "UserGuide" session, reviewed and merged by this one.
+
 **Shipped 2026-09-11 (in `main`, deployed, verified on ballisticnerd.com):**
 - **Calculator Step 1 declutter + sensible defaults** (PR #19, 5 changes from a UX
   Review spec, confirmed with Jake before each batch):

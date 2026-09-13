@@ -79,16 +79,39 @@ boundary — see `CODE-REVIEW.md`).
    lazy-load is the move if it keeps growing much.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
    derive script, then the cartridge-name normalization pass before merge.
-2. **Spin drift and Coriolis** — last on the original roadmap, "after wind is solid"
-   — it is now. Needs independent fixtures like wind did.
-3. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**
+2. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**
    collapse-filled-sections pass (PR #15), "add a round to Compare" from the
    empty state (PR #14), and cloud sync for the shared "My rig" (PR #16).
    **Still open:** a fully flattened/searchable catalog picker (Jake chose to
    keep the 3 cascading dropdowns with typeahead for now).
-4. React 18 → 19.
+3. React 18 → 19.
+
+The original roadmap's last physics item (spin drift + Coriolis) shipped
+2026-09-13 — see below. What's left after that is genuinely small: the
+catalog-picker item above, and the toolchain bump.
 
 **Shipped 2026-09-13 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Spin drift and Coriolis effect** (PR #23) — the last item on the original
+  physics roadmap. Manual-entry-only twist rate/bullet length/diameter for spin
+  drift (bullet length isn't published anywhere in the 1,800-load catalog);
+  latitude-only "flat-fire" Coriolis, not full 3D (no azimuth input, no change
+  to the RK4 integrator — see below). Both live together in a new "Advanced"
+  section at the very bottom of the input panel, collapsed by default even on
+  a first visit. New `src/ballistics/spinDrift.js` (Litz gyroscopic
+  approximation over the Miller stability coefficient) and
+  `src/ballistics/coriolis.js` (closed-form flat-fire horizontal deflection) —
+  both verified line-for-line against py-ballisticcalc's own source (same
+  reference solver the wind fixtures use) and by hand, with real independent
+  fixtures extending `test/fixtures/generate.py`/`reference.json` (not just
+  self-consistency checks — these are genuine new physical effects). Both are
+  deliberately closed-form corrections composed onto windage *after*
+  `solveTrajectory()` runs (in `solveFromForm.js`), not forces integrated into
+  `solver.js`'s RK4 loop — the validated integrator is completely untouched.
+  Windage column now shows whenever wind OR spin drift OR Coriolis is active
+  (`isWindageActive`), not just wind. A real bug was caught and fixed in the
+  *existing* wind-fixture test loop while adding these: it was silently
+  "passing" on `NaN` comparisons for rows missing certain fields (`NaN >
+  threshold` is always `false`) — now explicitly guarded.
 - **Bullet Energy tab** (PR #21) — 6th tab, between Recoil and Help. A simple
   multi-row muzzle-energy calculator modeled on the *idea* of a reference site
   Jake liked (larrywillis.com/bullet-energy.html), not its UI: live-calculating

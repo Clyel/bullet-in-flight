@@ -8,12 +8,13 @@ passed"; if it doesn't, something is wrong with the environment, not the code.
 
 ## What this is
 
-A point-mass exterior ballistics calculator, live at
-https://clyel.github.io/bullet-in-flight/. Five tabs: **Calculator** (single load,
-range table + trajectory chart), **Compare** (overlay saved loads), **Optimal Zero**
-(compare the optimal zero across many catalog rounds or saved loads against one
-shared rig), **Recoil** (free-recoil-energy comparison), **Help**. Auto-deploys to
-GitHub Pages on every push to `main`.
+A point-mass exterior ballistics calculator, live at https://ballisticnerd.com.
+**Calculator** (single load, range table + trajectory chart, spin drift/Coriolis under
+an Advanced section), **Compare** (overlay saved loads), **Optimal Zero** (compare the
+optimal zero across many catalog rounds or saved loads against one shared rig),
+**Recoil** (free-recoil-energy comparison), **Bullet Energy** (quick multi-row muzzle
+energy comparison), **Handloader's Tools** (a hub, currently one tool: BC from
+Chronograph), **Help**. Auto-deploys to GitHub Pages on every push to `main`.
 
 ## What is already done and working
 
@@ -101,6 +102,34 @@ The original roadmap's last physics item (spin drift + Coriolis) shipped
 catalog-picker item above, and the toolchain bump.
 
 **Shipped 2026-09-13 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Handloader's Tools hub + BC from Chronograph** (PR #25) — a gap identified after
+  JBM Ballistics shut down: back-solve a bullet's real ballistic coefficient from a
+  shooter's own chronograph data (downrange velocity or time of flight) instead of
+  trusting the box's published number. New top-level **Handloader's Tools** tab,
+  deliberately a hub (card grid) rather than a flat tool tab, to keep tools aimed at
+  handloaders off the main bar as more land there over time — always opens to the
+  grid, never skips straight into the lone tool, so behavior can't silently change the
+  day a second tool ships. Nested hash routes (`#tab/handloader-tools`, `#tab/
+  handloader-tools/bc-from-chrono`). `src/ballistics/bcFromChrono.js` wraps the
+  already-validated `integrate()`/`sampleAt()` in a direction-agnostic bisection root-
+  find — zero new force physics, so no independent fixtures, but new *logic* with its
+  own way to be subtly wrong, validated instead by round-trip self-consistency in
+  `test/solver.test.mjs` (forward-solve a known BC, invert-solve the synthetic
+  measurement, recover the same BC — same treatment `vitalsWindow.js`'s
+  `optimalSightIn()` got). The solver verifies its own residual actually zeros before
+  returning an answer rather than surfacing a converged-but-off result with false
+  confidence, and physically impossible input (downrange velocity ≥ muzzle velocity, a
+  time faster than physically possible) is rejected up front with a clear amber
+  Notice. Result is labeled "chrono-measured," deliberately not reusing the catalog's
+  "derived BC" wording — opposite epistemic cases (derived = no published figure
+  exists; chrono-measured = empirical, from the shooter's own rifle) — with its own
+  FAQ entry explaining the distinction. Atmosphere defaults to standard (59°F/
+  29.92inHg, collapsed) but the result always states which atmosphere it assumed, live,
+  the moment either field is touched. UX Review caught a real mobile bug during her
+  pass — the main tab switcher (now at 7 tabs) overflowed a 375px viewport by a few
+  px — fixed by scoping a font/padding shrink to just that switcher (`.bif-main-tabs`
+  in styles.css) rather than touching the shared `Segmented` component or bumping its
+  `maxWidth` a fourth time; see "What remains" above for her flagged follow-up.
 - **Spin drift and Coriolis effect** (PR #23) — the last item on the original
   physics roadmap. Manual-entry-only twist rate/bullet length/diameter for spin
   drift (bullet length isn't published anywhere in the 1,800-load catalog);

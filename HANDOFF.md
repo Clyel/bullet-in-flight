@@ -98,15 +98,22 @@ boundary — see `CODE-REVIEW.md`).
   incomplete. Zero new physics — calls the existing `energyFtLb()` from
   `src/ballistics/solver.js` directly. Horizontal bar chart once 2+ rows have
   valid data (mirrors Recoil's `RecoilBars` pattern, not shared as a component
-  yet — two call sites, not worth extracting). Catalog-picker-per-row deferred
-  to a Phase 2 (UX Review's call — fights the "keep it simple" ask). New
-  `src/BulletEnergy.jsx`; wired into `App.jsx`'s tab switcher + `HELP_SECTION_BY_TAB`
+  yet — two call sites, not worth extracting). New `src/BulletEnergy.jsx`;
+  wired into `App.jsx`'s tab switcher + `HELP_SECTION_BY_TAB`
   + the `#tab/#help` hash-routing slugs (PR #17), and a new Help.jsx section
   (explicitly notes this is *muzzle* energy, not energy at range, per UX
   Review's flagged ambiguity). Caught live before shipping: the tab switcher's
   container (`maxWidth: 460`, sized for 5 tabs) made "Optimal Zero" and the new
   "Bullet Energy" both wrap to two lines while the other four stayed
   single-line — bumped to 580.
+- **Bullet Energy catalog picker, Phase 2** (PR #22) — the per-round picker
+  deferred when the tab shipped, added on Jake's go. Deliberately not a
+  per-row picker (the shape UX Review flagged as fighting the tool's "simple"
+  framing) — one `CommercialLoadPicker` above the table, same "picker adds to
+  the list" pattern Compare/OptimalZero use. A pick fills the first still-blank
+  row rather than always appending (the 2 starter rows get used first), then
+  appends once every row has something — manual typing into a row is
+  unaffected either way. Help.jsx's section updated to mention it.
 - **Field Guide refresh for PR #19** (PR #20) — two screenshots + a few copy
   lines were stale after the Step 1 declutter shipped (fused load lock, default
   collapse, default-on chart overlays, the Range header). Content-only, no app

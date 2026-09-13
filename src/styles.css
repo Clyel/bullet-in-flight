@@ -131,6 +131,23 @@ table { border-collapse: collapse; width: 100%; }
 button:focus-visible,
 input:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
 
+/* Main tab switcher (App.jsx) only -- Segmented's own per-button inline
+   font-size (11px) overflows a 375px viewport by a few px once there are 7
+   tabs. Scoped to this one switcher via !important rather than changing
+   Segmented's shared default or bumping its maxWidth again: every other
+   Segmented usage in the app (Imperial/Metric, G1/G7, MOA/MIL, Right/Left,
+   the BC tool's own mode toggle) is a short 2-4-option toggle that already
+   fits at any width, so leaving Segmented itself untouched keeps those
+   unaffected while this fixes the one switcher that doesn't fit. */
+@media (max-width: 400px) {
+  .bif-main-tabs button {
+    font-size: 9.5px !important;
+    letter-spacing: .04em !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+}
+
 /* Collapsible section headers (ui.jsx StepHead with onToggle): the whole
    row is the button. A faint wash on hover marks it as pressable without
    adding a border; the chevron rotation is handled inline and disabled by

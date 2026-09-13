@@ -127,8 +127,16 @@ function AppShell() {
               (flagged non-blocking, not a reason to change that plan -- the
               whole point of the hub is keeping tools like this OFF the bar,
               which still holds; the count just keeps growing on its own
-              regardless). */}
-          <div style={{ maxWidth: 720, flex: 1, minWidth: 300 }}>
+              regardless).
+              `bif-main-tabs` -- 7 labels at 11px overflows a 375px viewport
+              by a few pixels (UX Review caught this live, scrollWidth 379 vs
+              clientWidth 375). Shrunk via styles.css's own mobile breakpoint
+              rather than a bigger maxWidth here or a change to Segmented's
+              shared default -- every other Segmented usage in the app is a
+              short 2-4-option toggle that already fits at any width, so this
+              stays scoped to just this one switcher instead of touching a
+              component six other call sites also render. */}
+          <div className="bif-main-tabs" style={{ maxWidth: 720, flex: 1, minWidth: 300 }}>
             <Segmented
               options={["Calculator", "Compare", "Optimal Zero", "Recoil", "Bullet Energy", "Handloader's Tools", "Help"]}
               value={tab}

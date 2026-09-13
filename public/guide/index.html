@@ -196,7 +196,7 @@
     <a class="cta" href="https://ballisticnerd.com" target="_blank" rel="noopener">Open Ballistic Nerd →</a>
 
     <div class="stats">
-      <div><div class="label">Tools</div><div class="v">5</div></div>
+      <div><div class="label">Tools</div><div class="v">6</div></div>
       <div><div class="label">Catalog loads</div><div class="v">1,800+</div></div>
       <div><div class="label">Manufacturers</div><div class="v">11</div></div>
       <div><div class="label">Cost</div><div class="v">Free</div></div>
@@ -240,7 +240,7 @@
   </section>
 
   <section id="tools">
-    <h2>The five tools</h2>
+    <h2>The six tools</h2>
     <p>One tab per question. Nothing here is sequential — jump straight to whichever answers what
       you actually walked in asking.</p>
     <div class="tools">
@@ -254,6 +254,8 @@
             actually see through a scope.</li>
           <li>Chart overlays: Vitals Zero band and Optimal Sight-in are on by default; Leupold BAS is opt-in.</li>
           <li>Range table toggles MOA/MIL columns; "Print dope chart" builds a clean printable card.</li>
+          <li>An "Advanced" section (below Wind, collapsed even on first visit) adds spin drift and
+            Coriolis — twist rate, bullet length/diameter, and latitude, all typed in by hand.</li>
         </ul>
         <div class="watch"><b>Watch for</b>Sight height, vitals radius, and the air fields are your shared
           <em>rig</em> — a drift bar offers to save or reset them the moment you change one.</div>
@@ -300,6 +302,20 @@
       </div>
 
       <div class="tool">
+        <div class="tool-head"><div class="badge">BE</div><h3><a href="https://ballisticnerd.com/#tab/bullet-energy" target="_blank" rel="noopener">Bullet Energy</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">A quick multi-row muzzle-energy comparison —
+          weight and velocity in, energy out, nothing saved.</p>
+        <ul>
+          <li>Muzzle energy only (E = weight×velocity² / 450,437) — the instant it leaves the barrel,
+            not what's left downrange after drag. Same formula the Calculator and Recoil already use.</li>
+          <li>Type your own numbers per row, or fill one from the catalog picker above the table.</li>
+          <li>A bar chart appears once two or more rows have both fields filled in.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>Session-only — nothing here is saved. It's a scratch pad for
+          quick comparisons, not another place your loads live.</div>
+      </div>
+
+      <div class="tool">
         <div class="tool-head"><div class="badge">HP</div><h3><a href="https://ballisticnerd.com/#tab/help" target="_blank" rel="noopener">Help</a></h3></div>
         <p class="muted" style="margin:0;font-size:13.5px;">In-app how-tos, an FAQ, and a direct line
           to send an idea or report something wrong.</p>
@@ -334,6 +350,10 @@
         <img src="images/recoil.png" alt="Recoil tab comparing free recoil energy for the same cartridge in an 8lb rifle versus a 6.5lb rifle, as a table and a bar chart.">
         <figcaption><b>Recoil</b> — same cartridge, two rifle weights. Dropping from an 8lb rifle to a 6.5lb mountain rifle adds about 5 ft&middot;lb of free recoil energy.</figcaption>
       </figure>
+      <figure class="shot">
+        <img src="images/bullet-energy.png" alt="Bullet Energy tab comparing muzzle energy across three rows: a 172gr, a 140gr, and a 225gr bullet at their own velocities, as a table and a bar chart.">
+        <figcaption><b>Bullet Energy</b> — three bullets, three velocities, three muzzle-energy figures. No saving, no rig, no catalog required — type a weight and a velocity and it's compared.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -357,8 +377,10 @@
           the span where impact stays within your vitals radius of point of aim.</span></div>
       </div>
     </div>
-    <p style="margin-top:14px;">The range table underneath lists velocity, energy, drop, and windage at
-      every step distance you set. Turn on the <strong>MOA</strong> / <strong>MIL</strong> columns to
+    <p style="margin-top:14px;">The range table underneath lists velocity, energy, and drop at every
+      step distance you set, plus a <strong>windage</strong> column once wind, spin drift, or Coriolis
+      is actually in effect — the footnote below the chart always says which of the three, if any, are
+      on. Turn on the <strong>MOA</strong> / <strong>MIL</strong> columns to
       get holdover in scope-click units instead of inches. <strong>Print dope chart</strong> opens your
       browser's print dialog with a clean printable card — pick "Save as PDF" as the destination to
       keep one in your range bag.</p>
@@ -399,6 +421,15 @@
           <tr><td>Shot angle</td><td>Steep uphill or downhill shots carry less effective drop than the
             slant range suggests — this advisory line converts your slant distance to what it holds
             like on a flat shot (the "rifleman's rule").</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Twist rate</a></td><td>How fast your barrel's rifling spins the bullet, e.g. "1 turn in 8in." Needed,
+            along with bullet length and diameter, to turn on spin drift — leave any one of the three
+            blank and spin drift stays off.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Spin drift</a></td><td>A sideways drift from the bullet's own gyroscopic spin, always toward the
+            direction of the rifling twist. A standard closed-form approximation layered on the
+            trajectory, not a full 3D solve — opt in under Calculator's "Advanced" section.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Coriolis effect</a></td><td>A sideways (and slight vertical) drift from the earth's own rotation
+            under the bullet during its time of flight — needs only your latitude to turn on, under
+            Calculator's "Advanced" section. Matters far more at long range than short.</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Free recoil energy</a></td><td>Exact physics — conservation of momentum and kinetic
             energy, from SAAMI's own published formula. Not the same as how a rifle <em>feels</em> to
             shoot, which also depends on stock, pad, and muzzle device.</td></tr>
@@ -453,6 +484,12 @@
       <div class="d">It sets temperature and pressure directly from the altitude you entered — it
         doesn't add to whatever you already typed. Enter altitude first, then click it.</div>
     </div>
+    <div class="trip">
+      <div class="t">Spin drift needs all three of its fields, not just one</div>
+      <div class="d">Twist rate, bullet length, and bullet diameter all have to be filled in — leave
+        any single one blank and spin drift stays off, silently, with no error. Coriolis is simpler:
+        latitude alone turns it on.</div>
+    </div>
   </section>
 
   <section id="accounts">
@@ -503,12 +540,23 @@
         deliberately not estimated.</p>
     </details>
     <details>
+      <summary>How do spin drift and Coriolis work?</summary>
+      <p>Both are standard closed-form approximations layered on top of the trajectory — not a full 3D
+        solve of the bullet's spin or the earth's rotation, the same kind of established formula every
+        serious ballistics calculator uses. Spin drift needs twist rate, bullet length, and bullet
+        diameter (all three, or it stays off); Coriolis needs only your latitude. Both live under
+        Calculator's "Advanced" section, collapsed by default since most shots never need them — they
+        mostly matter past a few hundred yards. Off by default, on only if you fill them in. Checked
+        against the same independent reference solver the core trajectory is (see below) — worst-case
+        deviation is within 0.01in, tighter than the core trajectory's own 0.15in figure.</p>
+    </details>
+    <details>
       <summary>What isn't modeled yet?</summary>
-      <p>Spin drift, the Coriolis effect, aerodynamic jump, and powder-temperature sensitivity aren't
-        in the solver yet. Everything currently implemented — drag, wind deflection, atmosphere — is a
-        full point-mass integration, not a simplified approximation, and is checked against an
-        independent solver: worst-case deviation is under 1 fps on velocity and 0.15in on height, out
-        to 1000yd.</p>
+      <p>Aerodynamic jump and powder-temperature sensitivity aren't in the solver yet. Spin drift and
+        the Coriolis effect are, as of Calculator's "Advanced" section (see above). The core trajectory
+        — drag, wind deflection, atmosphere — is a full point-mass integration, not a simplified
+        approximation, and is checked against an independent solver: worst-case deviation is under 1 fps
+        on velocity and 0.15in on height, out to 1000yd.</p>
     </details>
     <details>
       <summary>Does the wind field use compass or clock directions?</summary>

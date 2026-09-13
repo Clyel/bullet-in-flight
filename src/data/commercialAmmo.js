@@ -143,6 +143,34 @@
 // bullets (Naturalis, Mega, plain SP/FMJ) only get a G1. bcSource
 // "published". Component bullets and .22 LR are filtered out; 1 FMJ load
 // with no BC at all was dropped.
+//
+// ---- Sig Sauer ----
+// Source: Ballistics_Data_2024.pdf, linked live from sigsauer.com/ballistics
+// as "VIEW THE 2024 BALLISTICS CHART" (internally still footered "2023
+// BALLISTICS DATA" -- Sig's own stale label, not a pull-date error here),
+// pulled 2026-09-13. Unlike the older 2020-sig-ammo-ballistics-chart.pdf
+// HANDOFF.md originally flagged as "image-only, needs OCR", this one has a
+// real text layer -- no OCR needed. Every rifle entry has a published G1 BC.
+// See scripts/sig_raw.py + scripts/buildSig.mjs. Rifle sections only (this
+// catalog is rifle-only): FMJ Rifle, Elite Match (OTM), Elite Varmint &
+// Predator (Tipped), Elite Copper (HT), Elite Tipped (Lead Core Tipped),
+// Elite Hunter AccuBond, Venari (Soft Point).
+//
+// Two real data-quality bugs in Sig's own PDF were caught and corrected
+// here, not just trusted: (1) the VENARI section's printed CALIBER text is
+// wrong for all 8 of its rows -- confirmed via each row's SKU prefix AND its
+// own embedded weight both pointing to a different, physically-plausible
+// cartridge than what's printed (e.g. the row printed "270 Winchester /
+// 130gr / 3140fps" carries SKU "V270SP130" -- 3140fps is the textbook
+// factory velocity for a 270 Win 130gr load, not whatever cartridge sits two
+// rows away with that SKU). Corrected by trusting the SKU over the printed
+// name. (2) One row (5.56mm, E556M4) has a "V (ft/sec)" summary column that
+// disagrees with the actual velocity-vs-range table it's built from (2750
+// vs 2816) -- used the table's own first value, since that's what Sig's own
+// downrange figures for that row were actually computed from.
+// sig_raw.py's own SKU-consistency check flags the Venari rows on every
+// re-run, so a future re-pull that changes (or fixes) either bug gets
+// surfaced instead of silently re-applying a stale correction. No drops.
 
 export const COMMERCIAL_AMMO = [
   // 17 Remington Fireball
@@ -2034,4 +2062,57 @@ export const COMMERCIAL_AMMO = [
   { id: "lapua-4319012", cartridge: "9.3x62 Mauser", bullet: "Open Tip", grains: 185, muzzleVelocity: 2772, ballisticCoefficient: 0.283, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
   { id: "lapua-N319204", cartridge: "9.3x62 Mauser", bullet: "Naturalis — Lead-free copper", grains: 250, muzzleVelocity: 2428, ballisticCoefficient: 0.215, dragModel: "G7", manufacturer: "Lapua", bcSource: "published" },
   { id: "lapua-4319010", cartridge: "9.3x62 Mauser", bullet: "Mega — Soft Point", grains: 285, muzzleVelocity: 2265, ballisticCoefficient: 0.339, dragModel: "G1", manufacturer: "Lapua", bcSource: "published" },
+  // Sig Sauer
+  { id: "sig-E300B1", cartridge: "300 AAC Blackout", bullet: "FMJ Rifle — FMJ", grains: 125, muzzleVelocity: 2145, ballisticCoefficient: 0.313, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308B1", cartridge: "308 Win", bullet: "FMJ Rifle — FMJ", grains: 150, muzzleVelocity: 2900, ballisticCoefficient: 0.398, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E277SFB135-16BBL", cartridge: "277 SIG Fury", bullet: "FMJ Rifle — FMJ (16in barrel)", grains: 135, muzzleVelocity: 2750, ballisticCoefficient: 0.475, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E277SFB135-24BBL", cartridge: "277 SIG Fury", bullet: "FMJ Rifle — FMJ (24in barrel)", grains: 135, muzzleVelocity: 3000, ballisticCoefficient: 0.475, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E300A1", cartridge: "300 AAC Blackout", bullet: "Elite Match — OTM", grains: 125, muzzleVelocity: 2200, ballisticCoefficient: 0.338, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E300A2", cartridge: "300 AAC Blackout", bullet: "Elite Match — OTM", grains: 220, muzzleVelocity: 1000, ballisticCoefficient: 0.608, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E223M1", cartridge: "223 Rem", bullet: "Elite Match — OTM", grains: 77, muzzleVelocity: 2750, ballisticCoefficient: 0.362, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E556M4", cartridge: "5.56 NATO", bullet: "Elite Match — OTM", grains: 77, muzzleVelocity: 2816, ballisticCoefficient: 0.362, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E6MMCM2", cartridge: "6mm Creedmoor", bullet: "Elite Match — OTM", grains: 107, muzzleVelocity: 2950, ballisticCoefficient: 0.527, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E65CM1", cartridge: "6.5 Creedmoor", bullet: "Elite Match — OTM", grains: 140, muzzleVelocity: 2690, ballisticCoefficient: 0.535, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308M1", cartridge: "308 Win", bullet: "Elite Match — OTM", grains: 168, muzzleVelocity: 2700, ballisticCoefficient: 0.462, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308M2", cartridge: "308 Win", bullet: "Elite Match — OTM", grains: 175, muzzleVelocity: 2600, ballisticCoefficient: 0.496, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3006M2", cartridge: "30-06 Springfield", bullet: "Elite Match — OTM", grains: 175, muzzleVelocity: 2700, ballisticCoefficient: 0.496, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3WMM1", cartridge: "300 Win Mag", bullet: "Elite Match — OTM", grains: 190, muzzleVelocity: 2850, ballisticCoefficient: 0.533, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E223V1", cartridge: "223 Rem", bullet: "Elite Varmint & Predator — Tipped", grains: 40, muzzleVelocity: 3650, ballisticCoefficient: 0.196, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E223V2", cartridge: "223 Rem", bullet: "Elite Varmint & Predator — Tipped", grains: 55, muzzleVelocity: 3340, ballisticCoefficient: 0.271, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E225V1", cartridge: "22-250 Rem", bullet: "Elite Varmint & Predator — Tipped", grains: 40, muzzleVelocity: 3975, ballisticCoefficient: 0.196, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E243V1", cartridge: "243 Win", bullet: "Elite Varmint & Predator — Tipped", grains: 55, muzzleVelocity: 3880, ballisticCoefficient: 0.225, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E223H1", cartridge: "223 Rem", bullet: "Elite Copper — HT", grains: 60, muzzleVelocity: 3100, ballisticCoefficient: 0.24, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E243H1", cartridge: "243 Win", bullet: "Elite Copper — HT", grains: 80, muzzleVelocity: 3425, ballisticCoefficient: 0.32, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E6MMCH1", cartridge: "6mm Creedmoor", bullet: "Elite Copper — HT", grains: 80, muzzleVelocity: 3375, ballisticCoefficient: 0.34, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E65CH1", cartridge: "6.5 Creedmoor", bullet: "Elite Copper — HT", grains: 120, muzzleVelocity: 2825, ballisticCoefficient: 0.38, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E270H1", cartridge: "270 Win", bullet: "Elite Copper — HT", grains: 130, muzzleVelocity: 3050, ballisticCoefficient: 0.38, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E300H1", cartridge: "300 AAC Blackout", bullet: "Elite Copper — HT", grains: 120, muzzleVelocity: 2250, ballisticCoefficient: 0.29, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308H1", cartridge: "308 Win", bullet: "Elite Copper — HT", grains: 150, muzzleVelocity: 2900, ballisticCoefficient: 0.4, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3006H1", cartridge: "30-06 Springfield", bullet: "Elite Copper — HT", grains: 150, muzzleVelocity: 2920, ballisticCoefficient: 0.4, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3WMH1", cartridge: "300 Win Mag", bullet: "Elite Copper — HT", grains: 165, muzzleVelocity: 3110, ballisticCoefficient: 0.41, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E6MMCTH2", cartridge: "6mm Creedmoor", bullet: "Elite Tipped — Lead Core Tipped", grains: 100, muzzleVelocity: 2970, ballisticCoefficient: 0.515, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E243TH2", cartridge: "243 Win", bullet: "Elite Tipped — Lead Core Tipped", grains: 90, muzzleVelocity: 3115, ballisticCoefficient: 0.49, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E65CMTH1", cartridge: "6.5 Creedmoor", bullet: "Elite Tipped — Lead Core Tipped", grains: 130, muzzleVelocity: 2850, ballisticCoefficient: 0.51, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E270TH2", cartridge: "270 Win", bullet: "Elite Tipped — Lead Core Tipped", grains: 140, muzzleVelocity: 2950, ballisticCoefficient: 0.508, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E7RMTH2", cartridge: "7mm Rem Mag", bullet: "Elite Tipped — Lead Core Tipped", grains: 150, muzzleVelocity: 3000, ballisticCoefficient: 0.575, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-H277SFTH1", cartridge: "277 SIG Fury", bullet: "Elite Tipped — Lead Core Tipped", grains: 140, muzzleVelocity: 3000, ballisticCoefficient: 0.508, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308TH2", cartridge: "308 Win", bullet: "Elite Tipped — Lead Core Tipped", grains: 165, muzzleVelocity: 2840, ballisticCoefficient: 0.53, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3006TH2", cartridge: "30-06 Springfield", bullet: "Elite Tipped — Lead Core Tipped", grains: 165, muzzleVelocity: 2950, ballisticCoefficient: 0.53, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3WMTH3", cartridge: "300 Win Mag", bullet: "Elite Tipped — Lead Core Tipped", grains: 180, muzzleVelocity: 2960, ballisticCoefficient: 0.515, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E65CMAB140", cartridge: "6.5 Creedmoor", bullet: "Elite Hunter AccuBond — AccuBond", grains: 140, muzzleVelocity: 2650, ballisticCoefficient: 0.509, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E270AB150", cartridge: "270 Win", bullet: "Elite Hunter AccuBond — AccuBond", grains: 150, muzzleVelocity: 2860, ballisticCoefficient: 0.5, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-H277SFAB150-16BBL", cartridge: "277 SIG Fury", bullet: "Elite Hunter AccuBond — AccuBond (16in barrel)", grains: 150, muzzleVelocity: 2830, ballisticCoefficient: 0.5, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-H277SFAB150-24BBL", cartridge: "277 SIG Fury", bullet: "Elite Hunter AccuBond — AccuBond (24in barrel)", grains: 150, muzzleVelocity: 3120, ballisticCoefficient: 0.5, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E308AB165", cartridge: "308 Win", bullet: "Elite Hunter AccuBond — AccuBond", grains: 165, muzzleVelocity: 2840, ballisticCoefficient: 0.475, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3006AB180", cartridge: "30-06 Springfield", bullet: "Elite Hunter AccuBond — AccuBond", grains: 180, muzzleVelocity: 2760, ballisticCoefficient: 0.507, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E3WMAB180", cartridge: "300 Win Mag", bullet: "Elite Hunter AccuBond — AccuBond", grains: 180, muzzleVelocity: 3050, ballisticCoefficient: 0.507, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-E7RMAB160", cartridge: "7mm Rem Mag", bullet: "Elite Hunter AccuBond — AccuBond", grains: 160, muzzleVelocity: 2950, ballisticCoefficient: 0.531, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V243SP100", cartridge: "243 Win", bullet: "Venari — Soft Point", grains: 100, muzzleVelocity: 2960, ballisticCoefficient: 0.405, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V277SFSP130", cartridge: "277 SIG Fury", bullet: "Venari — Soft Point", grains: 130, muzzleVelocity: 2710, ballisticCoefficient: 0.409, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V308SP150", cartridge: "308 Win", bullet: "Venari — Soft Point", grains: 150, muzzleVelocity: 2900, ballisticCoefficient: 0.338, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V3006SP165", cartridge: "30-06 Springfield", bullet: "Venari — Soft Point", grains: 165, muzzleVelocity: 2900, ballisticCoefficient: 0.387, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V65CMSP129", cartridge: "6.5 Creedmoor", bullet: "Venari — Soft Point", grains: 129, muzzleVelocity: 2820, ballisticCoefficient: 0.445, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V270SP130", cartridge: "270 Win", bullet: "Venari — Soft Point", grains: 130, muzzleVelocity: 3140, ballisticCoefficient: 0.409, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V7MMSP154", cartridge: "7mm Rem Mag", bullet: "Venari — Soft Point", grains: 154, muzzleVelocity: 3045, ballisticCoefficient: 0.433, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
+  { id: "sig-V300WMSP180", cartridge: "300 Win Mag", bullet: "Venari — Soft Point", grains: 180, muzzleVelocity: 3050, ballisticCoefficient: 0.425, dragModel: "G1", manufacturer: "Sig Sauer", bcSource: "published" },
 ];

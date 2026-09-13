@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { COLUMN_DEFS, commas, dopeColumnKeys } from "./RangeTable.jsx";
 import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
-import { num, isWindActive } from "../solveFromForm.js";
+import { num, isWindActive, isWindageActive, isSpinDriftActive, isCoriolisActive } from "../solveFromForm.js";
 
 /**
  * A print-only dope chart: title, range table, then the load/sights/
@@ -13,9 +13,10 @@ import { num, isWindActive } from "../solveFromForm.js";
  * would hide this too.
  *
  * Columns mirror whatever's showing on the live RangeTable (same
- * showMOA/showMIL toggle state, windage only if wind is active) via the
- * exact same COLUMN_DEFS/dopeColumnKeys RangeTable itself uses, so the
- * printed numbers can never drift from what's on screen.
+ * showMOA/showMIL toggle state, windage whenever wind/spin
+ * drift/Coriolis are active) via the exact same COLUMN_DEFS/dopeColumnKeys
+ * RangeTable itself uses, so the printed numbers can never drift from
+ * what's on screen.
  *
  * Deliberately tight — a lot of these end up taped to a stock, so the goal
  * is a compact reference card, not a spacious report. No `width` on the
@@ -25,8 +26,10 @@ import { num, isWindActive } from "../solveFromForm.js";
 export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
   const { system } = useUnits();
   const windActive = isWindActive(v);
+  const spinDriftActive = isSpinDriftActive(v);
+  const coriolisActive = isCoriolisActive(v);
   const title = saveName.trim() || "Dope Chart";
-  const keys = dopeColumnKeys({ showWindage: windActive, showMOA, showMIL });
+  const keys = dopeColumnKeys({ showWindage: isWindageActive(v), showMOA, showMIL });
   const hasSoftRows = solution.rows.some((r) => r.mach < 1.2);
 
   // Digits per field mirror what's already used for the same kind of value
@@ -113,11 +116,16 @@ export default function DopeChart({ v, solution, saveName, showMOA, showMIL }) {
           {windActive && (
             <Row label="Wind" value={`${field(v.windSpeedMph, "windSpeed", 1)} from ${v.windClock} o'clock`} />
           )}
+          {spinDriftActive && (
+            <Row label="Twist rate" value={`1:${v.twistIn} ${v.twistDirection.toLowerCase()}-hand`} />
+          )}
+          {coriolisActive && <Row label="Latitude" value={`${num(v.latitudeDeg)}°`} />}
         </Section>
       </div>
 
       <p style={{ font: "400 12px 'IBM Plex Sans',sans-serif", color: "#555", margin: "6px 0 0", textAlign: "center" }}>
-        Barrel angle above line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;. No spin drift or Coriolis modeled.
+        Barrel angle above line of sight: {solution.launchAngleDeg.toFixed(3)}&deg;.
+        {!spinDriftActive && !coriolisActive && " No spin drift or Coriolis entered."}
       </p>
     </div>,
     document.body

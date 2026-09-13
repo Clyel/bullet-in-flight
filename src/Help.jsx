@@ -95,7 +95,9 @@ export default function Help({ scrollTarget }) {
           inside (smaller for varmints, bigger for elk or moose) — it drives the Vitals Zero band on the chart and
           the vitals-window readout below it. Wind uses clock-face direction: 12 is straight into your face, 3 is
           your right cheek, 6 is at your back, 9 is your left cheek. Fill temperature and pressure directly, or
-          enter altitude and hit &ldquo;Fill from standard atmosphere&rdquo; for a quick estimate.
+          enter altitude and hit &ldquo;Fill from standard atmosphere&rdquo; for a quick estimate. Below wind, an
+          Advanced section (collapsed by default) holds spin drift and Coriolis — see the FAQ below for how those
+          work.
         </P>
         <P>
           Sight height, vitals radius, and the three air fields are your <strong>rig</strong> — shared with the
@@ -236,8 +238,20 @@ export default function Help({ scrollTarget }) {
           loses precision.
         </QA>
         <QA q="What isn't modeled yet?">
-          Spin drift and Coriolis effect aren't in the trajectory solver yet. Everything else that's implemented —
-          drag, wind deflection, atmosphere — is a full point-mass integration, not a simplified approximation.
+          Drag, wind deflection, atmosphere, spin drift, and Coriolis are all modeled now — spin drift and Coriolis
+          are standard closed-form approximations layered on top of the full point-mass integration, not read off
+          it; see the next question for how. Aerodynamic jump and powder-temperature sensitivity aren't modeled.
+        </QA>
+        <QA q="How do spin drift and Coriolis work?">
+          Both live in the Advanced section at the very bottom of the Calculator form, below the wind section,
+          collapsed by default — most shooters never need
+          them. Spin drift needs your barrel's twist rate and your bullet's length and diameter (none of that comes
+          from the catalog, since bullet length isn't published anywhere this app pulls from — enter it by hand, or
+          leave any of the three blank to turn spin drift off). Coriolis needs only your latitude, and uses the
+          same "flat-fire" approximation every commercial ballistic calculator uses at hunting/target ranges — it
+          only accounts for the deflection Earth's rotation adds to windage, not the vertical component that only
+          matters at genuine long-range distances well past what this app targets. Both fold directly into the
+          windage column once entered — no separate chart or output.
         </QA>
       </Section>
 

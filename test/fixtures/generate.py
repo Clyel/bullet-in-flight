@@ -70,6 +70,57 @@ for name, (baseName, windMph, windClock) in WIND_CASES.items():
                              "windMph": windMph, "windClock": windClock},
                  "zeroAngleDeg": zang >> Angular.Degree, "rows": rows}
 
+# Spin drift cases: real cartridges at their actual factory twist rate, no
+# wind, no latitude -- windage here is spin drift alone. py-ballisticcalc's
+# own spin_drift() (Litz approximation over the Miller stability
+# coefficient) is the independent source, same role py-ballisticcalc played
+# for the wind fixtures above.
+SPIN_DRIFT_CASES = {
+ "308_175_G7_twist8":   ("308_175_G7", 8),    # right-hand, standard .308 twist
+ "223_55_G1_twist7":    ("223_55_G1", 7),     # right-hand, fast-twist .223 (stabilizes 55gr fine)
+ "65_140_G7_twist8_left": ("65_140_G7", -8),  # left-hand twist -- drift should go the other way
+}
+
+for name, (baseName, twistIn) in SPIN_DRIFT_CASES.items():
+    bcv, tab, gr, cal, ln, mvv, sh, zero = CARTRIDGES[baseName]
+    dm, ammo, gun, calc, zang = build(bcv, tab, gr, cal, ln, mvv, sh, zero, twistIn=twistIn)
+    shot = Shot(weapon=gun, ammo=ammo, atmo=Atmo(**ATMO), relative_angle=Angular.Degree(0))
+    shot.weapon.zero_elevation = zang
+    r = calc.fire(shot, trajectory_range=Distance.Yard(1000), trajectory_step=Distance.Yard(100))
+    rows = []
+    for p in r.trajectory:
+        rows.append({"d": round(p.distance >> Distance.Yard, 1), "t": round(p.time, 5),
+                     "w": round(p.windage >> Distance.Inch, 4)})
+    out[name] = {"params": {"bc": bcv, "model": "G7" if tab is TableG7 else "G1", "grains": gr,
+                             "mv": mvv, "sightHeight": sh, "zeroYd": zero, "diameter": cal,
+                             "length": ln, "twistIn": twistIn, "tempF": 59, "pressInHg": 29.92},
+                 "rows": rows}
+
+# Coriolis cases: latitude-only ("flat-fire") mode -- no azimuth passed, so
+# py-ballisticcalc falls back to the same horizontal-only closed-form
+# correction this app implements (Coriolis.flat_fire_offsets). twistIn=0
+# keeps spin drift out of these rows, same isolation trick as the wind cases.
+CORIOLIS_CASES = {
+ "308_175_G7_lat45":    ("308_175_G7", 45.0),   # mid-northern latitude
+ "308_175_G7_lat_neg33": ("308_175_G7", -33.0), # southern hemisphere -- drift should flip sign
+ "223_55_G1_lat0":      ("223_55_G1", 0.0),     # equator -- should be ~zero
+}
+
+for name, (baseName, latDeg) in CORIOLIS_CASES.items():
+    bcv, tab, gr, cal, ln, mvv, sh, zero = CARTRIDGES[baseName]
+    dm, ammo, gun, calc, zang = build(bcv, tab, gr, cal, ln, mvv, sh, zero, twistIn=0)
+    shot = Shot(weapon=gun, ammo=ammo, atmo=Atmo(**ATMO), relative_angle=Angular.Degree(0),
+                latitude=latDeg)
+    shot.weapon.zero_elevation = zang
+    r = calc.fire(shot, trajectory_range=Distance.Yard(1000), trajectory_step=Distance.Yard(100))
+    rows = []
+    for p in r.trajectory:
+        rows.append({"d": round(p.distance >> Distance.Yard, 1), "t": round(p.time, 5),
+                     "w": round(p.windage >> Distance.Inch, 4)})
+    out[name] = {"params": {"bc": bcv, "model": "G7" if tab is TableG7 else "G1", "grains": gr,
+                             "mv": mvv, "sightHeight": sh, "zeroYd": zero, "latitudeDeg": latDeg},
+                 "rows": rows}
+
 print(json.dumps(out, indent=1))
 
 # Usage:

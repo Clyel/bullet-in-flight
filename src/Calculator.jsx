@@ -9,7 +9,9 @@ import { ImportActions, Notice } from "./components/ui.jsx";
 import { useSavedLoads } from "./storage/useSavedLoads.js";
 import { useMyRig } from "./storage/useMyRig.js";
 import { getMyRig, rigDiffers, RIG_FIELDS } from "./storage/myRig.js";
-import { num, isWindActive, solveFromForm, baseBallisticParams } from "./solveFromForm.js";
+import {
+  num, isWindActive, isWindageActive, isSpinDriftActive, isCoriolisActive, solveFromForm, baseBallisticParams,
+} from "./solveFromForm.js";
 import { inclinedEquivalentRange } from "./ballistics/inclineComp.js";
 import { COMMERCIAL_AMMO } from "./data/commercialAmmo.js";
 import { useUnits } from "./UnitsContext.jsx";
@@ -39,6 +41,14 @@ const DEFAULTS = {
   windClock: "",
   vitalsRadiusIn: "3",
   shotAngleDeg: "0",
+  // Advanced/optional -- spin drift and Coriolis, both manual-entry-only
+  // (see spinDrift.js/coriolis.js). Blank means the effect is off, same
+  // contract wind already has.
+  twistIn: "",
+  twistDirection: "Right",
+  bulletLengthIn: "",
+  bulletDiameterIn: "",
+  latitudeDeg: "",
 };
 
 const REQUIRED = [
@@ -394,7 +404,7 @@ export default function Calculator() {
               </div>
             </div>
 
-            <RangeTable rows={solution.rows} showWindage={windActive} showMOA={showMOA} showMIL={showMIL} />
+            <RangeTable rows={solution.rows} showWindage={isWindageActive(v)} showMOA={showMOA} showMIL={showMIL} />
             <button
               onClick={() => setPrinting(true)}
               style={{ margin: "10px 0", padding: "6px 0", background: "none", border: "none",
@@ -409,7 +419,10 @@ export default function Calculator() {
               {windActive
                 ? ` Wind: ${num(v.windSpeedMph)} mph from ${num(v.windClock)} o'clock, factored into velocity, energy, and windage.`
                 : " No wind entered."}
-              {" "}No spin drift or Coriolis in this version.
+              {isSpinDriftActive(v) &&
+                ` Spin drift: 1:${v.twistIn} ${v.twistDirection.toLowerCase()}-hand twist, factored into windage.`}
+              {isCoriolisActive(v) && ` Coriolis: ${num(v.latitudeDeg)}° latitude, factored into windage.`}
+              {!isSpinDriftActive(v) && !isCoriolisActive(v) && " No spin drift or Coriolis entered."}
             </p>
             {printing && (
               <DopeChart v={v} solution={solution} saveName={saveName} showMOA={showMOA} showMIL={showMIL} />

@@ -4,6 +4,8 @@ import { vitalsWindow, optimalSightIn } from "../src/ballistics/vitalsWindow.js"
 import { reticleGroups, dropAt500With200Zero } from "../src/ballistics/reticleGroups.js";
 import { inclinedEquivalentRange } from "../src/ballistics/inclineComp.js";
 import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil.js";
+import { millerStability, spinDriftIn } from "../src/ballistics/spinDrift.js";
+import { coriolisWindageIn } from "../src/ballistics/coriolis.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -16,6 +18,16 @@ const TOL = { velocity: 1.0, energy: 1.5, height: 0.3, windage: 0.15, time: 0.00
 
 let failures = 0;
 for (const [name, fx] of Object.entries(ref)) {
+  // The spin-drift/Coriolis fixtures further down are windage-only rows
+  // (just d/t/w -- see generate.py) and get their own dedicated comparison
+  // blocks below, composed the way solveFromForm.js actually combines them.
+  // Skipping them here isn't a coverage gap: the base trajectory numbers
+  // (velocity/energy/height) for the exact same cartridges are already
+  // exercised by the plain and wind fixtures above. Without this skip,
+  // reading undefined v/e/h/zeroAngleDeg off these rows produces NaN --
+  // and `NaN > TOL.x` is always false, which would silently "pass" a
+  // comparison that never actually ran, instead of failing loudly.
+  if (fx.rows[0]?.v === undefined) continue;
   const p = fx.params;
   const sol = solveTrajectory({
     muzzleVelocity: p.mv,
@@ -42,7 +54,14 @@ for (const [name, fx] of Object.entries(ref)) {
     worst.energy   = Math.max(worst.energy,   Math.abs(mine.energy - r.e));
     worst.height   = Math.max(worst.height,   Math.abs(mine.height - r.h));
     worst.time     = Math.max(worst.time,     Math.abs(mine.time - r.t));
-    if (r.w !== undefined) {
+    // Only the wind cases set windMph -- the spin-drift/Coriolis fixtures
+    // below also carry a `w` column, but solveTrajectory() here isn't given
+    // twist/latitude (that composition happens in the dedicated blocks
+    // further down), so their windage would be spuriously 0 here and fail
+    // for the wrong reason. Still exercises velocity/height/time for those
+    // cases -- a free check that irrelevant params don't perturb the base
+    // trajectory.
+    if (r.w !== undefined && p.windMph !== undefined) {
       worst.windage = Math.max(worst.windage, Math.abs(mine.windage - r.w));
     }
   }
@@ -55,6 +74,93 @@ for (const [name, fx] of Object.entries(ref)) {
     `dE ${worst.energy.toFixed(1)}ftlb  dH ${worst.height.toFixed(3)}in  ` +
     `dW ${worst.windage.toFixed(3)}in  dT ${worst.time.toFixed(5)}s`
   );
+}
+
+// Spin drift: independent-fixture check against py-ballisticcalc, same
+// rigor as the wind loop above -- but solveTrajectory() itself has no idea
+// spin drift exists (kept out of the validated integrator on purpose, see
+// spinDrift.js's own header); solveFromForm.js composes it by adding
+// spinDriftIn(row.time, ...) onto each row's windage after the fact, so
+// that's exactly what this test does too, then compares the combined
+// value against the fixture's reference windage.
+for (const [name, fx] of Object.entries(ref)) {
+  if (!fx.params.twistIn) continue;
+  const p = fx.params;
+  const sol = solveTrajectory({
+    muzzleVelocity: p.mv, ballisticCoefficient: p.bc, dragModel: p.model, grains: p.grains,
+    sightHeight: p.sightHeight, zeroRangeYd: p.zeroYd, maxRangeYd: 1000, tableStepYd: 100,
+    tempF: p.tempF, pressInHg: p.pressInHg,
+  });
+  let worst = 0;
+  for (const r of fx.rows) {
+    const mine = sol.rows.find((x) => Math.abs(x.range - r.d) < 0.51);
+    if (!mine) continue;
+    const combined = mine.windage + spinDriftIn(mine.time, {
+      twistIn: p.twistIn, diameterIn: p.diameter, lengthIn: p.length,
+      grains: p.grains, muzzleVelocityFps: p.mv, tempF: p.tempF, pressInHg: p.pressInHg,
+    });
+    worst = Math.max(worst, Math.abs(combined - r.w));
+  }
+  const ok = worst <= TOL.windage;
+  if (!ok) failures++;
+  console.log(`${ok ? "pass" : "FAIL"}  spin drift ${name.padEnd(22)} dW ${worst.toFixed(4)}in`);
+}
+
+// Coriolis (latitude-only "flat-fire" mode): same independent-fixture
+// treatment, composed the same way solveFromForm.js will -- coriolisWindageIn
+// added onto each row's windage after solveTrajectory(), which doesn't know
+// latitude exists either.
+for (const [name, fx] of Object.entries(ref)) {
+  if (fx.params.latitudeDeg === undefined) continue;
+  const p = fx.params;
+  const sol = solveTrajectory({
+    muzzleVelocity: p.mv, ballisticCoefficient: p.bc, dragModel: p.model, grains: p.grains,
+    sightHeight: p.sightHeight, zeroRangeYd: p.zeroYd, maxRangeYd: 1000, tableStepYd: 100,
+    tempF: 59, pressInHg: 29.92,
+  });
+  let worst = 0;
+  for (const r of fx.rows) {
+    const mine = sol.rows.find((x) => Math.abs(x.range - r.d) < 0.51);
+    if (!mine) continue;
+    const combined = mine.windage + coriolisWindageIn(mine.time, mine.range, p.latitudeDeg);
+    worst = Math.max(worst, Math.abs(combined - r.w));
+  }
+  const ok = worst <= TOL.windage;
+  if (!ok) failures++;
+  console.log(`${ok ? "pass" : "FAIL"}  coriolis ${name.padEnd(24)} dW ${worst.toFixed(4)}in`);
+}
+
+// Self-consistency guards on top of the fixture checks above -- cheap
+// regression traps for the "blank means off" contract and the sign
+// conventions (right-hand twist / Northern latitude both drift right).
+{
+  // Hand-derived from the Miller formula for this exact case (308_175_G7,
+  // 8in twist): SG = 30*175 / (25.974^2 * 0.308^3 * 4.026 * (1+4.026^2))
+  // * (2600/2800)^(1/3) * 1 (std atmosphere) ~= 3.75 -- matches the fixture
+  // (test/fixtures/generate.py's 308_175_G7_twist8) to within rounding.
+  const sg = millerStability({ twistIn: 8, diameterIn: 0.308, lengthIn: 1.24, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const sgOk = Math.abs(sg - 3.75) < 0.02 && millerStability({ twistIn: 0, diameterIn: 0.308, lengthIn: 1.24, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 }) === 0;
+  if (!sgOk) failures++;
+  console.log(`${sgOk ? "pass" : "FAIL"}  Miller stability coefficient   SG ${sg.toFixed(3)} (want ~3.75), blank twist -> 0`);
+
+  const noTwist = spinDriftIn(1.0, { twistIn: 0, diameterIn: 0.308, lengthIn: 1.2, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const noLength = spinDriftIn(1.0, { twistIn: 10, diameterIn: 0.308, lengthIn: 0, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const right = spinDriftIn(0.5, { twistIn: 10, diameterIn: 0.308, lengthIn: 1.2, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const left = spinDriftIn(0.5, { twistIn: -10, diameterIn: 0.308, lengthIn: 1.2, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const grows = spinDriftIn(1.0, { twistIn: 10, diameterIn: 0.308, lengthIn: 1.2, grains: 175, muzzleVelocityFps: 2600, tempF: 59, pressInHg: 29.92 });
+  const ok = noTwist === 0 && noLength === 0 && right > 0 && left < 0 &&
+             Math.abs(right + left) < 1e-9 && grows > right;
+  if (!ok) failures++;
+  console.log(`${ok ? "pass" : "FAIL"}  spin drift self-consistency   blank->0, right +${right.toFixed(3)}in, left ${left.toFixed(3)}in, grows ${grows.toFixed(3)}in`);
+}
+{
+  const blank = coriolisWindageIn(1.0, 500, NaN);
+  const equator = coriolisWindageIn(1.0, 500, 0);
+  const north = coriolisWindageIn(1.0, 500, 45);
+  const south = coriolisWindageIn(1.0, 500, -45);
+  const ok = blank === 0 && Math.abs(equator) < 1e-9 && north > 0 && south < 0 && Math.abs(north + south) < 1e-9;
+  if (!ok) failures++;
+  console.log(`${ok ? "pass" : "FAIL"}  coriolis self-consistency   blank->0, equator ${equator.toFixed(4)}in, N +${north.toFixed(4)}in, S ${south.toFixed(4)}in`);
 }
 
 // Sanity: the trajectory must actually cross the sight line at the zero.

@@ -346,21 +346,35 @@ function Chip({ text, onRemove }) {
   );
 }
 
-/** A tiny single-pick typeahead that adds a chip then clears itself, ready to add another. */
+/** A tiny single-pick typeahead that adds a chip then clears itself, ready to
+ *  add another -- full arrow-key nav, matching the main search box right
+ *  next to it (UX Review's PR #29 pass caught this missing on the first
+ *  build: Enter only ever committed filtered[0], so a keyboard-only user
+ *  could never reach option 2+ without typing precisely enough to sort it
+ *  first). */
 function AddFilterPicker({ placeholder, options, onPick }) {
   const id = useId();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? options.filter((o) => o.toLowerCase().includes(q)) : options;
+    return (q ? options.filter((o) => o.toLowerCase().includes(q)) : options).slice(0, 50);
   }, [options, query]);
 
+  useEffect(() => setHighlight(0), [query, options]);
+
   const commit = (opt) => { onPick(opt); setQuery(""); setOpen(false); };
+  const listboxId = `${id}-listbox`;
 
   return (
     <div style={{ position: "relative" }}>
       <input
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={open && filtered[highlight] ? `${id}-opt-${highlight}` : undefined}
         aria-label={placeholder}
         value={query}
         placeholder={placeholder}
@@ -369,21 +383,33 @@ function AddFilterPicker({ placeholder, options, onPick }) {
         onClick={() => setOpen(true)}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onBlur={() => setOpen(false)}
-        onKeyDown={(e) => { if (e.key === "Enter" && filtered[0]) { e.preventDefault(); commit(filtered[0]); } }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setHighlight((h) => Math.min(h + 1, filtered.length - 1)); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)); }
+          else if (e.key === "Enter") { if (filtered[highlight]) { e.preventDefault(); commit(filtered[highlight]); } }
+          else if (e.key === "Escape") { setOpen(false); }
+        }}
         style={{ width: "100%", padding: "5px 7px", border: `1px solid ${C.rule}`,
                  background: C.card, color: C.ink, font: "400 11.5px 'IBM Plex Sans',sans-serif" }}
       />
       {open && filtered.length > 0 && (
         <div
+          role="listbox"
+          id={listboxId}
           onMouseDown={(e) => e.preventDefault()}
           style={{ position: "absolute", zIndex: 11, top: "100%", left: 0, right: 0, maxHeight: 180,
                    overflowY: "auto", background: C.card, border: `1px solid ${C.rule}` }}
         >
-          {filtered.slice(0, 50).map((o) => (
+          {filtered.map((o, i) => (
             <div
               key={o}
+              id={`${id}-opt-${i}`}
+              role="option"
+              aria-selected={i === highlight}
               onMouseDown={(e) => { e.preventDefault(); commit(o); }}
-              style={{ padding: "5px 7px", cursor: "pointer", font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.ink }}
+              onMouseEnter={() => setHighlight(i)}
+              style={{ padding: "5px 7px", cursor: "pointer", background: i === highlight ? C.field : C.card,
+                       font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.ink }}
             >
               {o}
             </div>

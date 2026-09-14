@@ -132,23 +132,16 @@ export default function Compare() {
     </>
   );
 
-  if (savedLoads.length === 0) {
-    return (
-      <div className="bif-grid">
-        <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-          <StepHead n={1} name="Datasets to compare" first />
-          {catalogPicker}
-        </div>
-        <div>
-          <Notice tone={C.brass} title="Nothing to compare yet">
-            Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
-            come back — every saved dataset shows up here.
-          </Notice>
-        </div>
-      </div>
-    );
-  }
+  const hasSavedLoads = savedLoads.length > 0;
 
+  // One tree, not a separate early-return for the empty state -- two
+  // structurally different trees both rendering `catalogPicker` meant React
+  // couldn't preserve CommercialLoadPicker's identity across the 0->1
+  // savedLoads transition (a fresh mount wipes its "Added: ..." confirmation
+  // and refocus-for-next-search state right at the moment -- a brand-new
+  // user's very first add -- those matter most). Caught by UX Review's PR
+  // #29 pass; the picker now sits at the same position in the tree either
+  // way, only the content around it varies on `hasSavedLoads`.
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
@@ -161,32 +154,45 @@ export default function Compare() {
           </label>
         ))}
 
-        <div style={{ marginTop: 16 }}>{catalogPicker}</div>
+        <div style={hasSavedLoads ? { marginTop: 16 } : undefined}>{catalogPicker}</div>
 
-        <StepHead n={2} name="Compare at" />
-        <UnitField
-          label="Distance"
-          category="distance"
-          value={atYd}
-          onChange={(v) => { setAtYd(v); setAtYdTouched(true); }}
-        />
+        {hasSavedLoads && (
+          <>
+            <StepHead n={2} name="Compare at" />
+            <UnitField
+              label="Distance"
+              category="distance"
+              value={atYd}
+              onChange={(v) => { setAtYd(v); setAtYdTouched(true); }}
+            />
+          </>
+        )}
       </div>
 
       <div>
-        {failed.length > 0 && (
-          <Notice tone={C.ox} title="Couldn't solve some datasets">
-            {failed.map((f) => `${f.name}: ${f.message}`).join(" — ")}
-          </Notice>
-        )}
-
-        {results.length === 0 ? (
-          <Notice tone={C.brass} title="Nothing selected">
-            Check off one or more saved datasets to overlay their trajectories.
+        {!hasSavedLoads ? (
+          <Notice tone={C.brass} title="Nothing to compare yet">
+            Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
+            come back — every saved dataset shows up here.
           </Notice>
         ) : (
           <>
-            <CompareChart results={results} atYd={atYdNum} />
-            {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
+            {failed.length > 0 && (
+              <Notice tone={C.ox} title="Couldn't solve some datasets">
+                {failed.map((f) => `${f.name}: ${f.message}`).join(" — ")}
+              </Notice>
+            )}
+
+            {results.length === 0 ? (
+              <Notice tone={C.brass} title="Nothing selected">
+                Check off one or more saved datasets to overlay their trajectories.
+              </Notice>
+            ) : (
+              <>
+                <CompareChart results={results} atYd={atYdNum} />
+                {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
+              </>
+            )}
           </>
         )}
       </div>

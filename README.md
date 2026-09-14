@@ -101,8 +101,9 @@ smaller window, never a wider one).
 - **Compare tab** — overlay several saved loads on one chart plus a single-distance
   table, with a "Compare at" field that scales the chart to match.
 - **Commercial ammo catalog** — ~1,850 entries across Remington, Winchester, Nosler, Norma, Barnes,
-  Federal, Hornady, Weatherby, Berger, Browning, Lapua, and Sig Sauer (`src/data/commercialAmmo.js`), picked via a cascading Caliber ->
-  Manufacturer -> Load selector (`src/components/CommercialLoadPicker.jsx`). BC is
+  Federal, Hornady, Weatherby, Berger, Browning, Lapua, and Sig Sauer (`src/data/commercialAmmo.js`), picked via a single
+  search box over the flattened catalog, with caliber/manufacturer as optional
+  filter chips (`src/components/CommercialLoadPicker.jsx`). BC is
   published where the manufacturer states one; where they don't (Hornady entirely,
   most of Federal), it's back-calculated by bisection against this app's own solver
   from the manufacturer's own published velocity table — see the header comment in

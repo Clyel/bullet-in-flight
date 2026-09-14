@@ -196,7 +196,7 @@
     <a class="cta" href="https://ballisticnerd.com" target="_blank" rel="noopener">Open Ballistic Nerd →</a>
 
     <div class="stats">
-      <div><div class="label">Tools</div><div class="v">6</div></div>
+      <div><div class="label">Tools</div><div class="v">7</div></div>
       <div><div class="label">Catalog loads</div><div class="v">1,850+</div></div>
       <div><div class="label">Manufacturers</div><div class="v">12</div></div>
       <div><div class="label">Cost</div><div class="v">Free</div></div>
@@ -240,7 +240,7 @@
   </section>
 
   <section id="tools">
-    <h2>The six tools</h2>
+    <h2>The seven tools</h2>
     <p>One tab per question. Nothing here is sequential — jump straight to whichever answers what
       you actually walked in asking.</p>
     <div class="tools">
@@ -316,6 +316,26 @@
       </div>
 
       <div class="tool">
+        <div class="tool-head"><div class="badge">HT</div><h3><a href="https://ballisticnerd.com/#tab/handloader-tools" target="_blank" rel="noopener">Handloader's Tools</a></h3></div>
+        <p class="muted" style="margin:0;font-size:13.5px;">A hub, not a single tool — kept off the main
+          tab bar so it doesn't crowd things for everyone else. Opening it always lands on a card grid;
+          today that grid holds one card.</p>
+        <ul>
+          <li><strong>BC from Chronograph</strong> — back-solve your bullet's real BC from your own
+            muzzle velocity plus a downrange velocity or time-of-flight reading, instead of trusting the
+            box's number.</li>
+          <li>Root-finds around this app's own trajectory solver — zero new physics, the same math the
+            Calculator already relies on, just run in reverse.</li>
+          <li>Atmosphere defaults to standard (59°F / 29.92 inHg), collapsed but always shown — expand it
+            if your chrono session wasn't at standard conditions.</li>
+        </ul>
+        <div class="watch"><b>Watch for</b>A "chrono-measured" BC and a catalog's "derived BC" are
+          deliberately different labels for opposite situations — chrono-measured is from your own real
+          data (arguably higher confidence than a catalog figure), derived is this app's own approximation
+          for a load whose manufacturer never published one at all.</div>
+      </div>
+
+      <div class="tool">
         <div class="tool-head"><div class="badge">HP</div><h3><a href="https://ballisticnerd.com/#tab/help" target="_blank" rel="noopener">Help</a></h3></div>
         <p class="muted" style="margin:0;font-size:13.5px;">In-app how-tos, an FAQ, and a direct line
           to send an idea or report something wrong.</p>
@@ -353,6 +373,10 @@
       <figure class="shot">
         <img src="images/bullet-energy.png" alt="Bullet Energy tab comparing muzzle energy across three rows: a 172gr, a 140gr, and a 225gr bullet at their own velocities, as a table and a bar chart.">
         <figcaption><b>Bullet Energy</b> — three bullets, three velocities, three muzzle-energy figures. No saving, no rig, no catalog required — type a weight and a velocity and it's compared.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="images/bc-chrono.png" alt="BC from Chronograph tool inside Handloader's Tools: muzzle velocity 2825fps, distance 500yd, G7 drag model, downrange velocity 2008fps measured, solving to a ballistic coefficient of 0.265 G7 under a standard-atmosphere assumption.">
+        <figcaption><b>BC from Chronograph</b> (Handloader's Tools) — this example's inputs are this same 30-06 load's own real numbers fed back in, so the solved 0.265&nbsp;G7 exactly matches its actual published BC used everywhere else in this guide — a round trip, not a coincidence.</figcaption>
       </figure>
     </div>
   </section>
@@ -436,6 +460,11 @@
           <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Derived BC</a></td><td>A load's own manufacturer didn't publish a BC, so one was
             back-solved from that manufacturer's own published downrange velocity numbers. Grounded in
             real data, but an approximation — always labeled, never presented as an official figure.</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Chrono-measured BC</a></td><td>A BC solved from your own chronograph data (Handloader's Tools →
+            BC from Chronograph) — same root-finding method as a Derived BC, but deliberately labeled
+            differently, since it's the opposite situation: your own real rifle and ammo, not the app's
+            approximation for a manufacturer who published nothing. Arguably higher confidence than a
+            catalog figure, not lower.</td></tr>
         </tbody>
       </table>
     </div>
@@ -543,6 +572,16 @@
         mostly matter past a few hundred yards. Off by default, on only if you fill them in. Checked
         against the same independent reference solver the core trajectory is (see below) — worst-case
         deviation is within 0.01in, tighter than the core trajectory's own 0.15in figure.</p>
+    </details>
+    <details>
+      <summary>Is a "chrono-measured" BC the same kind of thing as a catalog's "derived BC"?</summary>
+      <p>No — deliberately different words for opposite situations. "Derived BC" means a manufacturer
+        never published a real figure, so this app approximated one from their other published data —
+        lower confidence than a real published BC. A "chrono-measured" BC, from Handloader's Tools' BC
+        from Chronograph, is empirical — solved from your own rifle, your own ammo, shot under your own
+        conditions — arguably higher confidence than a generic catalog figure, not lower. Same
+        root-finding method underneath either way, but the two labels intentionally don't share a word so
+        they're never mistaken for each other.</p>
     </details>
     <details>
       <summary>What isn't modeled yet?</summary>

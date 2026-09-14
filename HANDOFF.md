@@ -29,10 +29,13 @@ manufacturer's own published data where they don't state one — see
 `scripts/deriveBC.mjs`), a single-search catalog picker (see below),
 per-load vitals-zone radius + a "vitals window" readout and an "Optimal Zero" solve
 for the zero that maximizes it, the Optimal Zero comparison tab, the Recoil tab
-(SAAMI free recoil energy), a printable dope chart, a Compare comparison table, the
-Help/FAQ tab, Supabase-backed accounts, GitHub Pages hosting, and the code-review
-pass (dependency-free SVG charts, Optimal Zero Web Worker, bundle split, error
-boundary — see `CODE-REVIEW.md`).
+(SAAMI free recoil energy), the Bullet Energy tab (quick multi-row muzzle-energy
+comparator), spin drift and Coriolis (Calculator's collapsed Advanced section),
+the Handloader's Tools hub with BC from Chronograph (back-solve a real BC from a
+shooter's own chronograph data), a printable dope chart, a Compare comparison table,
+the Help/FAQ tab, Supabase-backed accounts, GitHub Pages hosting, the React 18→19
+toolchain bump, and the code-review pass (dependency-free SVG charts, Optimal Zero
+Web Worker, bundle split, error boundary — see `CODE-REVIEW.md`).
 
 ## Ground rules for working with me
 
@@ -142,6 +145,17 @@ follow-up.
   override it, so comparing at long-range distances silently showed "beyond this load's
   charted distance" — bumped to 1500, matching Calculator's own existing zeroRangeYd
   sanity-check ceiling.
+- **Field Guide kept current across tonight's ships** (PRs #28, #30, #31, all content-
+  only, maintained by the "UserGuide" peer session, reviewed and merged by this one):
+  catalog stats (1,800+/11 → 1,850+/12, PR #28); Quick Start step 1 and the tool-list
+  screenshot rewritten for the search-box picker rebuild, the now-obsolete "third
+  dropdown" trip-up note removed rather than patched (PR #30); a new Handloader's
+  Tools card, screenshot, glossary entry, and FAQ entry on chrono-measured vs. derived
+  BC (PR #31). Every image and numeric claim was independently re-verified before
+  merge, not just visually skimmed — e.g. PR #31's round-trip screenshot (this guide's
+  own recurring 30-06 example fed back into BC from Chronograph, solving back to its
+  real 0.265 G7) was re-run through `bcFromVelocity()` directly to confirm the number,
+  not just eyeballed.
 - **React 18 → 19** (PR #26) — the toolchain item from "What remains." No app code
   changes needed (already on `createRoot`/`StrictMode`, zero `propTypes`/
   `defaultProps`/`forwardRef`/`findDOMNode` usage anywhere), so none of React 19's

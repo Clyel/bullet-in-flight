@@ -80,13 +80,13 @@ boundary — see `CODE-REVIEW.md`).
    the move if it keeps growing much.
    Federal is already in. Each add: a raw-harvest script + (if BC isn't published) a
    derive script, then the cartridge-name normalization pass before merge.
-2. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**
-   collapse-filled-sections pass (PR #15), "add a round to Compare" from the
-   empty state (PR #14), cloud sync for the shared "My rig" (PR #16).
-   **Also now shipping:** the flattened/searchable catalog picker — item #7
-   from the original review, picked back up once the catalog grew large
-   enough to justify the full rebuild Jake deferred at the time (see "Shipped"
-   below once merged).
+2. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped:** collapse-
+   filled-sections pass (PR #15), "add a round to Compare" from the empty
+   state (PR #14), cloud sync for the shared "My rig" (PR #16, all
+   2026-09-10), and the flattened/searchable catalog picker (PR #29,
+   2026-09-13, see below) — item #7 from the original review, picked back up
+   once the catalog grew large enough to justify the full rebuild Jake
+   deferred at the time.
 3. React 18 → 19 — **shipped 2026-09-13 (PR #26, see below).**
 4. **Main tab switcher's mobile scaling has a ceiling.** PR #25 (Handloader's
    Tools) fixed a real 375px overflow by shrinking the switcher's font below
@@ -100,10 +100,48 @@ boundary — see `CODE-REVIEW.md`).
    made under time pressure.
 
 The original roadmap's last physics item (spin drift + Coriolis) shipped
-2026-09-13 — see below. What's left after that is genuinely small: the
-catalog-picker item above, and the toolchain bump.
+2026-09-13 — see below. Every item in this list has now shipped; nothing is
+currently pending here beyond item #4's flagged-for-later responsive-nav
+follow-up.
 
-**Shipped 2026-09-13 (in `main`, deployed, verified on ballisticnerd.com):**
+**Shipped 2026-09-13/14 (in `main`, deployed, verified on ballisticnerd.com):**
+- **Catalog picker rebuilt as one flattened search box** (PR #29) — UX-REVIEW.md item
+  #7's full rebuild, picked back up once the catalog grew from 855 to ~1,852 loads / 8
+  to 12 manufacturers (exactly the growth the original pitch bet would eventually
+  justify it). Replaces the three-select Caliber → Manufacturer → Load cascade with one
+  search box over the whole flattened catalog; caliber/manufacturer survive as
+  optional, additive filter chips instead of mandatory sequential steps.
+  `onSelect(ammo)` contract unchanged — none of the 5 existing call sites (Calculator,
+  Compare, Optimal Zero, Recoil, Bullet Energy) needed touching. Hand-rolled relevance
+  scoring (no new dependency): a query match at the start of the cartridge name
+  outranks a start-match on manufacturer/bullet, which outranks any mid-string hit;
+  every typed token must match something (AND across tokens). Capped to top 40
+  results; a live count only shows past 20 matches. One shared row renderer behind two
+  shells — desktop inline popover, mobile full-screen sheet with autofocus + a
+  persistent Cancel button. Each result's accessible name is one well-formed string
+  covering every field (screen readers can't perceive the two-line visual layout),
+  derived-BC labeling included. Auto-advance-on-one-option needed no special code — it
+  falls out of the search paradigm for free. Tagged `pre-catalog-picker-rebuild` on the
+  pre-rebuild commit as an explicit rollback point before starting, per Jake's ask.
+  UX Review's pass caught two real issues, both fixed before merge: (1) Compare.jsx had
+  two separate `return` statements (empty-state vs. populated-state) both rendering the
+  same `CommercialLoadPicker` JSX — two structurally different trees meant React
+  couldn't preserve the picker's identity across the 0→1 saved-datasets transition, so
+  a brand-new user's very first catalog pick silently lost its "Added: ..." confirmation
+  and refocus-for-next-search. Restructured to one consistent tree. (2) The small
+  "+ Caliber filter"/"+ Manufacturer filter" chip-adders had no arrow-key navigation —
+  brought up to the same combobox/listbox ARIA pattern the main search box already had.
+- **Two production fixes folded into the same PR**, both flagged directly by Jake while
+  reviewing: (1) a stale-deploy-chunk error ("Failed to fetch dynamically imported
+  module") on Compare, from a deploy landing while someone already had the page open —
+  `main.jsx` now listens for Vite's own `vite:preloadError` event and reloads once
+  automatically (sessionStorage-guarded against looping; falls through to the existing
+  ErrorBoundary if a reload genuinely doesn't fix it — UX Review verified this exact
+  layered behavior by actually renaming a built chunk file to force a real 404). (2)
+  Compare hardcoded every catalog-added dataset's `maxRangeYd` at 500 with no field to
+  override it, so comparing at long-range distances silently showed "beyond this load's
+  charted distance" — bumped to 1500, matching Calculator's own existing zeroRangeYd
+  sanity-check ceiling.
 - **React 18 → 19** (PR #26) — the toolchain item from "What remains." No app code
   changes needed (already on `createRoot`/`StrictMode`, zero `propTypes`/
   `defaultProps`/`forwardRef`/`findDOMNode` usage anywhere), so none of React 19's

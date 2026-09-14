@@ -9,10 +9,18 @@ import { useMyRig } from "./storage/useMyRig.js";
 import { num, solveFromForm } from "./solveFromForm.js";
 
 // Everything solveFromForm/CompareChart need that isn't ammo: the shared
-// rig (sight/vitals/atmosphere) plus the same zero / distance / step the
-// Calculator starts a fresh load at. Wind stays out — Compare has no wind
-// input, and a saved dataset with no wind is what the rest of the tab
-// already expects.
+// rig (sight/vitals/atmosphere) plus a zero/distance/step. Wind stays out —
+// Compare has no wind input, and a saved dataset with no wind is what the
+// rest of the tab already expects.
+//
+// maxRangeYd 1500, not Calculator's own 500 default -- Compare has no
+// "Distance out to" field of its own (unlike Calculator), so this value is
+// invisible and fixed for every catalog-added dataset; a shorter cap meant
+// "Compare at" a long-range distance silently read "beyond this load's
+// charted distance" for anyone comparing at match-shooting ranges (Jake
+// flagged this directly, 2026-09-13). 1500 matches this app's own existing
+// "reasonable long range" convention -- it's already Calculator's own
+// zeroRangeYd sanity-check ceiling (see SANITY in Calculator.jsx).
 function datasetFromAmmo(ammo, rig) {
   return {
     cartridge: ammo.cartridge,
@@ -24,7 +32,7 @@ function datasetFromAmmo(ammo, rig) {
     grains: String(ammo.grains),
     dragModel: ammo.dragModel,
     zeroRangeYd: "200",
-    maxRangeYd: "500",
+    maxRangeYd: "1500",
     tableStepYd: "100",
     windSpeedMph: "",
     windClock: "",
@@ -121,7 +129,7 @@ export default function Compare() {
       </span>
       <CommercialLoadPicker onSelect={handleAddCatalogRound} resetLoadAfterSelect />
       <div style={{ marginBottom: 4, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 500&nbsp;yd — it's
+        Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 1500&nbsp;yd — it's
         saved as a dataset and added to the comparison. Tune it on the Calculator tab.
       </div>
       {addError && (

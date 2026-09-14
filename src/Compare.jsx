@@ -9,10 +9,18 @@ import { useMyRig } from "./storage/useMyRig.js";
 import { num, solveFromForm } from "./solveFromForm.js";
 
 // Everything solveFromForm/CompareChart need that isn't ammo: the shared
-// rig (sight/vitals/atmosphere) plus the same zero / distance / step the
-// Calculator starts a fresh load at. Wind stays out — Compare has no wind
-// input, and a saved dataset with no wind is what the rest of the tab
-// already expects.
+// rig (sight/vitals/atmosphere) plus a zero/distance/step. Wind stays out —
+// Compare has no wind input, and a saved dataset with no wind is what the
+// rest of the tab already expects.
+//
+// maxRangeYd 1500, not Calculator's own 500 default -- Compare has no
+// "Distance out to" field of its own (unlike Calculator), so this value is
+// invisible and fixed for every catalog-added dataset; a shorter cap meant
+// "Compare at" a long-range distance silently read "beyond this load's
+// charted distance" for anyone comparing at match-shooting ranges (Jake
+// flagged this directly, 2026-09-13). 1500 matches this app's own existing
+// "reasonable long range" convention -- it's already Calculator's own
+// zeroRangeYd sanity-check ceiling (see SANITY in Calculator.jsx).
 function datasetFromAmmo(ammo, rig) {
   return {
     cartridge: ammo.cartridge,
@@ -24,7 +32,7 @@ function datasetFromAmmo(ammo, rig) {
     grains: String(ammo.grains),
     dragModel: ammo.dragModel,
     zeroRangeYd: "200",
-    maxRangeYd: "500",
+    maxRangeYd: "1500",
     tableStepYd: "100",
     windSpeedMph: "",
     windClock: "",
@@ -121,7 +129,7 @@ export default function Compare() {
       </span>
       <CommercialLoadPicker onSelect={handleAddCatalogRound} resetLoadAfterSelect />
       <div style={{ marginBottom: 4, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
-        Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 500&nbsp;yd — it's
+        Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 1500&nbsp;yd — it's
         saved as a dataset and added to the comparison. Tune it on the Calculator tab.
       </div>
       {addError && (
@@ -132,23 +140,16 @@ export default function Compare() {
     </>
   );
 
-  if (savedLoads.length === 0) {
-    return (
-      <div className="bif-grid">
-        <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-          <StepHead n={1} name="Datasets to compare" first />
-          {catalogPicker}
-        </div>
-        <div>
-          <Notice tone={C.brass} title="Nothing to compare yet">
-            Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
-            come back — every saved dataset shows up here.
-          </Notice>
-        </div>
-      </div>
-    );
-  }
+  const hasSavedLoads = savedLoads.length > 0;
 
+  // One tree, not a separate early-return for the empty state -- two
+  // structurally different trees both rendering `catalogPicker` meant React
+  // couldn't preserve CommercialLoadPicker's identity across the 0->1
+  // savedLoads transition (a fresh mount wipes its "Added: ..." confirmation
+  // and refocus-for-next-search state right at the moment -- a brand-new
+  // user's very first add -- those matter most). Caught by UX Review's PR
+  // #29 pass; the picker now sits at the same position in the tree either
+  // way, only the content around it varies on `hasSavedLoads`.
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
@@ -161,32 +162,45 @@ export default function Compare() {
           </label>
         ))}
 
-        <div style={{ marginTop: 16 }}>{catalogPicker}</div>
+        <div style={hasSavedLoads ? { marginTop: 16 } : undefined}>{catalogPicker}</div>
 
-        <StepHead n={2} name="Compare at" />
-        <UnitField
-          label="Distance"
-          category="distance"
-          value={atYd}
-          onChange={(v) => { setAtYd(v); setAtYdTouched(true); }}
-        />
+        {hasSavedLoads && (
+          <>
+            <StepHead n={2} name="Compare at" />
+            <UnitField
+              label="Distance"
+              category="distance"
+              value={atYd}
+              onChange={(v) => { setAtYd(v); setAtYdTouched(true); }}
+            />
+          </>
+        )}
       </div>
 
       <div>
-        {failed.length > 0 && (
-          <Notice tone={C.ox} title="Couldn't solve some datasets">
-            {failed.map((f) => `${f.name}: ${f.message}`).join(" — ")}
-          </Notice>
-        )}
-
-        {results.length === 0 ? (
-          <Notice tone={C.brass} title="Nothing selected">
-            Check off one or more saved datasets to overlay their trajectories.
+        {!hasSavedLoads ? (
+          <Notice tone={C.brass} title="Nothing to compare yet">
+            Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
+            come back — every saved dataset shows up here.
           </Notice>
         ) : (
           <>
-            <CompareChart results={results} atYd={atYdNum} />
-            {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
+            {failed.length > 0 && (
+              <Notice tone={C.ox} title="Couldn't solve some datasets">
+                {failed.map((f) => `${f.name}: ${f.message}`).join(" — ")}
+              </Notice>
+            )}
+
+            {results.length === 0 ? (
+              <Notice tone={C.brass} title="Nothing selected">
+                Check off one or more saved datasets to overlay their trajectories.
+              </Notice>
+            ) : (
+              <>
+                <CompareChart results={results} atYd={atYdNum} />
+                {Number.isFinite(atYdNum) && <CompareTable results={results} atYd={atYdNum} />}
+              </>
+            )}
           </>
         )}
       </div>

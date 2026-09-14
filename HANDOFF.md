@@ -26,7 +26,7 @@ cloud sync when signed in), Compare tab.
 Built since: a ~1,850-entry commercial ammo catalog across twelve manufacturers
 (Remington, Winchester, Nosler, Norma, Barnes, Federal, Hornady, Weatherby, Berger, Browning, Lapua, Sig Sauer; BC back-calculated from the
 manufacturer's own published data where they don't state one — see
-`scripts/deriveBC.mjs`), a cascading Caliber -> Manufacturer -> Load picker,
+`scripts/deriveBC.mjs`), a single-search catalog picker (see below),
 per-load vitals-zone radius + a "vitals window" readout and an "Optimal Zero" solve
 for the zero that maximizes it, the Optimal Zero comparison tab, the Recoil tab
 (SAAMI free recoil energy), a printable dope chart, a Compare comparison table, the
@@ -82,10 +82,11 @@ boundary — see `CODE-REVIEW.md`).
    derive script, then the cartridge-name normalization pass before merge.
 2. Deferred UX items (from the 2026-09-09 UX pass) — **all shipped 2026-09-10:**
    collapse-filled-sections pass (PR #15), "add a round to Compare" from the
-   empty state (PR #14), and cloud sync for the shared "My rig" (PR #16).
-   **Still open:** a fully flattened/searchable catalog picker (Jake chose to
-   keep the 3 cascading dropdowns with typeahead for now, a closed decision,
-   not pending work).
+   empty state (PR #14), cloud sync for the shared "My rig" (PR #16).
+   **Also now shipping:** the flattened/searchable catalog picker — item #7
+   from the original review, picked back up once the catalog grew large
+   enough to justify the full rebuild Jake deferred at the time (see "Shipped"
+   below once merged).
 3. React 18 → 19 — **shipped 2026-09-13 (PR #26, see below).**
 4. **Main tab switcher's mobile scaling has a ceiling.** PR #25 (Handloader's
    Tools) fixed a real 375px overflow by shrinking the switcher's font below

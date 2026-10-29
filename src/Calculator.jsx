@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
@@ -110,6 +110,10 @@ export default function Calculator() {
   // "Saved" / "Updated" confirmation under the Save button; cleared by the
   // next edit to the name or the form.
   const [savedNotice, setSavedNotice] = useState(null);
+  // Bumped whenever the form's load changes underneath the catalog picker (a
+  // saved load opened, hand edits clearing the identity, Start over), which
+  // remounts it so its box stops showing a pick that's no longer what's loaded.
+  const [pickerKey, setPickerKey] = useState(0);
   // The drift bar shows only after the user *deliberately* touches a rig
   // field -- not when a rig field changes because a saved dataset was
   // loaded (that dataset carries its own conditions, and both "Save as my
@@ -129,6 +133,7 @@ export default function Calculator() {
         if (k === "ballisticCoefficient") {
           setBcOrigin(null);
         } else if (cur.cartridge) {
+          setPickerKey((n) => n + 1);
           setBcOrigin({ bullet: cur.bullet, grains: cur.grains, bc: cur.ballisticCoefficient, dragModel: cur.dragModel });
         }
         setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
@@ -210,14 +215,31 @@ export default function Calculator() {
   const startingForm = useMemo(() => ({ ...DEFAULTS, ...storedRig }), [storedRig]);
   const changedFromStart = Object.keys(DEFAULTS).some((k) => v[k] !== startingForm[k]);
   const initialV = useRef(v);
+  const latest = useRef(null);
+  latest.current = { v, rigTouched, bcOrigin, changedFromStart };
+  const writeNow = useCallback(() => {
+    const s = latest.current;
+    if (s.v === initialV.current) return;
+    if (s.changedFromStart) saveLastForm({ form: s.v, rigTouched: s.rigTouched, bcOrigin: s.bcOrigin }, DEFAULTS);
+    else clearLastForm();
+  }, []);
   useEffect(() => {
     if (v === initialV.current) return undefined;
-    const t = setTimeout(() => {
-      if (changedFromStart) saveLastForm({ form: v, rigTouched, bcOrigin }, DEFAULTS);
-      else clearLastForm();
-    }, 400);
+    const t = setTimeout(writeNow, 400);
     return () => clearTimeout(t);
-  }, [v, rigTouched, bcOrigin, changedFromStart]);
+  }, [v, rigTouched, bcOrigin, changedFromStart, writeNow]);
+  // The debounce must not lose the last edit: leaving the tab unmounts the
+  // Calculator, and a phone can freeze or kill a backgrounded page outright.
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") writeNow(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", writeNow);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", writeNow);
+      writeNow();
+    };
+  }, [writeNow]);
   const handleSaveRig = () => {
     saveRig(Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]])));
     setRigTouched(false);
@@ -267,6 +289,7 @@ export default function Calculator() {
     setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", bcSource: "", ...formState }));
     setBcOverridden(false);
     setBcOrigin(null);
+    setPickerKey((n) => n + 1);
     // The dataset's own sight/vitals/conditions came along -- they're not a
     // deliberate rig edit, so don't let them raise the drift bar.
     setRigTouched(false);
@@ -420,6 +443,7 @@ export default function Calculator() {
     setSaveName("");
     setSavedNotice(null);
     setAnswerRange(null);
+    setPickerKey((n) => n + 1);
     clearLastForm();
   };
 
@@ -437,7 +461,7 @@ export default function Calculator() {
         rigDrifted={rigDrifted} onSaveRig={handleSaveRig} onResetRig={handleResetRig}
         onJumpToResults={jumpToResults}
         savedNotice={savedNotice} staleBc={staleBcOrigin(v, bcOrigin)}
-        canStartOver={changedFromStart} onStartOver={handleStartOver}
+        canStartOver={changedFromStart} onStartOver={handleStartOver} pickerKey={pickerKey}
       />
 
       <div className="bif-results-col" id="bif-results" tabIndex={-1} ref={resultsRef}>

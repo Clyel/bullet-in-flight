@@ -555,6 +555,13 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   eq("last form: unknown fields and non-strings are dropped",
     parseLastForm(JSON.stringify({ version: 1, form: { grains: "150", muzzleVelocity: 2700, evil: "x" } }), defs).form,
     { grains: "150" });
+  const enumDefs = { dragModel: "G7", twistDirection: "Right", grains: "172" };
+  eq("last form: an invalid drag model or twist direction is dropped, not trusted",
+    parseLastForm(JSON.stringify({ version: 1, form: { dragModel: "G9", twistDirection: "Up", grains: "150" } }), enumDefs).form,
+    { grains: "150" });
+  eq("last form: valid enum values are kept",
+    parseLastForm(JSON.stringify({ version: 1, form: { dragModel: "G1", twistDirection: "Left" } }), enumDefs).form,
+    { dragModel: "G1", twistDirection: "Left" });
   eq("last form: a malformed bcOrigin becomes null",
     parseLastForm(JSON.stringify({ version: 1, form: {}, bcOrigin: { bullet: "x" } }), defs).bcOrigin, null);
   eq("last form: rigTouched only when exactly true",

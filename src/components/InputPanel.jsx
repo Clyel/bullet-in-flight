@@ -38,7 +38,7 @@ const DEFAULT_COLLAPSED = ["target", "air", "wind", "advanced"];
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
-  rigDrifted, onSaveRig, onResetRig, onJumpToResults, savedNotice, staleBc, canStartOver, onStartOver,
+  rigDrifted, onSaveRig, onResetRig, onJumpToResults, savedNotice, staleBc, canStartOver, onStartOver, pickerKey,
 }) {
   const { system } = useUnits();
   const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS, DEFAULT_COLLAPSED);
@@ -70,6 +70,9 @@ export default function InputPanel({
   // Start over throws away unsaved edits, so it asks first -- inline, not
   // window.confirm (see the drag-model guard above for why).
   const [confirmingStartOver, setConfirmingStartOver] = useState(false);
+  // Each of these buttons unmounts the one that held focus, which would drop a
+  // keyboard user onto the page body -- hand focus to the next sensible place.
+  const focusSoon = (id) => setTimeout(() => document.getElementById(id)?.focus(), 0);
   useEffect(() => setPendingModel(null), [v.cartridge, bcOverridden]);
 
   const handleDragModelChange = (nextModel) => {
@@ -203,7 +206,7 @@ export default function InputPanel({
               <button
                 type="button"
                 className="bif-tap-link"
-                onClick={() => { setConfirmingStartOver(false); onStartOver(); }}
+                onClick={() => { setConfirmingStartOver(false); onStartOver(); focusSoon("bif-inputs"); }}
                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.ox,
                          textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
               >
@@ -212,7 +215,8 @@ export default function InputPanel({
               <button
                 type="button"
                 className="bif-tap-link"
-                onClick={() => setConfirmingStartOver(false)}
+                id="bif-keep-numbers"
+                onClick={() => { setConfirmingStartOver(false); focusSoon("bif-start-over"); }}
                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.steel,
                          textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
               >
@@ -223,7 +227,8 @@ export default function InputPanel({
             <button
               type="button"
               className="bif-tap-link"
-              onClick={() => setConfirmingStartOver(true)}
+              id="bif-start-over"
+              onClick={() => { setConfirmingStartOver(true); focusSoon("bif-keep-numbers"); }}
               style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.steel,
                        textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
             >
@@ -251,7 +256,7 @@ export default function InputPanel({
       {section("load", { n: 1, name: "The load", first: true }, (
         <>
           <span style={sub}>Pick a commercial round</span>
-          <CommercialLoadPicker onSelect={(ammo) => onSelectCommercial(ammo.id)} />
+          <CommercialLoadPicker key={pickerKey} onSelect={(ammo) => onSelectCommercial(ammo.id)} />
           <div style={{ marginBottom: 16, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
             Fills in muzzle velocity, bullet weight, drag model, and BC below. Sight height, zero, and
             conditions are yours to set separately.

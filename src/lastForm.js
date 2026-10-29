@@ -14,6 +14,9 @@
 const KEY = "bullet-in-flight:lastForm";
 const VERSION = 1;
 
+// Fields where "is a string" isn't enough: any other value would break the solve.
+const ENUMS = { dragModel: ["G1", "G7"], twistDirection: ["Right", "Left"] };
+
 const isStringRecord = (o, keys) => o && typeof o === "object" && keys.every((k) => typeof o[k] === "string");
 const ORIGIN_KEYS = ["bullet", "grains", "bc", "dragModel"];
 
@@ -25,7 +28,8 @@ export function parseLastForm(raw, defaults) {
   if (!data || data.version !== VERSION || !data.form || typeof data.form !== "object") return null;
   const form = {};
   for (const k of Object.keys(defaults)) {
-    if (typeof data.form[k] === "string") form[k] = data.form[k];
+    const value = data.form[k];
+    if (typeof value === "string" && (!ENUMS[k] || ENUMS[k].includes(value))) form[k] = value;
   }
   const bcOrigin = isStringRecord(data.bcOrigin, ORIGIN_KEYS)
     ? Object.fromEntries(ORIGIN_KEYS.map((k) => [k, data.bcOrigin[k]]))

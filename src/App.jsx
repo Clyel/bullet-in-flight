@@ -110,8 +110,8 @@ function AppShell() {
               The Ballistic Nerd
             </h1>
             <p style={{ margin: "4px 0 0", font: "400 11.5px 'IBM Plex Sans',sans-serif", color: C.muted }}>
-              Point-mass trajectory. Heights are measured from the line of sight, so the bullet starts
-              one sight height low, rises through the near zero, and falls back through the far zero.
+              Shows where your bullet lands at each distance. Heights are measured from your line of sight, so
+              the bullet starts one sight height low, rises through the near zero, and falls back through the far zero.
             </p>
           </div>
           <div style={{ paddingTop: 6 }}>
@@ -165,6 +165,7 @@ function AppShell() {
                 an <a> here instead of the in-app HelpLink button -- opens in
                 its own tab rather than replacing the app. */}
             <a
+              className="bif-tap-link"
               href="/guide/"
               target="_blank"
               rel="noopener"
@@ -215,6 +216,7 @@ function TabLoading() {
 function HelpLink({ onClick, children }) {
   return (
     <button
+      className="bif-tap-link"
       onClick={onClick}
       style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
                color: C.steel, textDecoration: "underline",

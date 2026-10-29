@@ -88,6 +88,14 @@ table { border-collapse: collapse; width: 100%; }
    size (a hunter at the range is not using a mouse). Opt in per control. */
 @media (pointer: coarse) {
   .bif-tap { min-height: 44px; font-size: 15px !important; }
+  /* Text-style links and the small underlined buttons (Edit, x, Edit numbers,
+     Collapse all, the help links): a 44px target and a size a 60-year-old can
+     read, not just a hit-area change. */
+  .bif-tap-link {
+    min-height: 44px; min-width: 44px; padding: 0 8px !important;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px !important;
+  }
 }
 /* Grid children default to min-width:auto, so a long native <select> option
    ("300 Remington SA Ultra Mag") sets a content-driven floor no narrower
@@ -148,12 +156,13 @@ select:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
    the BC tool's own mode toggle) is a short 2-4-option toggle that already
    fits at any width, so leaving Segmented itself untouched keeps those
    unaffected while this fixes the one switcher that doesn't fit. */
-@media (max-width: 400px) {
+@media (max-width: 480px) {
+  .bif-main-tabs > div { flex-wrap: wrap; }
   .bif-main-tabs button {
-    font-size: 9.5px !important;
-    letter-spacing: .04em !important;
-    padding-left: 2px !important;
-    padding-right: 2px !important;
+    flex: 1 1 24% !important;
+    font-size: 12px !important;
+    padding: 10px 4px !important;
+    min-height: 44px;
   }
 }
 

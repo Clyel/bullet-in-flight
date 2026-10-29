@@ -130,7 +130,7 @@ export default function Compare() {
       <CommercialLoadPicker onSelect={handleAddCatalogRound} resetLoadAfterSelect />
       <div style={{ marginBottom: 4, font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
         Loaded at your saved rig's sight height and conditions, a 200&nbsp;yd zero, out to 1500&nbsp;yd — it's
-        saved as a dataset and added to the comparison. Tune it on the Calculator tab.
+        saved as a load and added to the comparison. Tune it on the Calculator tab.
       </div>
       {addError && (
         <div style={{ marginBottom: 8, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.ox }}>
@@ -153,7 +153,7 @@ export default function Compare() {
   return (
     <div className="bif-grid">
       <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
-        <StepHead n={1} name="Datasets to compare" first />
+        <StepHead n={1} name="Loads to compare" first />
         {savedLoads.map((l) => (
           <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
                                       marginBottom: 8, cursor: "pointer" }}>
@@ -181,19 +181,19 @@ export default function Compare() {
         {!hasSavedLoads ? (
           <Notice tone={C.brass} title="Nothing to compare yet">
             Pick a round from the catalog on the left to start, or save a load from the Calculator tab and
-            come back — every saved dataset shows up here.
+            come back — every saved load shows up here.
           </Notice>
         ) : (
           <>
             {failed.length > 0 && (
-              <Notice tone={C.ox} title="Couldn't solve some datasets">
+              <Notice tone={C.ox} title="Couldn't solve some loads">
                 {failed.map((f) => `${f.name}: ${f.message}`).join(" — ")}
               </Notice>
             )}
 
             {results.length === 0 ? (
               <Notice tone={C.brass} title="Nothing selected">
-                Check off one or more saved datasets to overlay their trajectories.
+                Check off one or more saved loads to overlay their trajectories.
               </Notice>
             ) : (
               <>

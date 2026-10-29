@@ -3,6 +3,7 @@ import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
 import AnswerLine from "./components/AnswerLine.jsx";
+import IntroStrip from "./components/IntroStrip.jsx";
 import { answerChoices, pickAnswerRow } from "./describeShot.js";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
@@ -317,6 +318,9 @@ export default function Calculator() {
 
   const zeroPastMax = num(v.zeroRangeYd) > num(v.maxRangeYd);
   const windActive = isWindActive(v);
+  // Exactly one of the two wind fields filled in: nothing happens, which
+  // looks like the wind is being ignored -- say why.
+  const windHalfEntered = !windActive && (v.windSpeedMph.trim() !== "") !== (v.windClock.trim() !== "");
 
   // `v`'s identity only changes when a field actually changes (every setter
   // spreads a new object), so it's a sound dep on its own — no need to
@@ -356,6 +360,8 @@ export default function Calculator() {
   };
 
   return (
+    <>
+    <IntroStrip onDismiss={() => document.getElementById("bif-inputs")?.focus({ preventScroll: true })} />
     <div className="bif-grid">
       <InputPanel
         v={v} set={set}
@@ -445,11 +451,14 @@ export default function Calculator() {
               Drag uses the tabulated {v.dragModel} standard curve, integrated in 0.25 ms steps.
               {windActive
                 ? ` Wind: ${num(v.windSpeedMph)} mph from ${num(v.windClock)} o'clock, factored into velocity, energy, and windage.`
+                : windHalfEntered
+                ? " Wind needs both a speed and a direction, so none is applied."
                 : " No wind entered."}
               {isSpinDriftActive(v) &&
                 ` Spin drift: 1:${v.twistIn} ${v.twistDirection.toLowerCase()}-hand twist, factored into windage.`}
               {isCoriolisActive(v) && ` Coriolis: ${num(v.latitudeDeg)}° latitude, factored into windage.`}
               {!isSpinDriftActive(v) && !isCoriolisActive(v) && " No spin drift or Coriolis entered."}
+              {" "}Calculated from the numbers you enter; confirm at the range.
             </p>
             {printing && (
               <DopeChart v={v} solution={solution} saveName={saveName} showMOA={showMOA} showMIL={showMIL} />
@@ -458,6 +467,7 @@ export default function Calculator() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

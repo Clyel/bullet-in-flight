@@ -156,7 +156,14 @@ select:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
    the BC tool's own mode toggle) is a short 2-4-option toggle that already
    fits at any width, so leaving Segmented itself untouched keeps those
    unaffected while this fixes the one switcher that doesn't fit. */
+.bif-short { display: none; }
 @media (max-width: 480px) {
+  /* The long help-link label wrapped the top link row onto two lines. */
+  .bif-long { display: none; }
+  .bif-short { display: inline; }
+  /* Suggest an idea stays reachable from the Help tab; the phone's top link
+     row is crowded enough that the ammo search was below the first screen. */
+  .bif-hide-phone { display: none !important; }
   .bif-main-tabs > div { flex-wrap: wrap; }
   .bif-main-tabs button {
     flex: 1 1 24% !important;

@@ -158,9 +158,12 @@ function AppShell() {
 
         {tab !== "Help" && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 16 }}>
-            <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>How does {tab} work?</HelpLink>
+            <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>
+              <span className="bif-long">How does {tab} work?</span>
+              <span className="bif-short">How it works</span>
+            </HelpLink>
             <HelpLink onClick={() => goToHelp("faq")}>FAQ</HelpLink>
-            <HelpLink onClick={() => goToHelp("submit")}>Suggest an idea</HelpLink>
+            <HelpLink className="bif-hide-phone" onClick={() => goToHelp("submit")}>Suggest an idea</HelpLink>
             {/* Real navigation (a static page at /guide/, not app state), so
                 an <a> here instead of the in-app HelpLink button -- opens in
                 its own tab rather than replacing the app. */}
@@ -213,10 +216,10 @@ function TabLoading() {
   );
 }
 
-function HelpLink({ onClick, children }) {
+function HelpLink({ onClick, children, className = "" }) {
   return (
     <button
-      className="bif-tap-link"
+      className={`bif-tap-link ${className}`}
       onClick={onClick}
       style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
                color: C.steel, textDecoration: "underline",

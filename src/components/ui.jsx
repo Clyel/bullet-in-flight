@@ -11,7 +11,7 @@ import { fieldDisplayValue, fieldCanonicalValue, unitSuffix } from "../units.js"
 // lives inside the box, right-aligned and pointer-events:none, so a tap
 // still lands on the field and it can't clip off the edge on mobile.
 // Focus takes the border to C.ink via .bif-field:focus-within in styles.css.
-export function Field({ label: text, hint, value, onChange, suffix, type, inputMode = "decimal" }) {
+export function Field({ label: text, hint, value, onChange, suffix, type, inputMode = "decimal", id }) {
   return (
     <label style={{ display: "block", marginBottom: 14 }}>
       <span style={{ ...label, display: "block", marginBottom: 4 }}>{text}</span>
@@ -19,6 +19,7 @@ export function Field({ label: text, hint, value, onChange, suffix, type, inputM
             style={{ display: "flex", alignItems: "center", gap: 6,
                      border: `1.5px solid ${C.rule}`, background: C.inputBg, padding: "7px 8px" }}>
         <input
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           type={type}

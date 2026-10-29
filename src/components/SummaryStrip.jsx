@@ -1,18 +1,19 @@
 import React from "react";
 import { C, label } from "./theme.js";
 import { useUnitFormatters } from "../useUnitFormatters.js";
+import { commas } from "../formatNumbers.js";
 
-export default function SummaryStrip({ solution, maxRangeYd }) {
+export default function SummaryStrip({ solution, row }) {
   const { dist, vel, len, energy, dSuf, vSuf, lSuf, eSuf } = useUnitFormatters();
-  const { last, crossings, apex, subsonicYd } = solution;
+  const { crossings, apex, subsonicYd } = solution;
   const near = crossings[0];
 
   const cells = [
-    [`At ${Math.round(dist(maxRangeYd))} ${dSuf}`, `${Math.round(vel(last.velocity))} ${vSuf}`],
-    ["Energy there", `${Math.round(energy(last.energy))} ${eSuf}`],
-    ["Height there", `${len(last.height).toFixed(1)} ${lSuf}`],
-    ["Max ordinate", `${len(apex.height).toFixed(1)} ${lSuf} @ ${Math.round(dist(apex.range))} ${dSuf}`],
-    ["Near zero", near != null ? `${dist(near).toFixed(0)} ${dSuf}` : "—"],
+    [`Speed at ${Math.round(dist(row.range))} ${dSuf}`, `${Math.round(vel(row.velocity))} ${vSuf}`],
+    ["Energy there", `${Math.round(energy(row.energy))} ${eSuf}`],
+    ["Height there", `${commas(len(row.height), 1)} ${lSuf}`],
+    ["Peak height", `${len(apex.height).toFixed(1)} ${lSuf} @ ${Math.round(dist(apex.range))} ${dSuf}`],
+    ["Near zero (rising)", near != null ? `${dist(near).toFixed(0)} ${dSuf}` : "—"],
     ["Goes subsonic", subsonicYd != null ? `${Math.round(dist(subsonicYd))} ${dSuf}` : "beyond range"],
   ];
 

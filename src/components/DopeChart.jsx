@@ -1,6 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { COLUMN_DEFS, commas, dopeColumnKeys } from "./RangeTable.jsx";
+import { COLUMN_DEFS } from "./RangeTable.jsx";
+import { commas } from "../formatNumbers.js";
+import { dopeColumnKeys } from "../tableColumns.js";
 import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
 import { num, isWindActive, isWindageActive, isSpinDriftActive, isCoriolisActive } from "../solveFromForm.js";

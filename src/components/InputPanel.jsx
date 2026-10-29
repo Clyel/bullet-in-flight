@@ -38,7 +38,7 @@ const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind", "advanced"
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
-  rigDrifted, onSaveRig, onResetRig,
+  rigDrifted, onSaveRig, onResetRig, onJumpToResults,
 }) {
   const { system } = useUnits();
   const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS, DEFAULT_COLLAPSED);
@@ -176,6 +176,18 @@ export default function InputPanel({
   return (
     <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
       <RigDriftBar drifted={rigDrifted} onSave={onSaveRig} onReset={onResetRig} />
+
+      {/* Single-column (phone) layout puts the results below this whole form;
+          .bif-jump is display:none above that breakpoint (styles.css). */}
+      <button
+        type="button"
+        className="bif-jump bif-tap"
+        onClick={onJumpToResults}
+        style={{ width: "100%", marginBottom: 10, padding: 9, background: C.ink, color: C.card,
+                 border: "none", cursor: "pointer", font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
+      >
+        Jump to results ↓
+      </button>
 
       {/* One control flips every section -- for the first read-through, or a
           quick scan of everything before a range trip. */}

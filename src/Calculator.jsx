@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { C, label } from "./components/theme.js";
 import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
+import AnswerLine from "./components/AnswerLine.jsx";
+import { answerChoices, pickAnswerRow } from "./describeShot.js";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
 import DopeChart from "./components/DopeChart.jsx";
@@ -335,6 +337,24 @@ export default function Calculator() {
 
   const maxRangeYd = Math.max(num(v.maxRangeYd), num(v.zeroRangeYd));
 
+  // One picked distance drives the answer line and the speed/energy/height
+  // tiles; null (the default) means the farthest row, which is what the
+  // tiles always reported before.
+  const [answerRange, setAnswerRange] = useState(null);
+  const choices = solution ? answerChoices(solution.rows) : [];
+  const answerRow = pickAnswerRow(choices, answerRange);
+
+  // Phone layout stacks the results under the whole form; this is the
+  // shortcut down to them (InputPanel only shows it at that width).
+  const resultsRef = useRef(null);
+  const jumpToResults = () => {
+    const el = resultsRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    el.focus({ preventScroll: true });
+  };
+
   return (
     <div className="bif-grid">
       <InputPanel
@@ -345,9 +365,10 @@ export default function Calculator() {
         onSelectCommercial={handleSelectCommercial} saveError={saveError} signedIn={signedIn}
         bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
         rigDrifted={rigDrifted} onSaveRig={handleSaveRig} onResetRig={handleResetRig}
+        onJumpToResults={jumpToResults}
       />
 
-      <div className="bif-results-col">
+      <div className="bif-results-col" id="bif-results" tabIndex={-1} ref={resultsRef}>
         {importCount > 0 && (
           <Notice tone={C.brass} title="Saved loads found on this device">
             {importCount} {importCount === 1 ? "load" : "loads"} saved locally, from before you signed in.
@@ -377,7 +398,9 @@ export default function Calculator() {
           <>
             <div className="bif-results">
               <LoadIdentity v={v} />
-              <SummaryStrip solution={solution} maxRangeYd={maxRangeYd} />
+              <AnswerLine choices={choices} row={answerRow} onPick={setAnswerRange} zeroYd={num(v.zeroRangeYd)}
+                          shotAngleDeg={num(v.shotAngleDeg)} showMOA={showMOA} showMIL={showMIL} />
+              <SummaryStrip solution={solution} row={answerRow} />
               <InclineNote maxRangeYd={maxRangeYd} shotAngleDeg={num(v.shotAngleDeg)} system={system} />
               <TrajectoryChart
                 solution={solution} maxRangeYd={maxRangeYd}
@@ -404,6 +427,10 @@ export default function Calculator() {
               </div>
             </div>
 
+            <p style={{ margin: "0 0 8px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
+              Height: a minus number is below where you aimed.
+              {isWindageActive(v) && " Windage: L or R is the side the bullet lands on."}
+            </p>
             <RangeTable rows={solution.rows} showWindage={isWindageActive(v)} showMOA={showMOA} showMIL={showMIL} />
             <button
               onClick={() => setPrinting(true)}

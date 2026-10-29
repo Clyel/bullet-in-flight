@@ -38,7 +38,7 @@ const DEFAULT_COLLAPSED = ["target", "air", "wind", "advanced"];
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
-  rigDrifted, onSaveRig, onResetRig, onJumpToResults, savedNotice, staleBc,
+  rigDrifted, onSaveRig, onResetRig, onJumpToResults, savedNotice, staleBc, canStartOver, onStartOver,
 }) {
   const { system } = useUnits();
   const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS, DEFAULT_COLLAPSED);
@@ -67,6 +67,9 @@ export default function InputPanel({
   // is worse than no guard on the one control that yields wrong-not-error
   // output. An inline confirm strip can't silently fail that way.
   const [pendingModel, setPendingModel] = useState(null);
+  // Start over throws away unsaved edits, so it asks first -- inline, not
+  // window.confirm (see the drag-model guard above for why).
+  const [confirmingStartOver, setConfirmingStartOver] = useState(false);
   useEffect(() => setPendingModel(null), [v.cartridge, bcOverridden]);
 
   const handleDragModelChange = (nextModel) => {
@@ -191,7 +194,43 @@ export default function InputPanel({
 
       {/* One control flips every section -- for the first read-through, or a
           quick scan of everything before a range trip. */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap",
+                    gap: "0 12px", marginBottom: 4 }}>
+        <div style={{ font: "500 12px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+          {canStartOver && (confirmingStartOver ? (
+            <span role="alert">
+              Go back to the example load?{" "}
+              <button
+                type="button"
+                className="bif-tap-link"
+                onClick={() => { setConfirmingStartOver(false); onStartOver(); }}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.ox,
+                         textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+              >
+                Yes, start over
+              </button>{" "}
+              <button
+                type="button"
+                className="bif-tap-link"
+                onClick={() => setConfirmingStartOver(false)}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.steel,
+                         textDecoration: "underline", font: "600 12px 'IBM Plex Sans',sans-serif" }}
+              >
+                Keep my numbers
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="bif-tap-link"
+              onClick={() => setConfirmingStartOver(true)}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.steel,
+                       textDecoration: "underline", font: "600 11px 'IBM Plex Sans',sans-serif" }}
+            >
+              Start over
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           className="bif-tap-link"

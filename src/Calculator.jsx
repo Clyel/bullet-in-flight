@@ -5,6 +5,7 @@ import SummaryStrip from "./components/SummaryStrip.jsx";
 import AnswerLine from "./components/AnswerLine.jsx";
 import IntroStrip from "./components/IntroStrip.jsx";
 import { staleBcOrigin } from "./staleBc.js";
+import { loadLastForm, saveLastForm, clearLastForm } from "./lastForm.js";
 import { answerChoices, pickAnswerRow } from "./describeShot.js";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
@@ -96,14 +97,16 @@ export default function Calculator() {
   // asynchronously from the cloud (see the effect below); the initial form
   // still seeds synchronously from this device's local rig.
   const { rig: storedRig, saveRig } = useMyRig();
-  const [v, setState] = useState(() => ({ ...DEFAULTS, ...getMyRig() }));
+  // Where the shooter left off on this device (lastForm.js), or null on a first visit.
+  const [restored] = useState(() => loadLastForm(DEFAULTS));
+  const [v, setState] = useState(() => ({ ...DEFAULTS, ...getMyRig(), ...(restored?.form ?? {}) }));
   // Current form for the stable setters below (they close over nothing else).
   const vRef = useRef(v);
   vRef.current = v;
   // Which load the BC on screen came from, once hand edits have cleared the
   // load's identity -- see staleBc.js. Separate from `v` so it never rides
   // into a saved load.
-  const [bcOrigin, setBcOrigin] = useState(null);
+  const [bcOrigin, setBcOrigin] = useState(restored?.bcOrigin ?? null);
   // "Saved" / "Updated" confirmation under the Save button; cleared by the
   // next edit to the name or the form.
   const [savedNotice, setSavedNotice] = useState(null);
@@ -111,7 +114,9 @@ export default function Calculator() {
   // field -- not when a rig field changes because a saved dataset was
   // loaded (that dataset carries its own conditions, and both "Save as my
   // rig" and "Reset to my rig" would be wrong for it).
-  const [rigTouched, setRigTouched] = useState(false);
+  // Restored as it was: untouched means the saved rig refreshes the rig fields
+  // (the fold-in effect below); touched keeps the edits and shows the drift bar.
+  const [rigTouched, setRigTouched] = useState(restored?.rigTouched ?? false);
   // One stable set of per-field setters (all the state setters they close
   // over are stable) — was rebuilding ~20 closures on every render.
   const set = useMemo(() => {
@@ -197,6 +202,22 @@ export default function Calculator() {
   }, [storedRig, rigTouched]);
 
   const rigDrifted = rigTouched && rigDiffers(v, storedRig);
+
+  // Remember the form for next time. Nothing is written until the form has
+  // actually changed from where this visit started, so a first-time visitor
+  // who only looks leaves no trace; a form that's back to the starting
+  // example clears the memory instead of storing it.
+  const startingForm = useMemo(() => ({ ...DEFAULTS, ...storedRig }), [storedRig]);
+  const changedFromStart = Object.keys(DEFAULTS).some((k) => v[k] !== startingForm[k]);
+  const initialV = useRef(v);
+  useEffect(() => {
+    if (v === initialV.current) return undefined;
+    const t = setTimeout(() => {
+      if (changedFromStart) saveLastForm({ form: v, rigTouched, bcOrigin }, DEFAULTS);
+      else clearLastForm();
+    }, 400);
+    return () => clearTimeout(t);
+  }, [v, rigTouched, bcOrigin, changedFromStart]);
   const handleSaveRig = () => {
     saveRig(Object.fromEntries(RIG_FIELDS.map((k) => [k, v[k]])));
     setRigTouched(false);
@@ -390,6 +411,18 @@ export default function Calculator() {
     el.focus({ preventScroll: true });
   };
 
+  const handleStartOver = () => {
+    setState({ ...DEFAULTS, ...storedRig });
+    setRigTouched(false);
+    setBcOrigin(null);
+    setBcOverridden(false);
+    setNameTouched(false);
+    setSaveName("");
+    setSavedNotice(null);
+    setAnswerRange(null);
+    clearLastForm();
+  };
+
   return (
     <>
     <IntroStrip onDismiss={() => document.getElementById("bif-inputs")?.focus({ preventScroll: true })} />
@@ -404,6 +437,7 @@ export default function Calculator() {
         rigDrifted={rigDrifted} onSaveRig={handleSaveRig} onResetRig={handleResetRig}
         onJumpToResults={jumpToResults}
         savedNotice={savedNotice} staleBc={staleBcOrigin(v, bcOrigin)}
+        canStartOver={changedFromStart} onStartOver={handleStartOver}
       />
 
       <div className="bif-results-col" id="bif-results" tabIndex={-1} ref={resultsRef}>

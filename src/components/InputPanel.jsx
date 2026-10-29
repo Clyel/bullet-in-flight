@@ -462,6 +462,12 @@ export default function InputPanel({
             onChange={set.windClock}
             suffix="o'clock"
           />
+          {(v.windSpeedMph.trim() !== "") !== (v.windClock.trim() !== "") && (
+            <div role="status" style={{ margin: "-6px 0 14px", padding: "6px 8px", border: `1px solid ${C.brass}`,
+                                        background: C.inputBg, font: "500 12px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+              Add a wind {v.windSpeedMph.trim() === "" ? "speed" : "direction"} too. Wind is only applied when both are filled in.
+            </div>
+          )}
         </>
       ))}
 

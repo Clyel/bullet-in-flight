@@ -4,8 +4,19 @@ import { Notice } from "./ui.jsx";
 
 const KEY = "bullet-in-flight:introDismissed";
 
+// Dismissed, or never needed: anything else this app has stored on this
+// device (saved loads, a rig, units, a folded section) means they've used it.
 const read = () => {
-  try { return localStorage.getItem(KEY) === "1"; } catch { return false; }
+  try {
+    if (localStorage.getItem(KEY) === "1") return true;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("bullet-in-flight:") && k !== KEY) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
 };
 
 /**
@@ -14,21 +25,21 @@ const read = () => {
  * straight away -- which is also why it has to say the numbers are an example,
  * not theirs. Dismissed once, remembered on this device.
  */
-export default function IntroStrip() {
+export default function IntroStrip({ onDismiss }) {
   const [dismissed, setDismissed] = useState(read);
   if (dismissed) return null;
 
   const dismiss = () => {
     try { localStorage.setItem(KEY, "1"); } catch { /* private mode -- hides for this visit only */ }
     setDismissed(true);
+    // The strip is about to unmount, taking keyboard focus with it.
+    onDismiss?.();
   };
 
   return (
     <Notice tone={C.steel} title="New here?">
-      This page opens on an example (a 30-06 Remington load) so you can see how it works. To get your own
-      answer, pick your ammo in step 1, check your sight height and zero in step 2, and set how far out you
-      want in step 4. Your answer is the sentence at the top of the results, beside the form or below it on a
-      phone. The target, air and wind steps have sensible defaults.
+      This opens on an example 30-06 load. To get your own answer: pick your ammo, check your zero, then
+      read the sentence at the top of the results.
       <div style={{ marginTop: 8 }}>
         <button
           type="button"

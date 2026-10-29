@@ -287,12 +287,13 @@ to §2's shared list, in my own voice:**
   produces) will silently no-op against a test that only calls `.focus()`.
   Cost me one full round of "the mobile sheet doesn't open" investigation
   before I realized the test was wrong, not the app.
-- Leftover `localStorage` from my *own* earlier test sessions on
-  ballisticnerd.com once made a totally unrelated page look catastrophically
-  broken (270px+ of horizontal overflow) purely because of stale saved-state
-  bleeding into the visual layout. `localStorage.clear()` before every fresh
-  verification, every single time, no exceptions — including production spot
-  checks, not just dev-server ones.
+- Resizing the emulated viewport without a reload can leave
+  ResizeObserver-driven charts at their old width, which looks like a page
+  overflow (639px against a 481px viewport). I first blamed leftover
+  `localStorage` and "fixed" it by clearing storage and reloading; the reload
+  was the real fix. Reload after resizing, before trusting an overflow
+  measurement. (Clearing `localStorage` before a fresh verification is still
+  good hygiene, but it wasn't the cause here.)
 
 **On worktrees:** they earned their keep completely — a full multi-PR session
 with zero repeat collisions after adopting them, exactly as §1/§3 describe.

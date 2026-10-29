@@ -4,6 +4,7 @@ import InputPanel from "./components/InputPanel.jsx";
 import SummaryStrip from "./components/SummaryStrip.jsx";
 import AnswerLine from "./components/AnswerLine.jsx";
 import IntroStrip from "./components/IntroStrip.jsx";
+import { staleBcOrigin } from "./staleBc.js";
 import { answerChoices, pickAnswerRow } from "./describeShot.js";
 import TrajectoryChart from "./components/TrajectoryChart.jsx";
 import RangeTable from "./components/RangeTable.jsx";
@@ -96,6 +97,16 @@ export default function Calculator() {
   // still seeds synchronously from this device's local rig.
   const { rig: storedRig, saveRig } = useMyRig();
   const [v, setState] = useState(() => ({ ...DEFAULTS, ...getMyRig() }));
+  // Current form for the stable setters below (they close over nothing else).
+  const vRef = useRef(v);
+  vRef.current = v;
+  // Which load the BC on screen came from, once hand edits have cleared the
+  // load's identity -- see staleBc.js. Separate from `v` so it never rides
+  // into a saved load.
+  const [bcOrigin, setBcOrigin] = useState(null);
+  // "Saved" / "Updated" confirmation under the Save button; cleared by the
+  // next edit to the name or the form.
+  const [savedNotice, setSavedNotice] = useState(null);
   // The drift bar shows only after the user *deliberately* touches a rig
   // field -- not when a rig field changes because a saved dataset was
   // loaded (that dataset carries its own conditions, and both "Save as my
@@ -108,7 +119,13 @@ export default function Calculator() {
       Object.keys(DEFAULTS).map((k) => [k, (val) => setState((prev) => ({ ...prev, [k]: val }))])
     );
     for (const k of IDENTITY_FIELDS) {
-      s[k] = (val) => setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
+      s[k] = (val) => {
+        const cur = vRef.current;
+        if (cur.cartridge) {
+          setBcOrigin({ bullet: cur.bullet, grains: cur.grains, bc: cur.ballisticCoefficient, dragModel: cur.dragModel });
+        }
+        setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
+      };
     }
     for (const k of RIG_FIELDS) {
       const base = s[k];
@@ -127,7 +144,8 @@ export default function Calculator() {
   // saveName at all; re-armed on a genuinely new catalog pick, same pattern
   // as bcOverridden/rigTouched.
   const [nameTouched, setNameTouched] = useState(false);
-  const handleSaveNameChange = (val) => { setNameTouched(true); setSaveName(val); };
+  const handleSaveNameChange = (val) => { setNameTouched(true); setSaveName(val); setSavedNotice(null); };
+  useEffect(() => setSavedNotice(null), [v]);
   const [showMOA, setShowMOA] = useState(false);
   const [showMIL, setShowMIL] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -202,8 +220,12 @@ export default function Calculator() {
   const handleSave = async () => {
     const trimmed = saveName.trim();
     if (!trimmed) return;
+    const updating = savedLoads.some((l) => l.name === trimmed);
     const ok = await save(trimmed, v);
-    if (ok) setSaveName("");
+    if (ok) {
+      setSaveName("");
+      setSavedNotice({ name: trimmed, updated: updating });
+    }
   };
   const loadSavedEntry = (id) => {
     const entry = savedLoads.find((l) => l.id === id);
@@ -216,6 +238,7 @@ export default function Calculator() {
     // stale name from whatever was loaded before it.
     setState((s) => ({ ...s, cartridge: "", bullet: "", manufacturer: "", bcSource: "", ...formState }));
     setBcOverridden(false);
+    setBcOrigin(null);
     // The dataset's own sight/vitals/conditions came along -- they're not a
     // deliberate rig edit, so don't let them raise the drift bar.
     setRigTouched(false);
@@ -269,6 +292,7 @@ export default function Calculator() {
       bcSource: ammo.bcSource,
     }));
     setBcOverridden(false);
+    setBcOrigin(null);
     // A genuinely new pick re-arms the name suggestion (the effect above
     // fills in the actual string once v updates) -- matches bcOverridden's
     // own reset right above.
@@ -372,6 +396,7 @@ export default function Calculator() {
         bcOverridden={bcOverridden} onBcOverride={() => setBcOverridden(true)}
         rigDrifted={rigDrifted} onSaveRig={handleSaveRig} onResetRig={handleResetRig}
         onJumpToResults={jumpToResults}
+        savedNotice={savedNotice} staleBc={staleBcOrigin(v, bcOrigin)}
       />
 
       <div className="bif-results-col" id="bif-results" tabIndex={-1} ref={resultsRef}>

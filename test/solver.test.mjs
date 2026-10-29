@@ -10,6 +10,7 @@ import { bcFromVelocity, bcFromTimeOfFlight } from "../src/ballistics/bcFromChro
 import { commas } from "../src/formatNumbers.js";
 import { dopeColumnKeys } from "../src/tableColumns.js";
 import { describeShot, answerChoices, pickAnswerRow } from "../src/describeShot.js";
+import { staleBcOrigin } from "../src/staleBc.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -532,6 +533,16 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   eq("answer row: defaults to the farthest", pickAnswerRow(answerChoices(metricRows), null).range, 546.81);
   eq("answer row: honours a picked distance", pickAnswerRow(answerChoices(metricRows), 218.72).range, 218.72);
   eq("answer row: a stale pick falls back to the farthest", pickAnswerRow(answerChoices(metricRows), 123).range, 546.81);
+  // Stale-BC notice: only fires when the load is hand-edited, the BC is still
+  // the origin load's, and the bullet itself (weight or drag model) has changed.
+  const origin = { bullet: "172gr Speer Impact", grains: "172", bc: "0.265", dragModel: "G7" };
+  const custom = { cartridge: "", grains: "172", ballisticCoefficient: "0.265", dragModel: "G7" };
+  eq("stale BC: velocity-only edit gets no notice", staleBcOrigin(custom, origin), null);
+  eq("stale BC: new bullet weight, same BC fires", staleBcOrigin({ ...custom, grains: "168" }, origin), origin);
+  eq("stale BC: new drag model, same BC fires", staleBcOrigin({ ...custom, dragModel: "G1" }, origin), origin);
+  eq("stale BC: a retyped BC clears it", staleBcOrigin({ ...custom, grains: "168", ballisticCoefficient: "0.243" }, origin), null);
+  eq("stale BC: a catalog load never fires", staleBcOrigin({ ...custom, cartridge: "308 Win", grains: "168" }, origin), null);
+  eq("stale BC: no origin, no notice", staleBcOrigin({ ...custom, grains: "168" }, null), null);
   eq("answer line: MIL when asked", describeShot(row, { system: "imperial", angle: "MIL" }).height,
     "your bullet lands 14.8 in (1.4 MIL) below where you aimed.");
   eq("answer line: metric lengths, same angle", describeShot(row, { system: "metric" }).height,

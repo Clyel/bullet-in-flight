@@ -38,7 +38,7 @@ const DEFAULT_COLLAPSED = ["target", "air", "wind", "advanced"];
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
   onSelectCommercial, saveError, signedIn, bcOverridden, onBcOverride,
-  rigDrifted, onSaveRig, onResetRig, onJumpToResults,
+  rigDrifted, onSaveRig, onResetRig, onJumpToResults, savedNotice, staleBc,
 }) {
   const { system } = useUnits();
   const { isOpen, anyOpen, toggle, setAll } = useCollapsibleSteps(COLLAPSE_KEY, SECTION_IDS, DEFAULT_COLLAPSED);
@@ -315,6 +315,13 @@ export default function InputPanel({
                   suffix={v.dragModel}
                 />
               </div>
+              {staleBc && (
+                <div role="status" style={{ marginTop: 10, padding: "6px 8px", border: `1px solid ${C.brass}`,
+                                            background: C.card, font: "500 12px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
+                  Heads up: this BC ({staleBc.bc} {staleBc.dragModel}) still belongs to the {staleBc.bullet}. If your
+                  bullet is different, enter its BC — it's on the box or the maker's site.
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ marginBottom: 14, padding: "8px 10px", background: C.field, border: `1px solid ${C.rule}`,
@@ -348,13 +355,20 @@ export default function InputPanel({
           <button
             onClick={onSave}
             disabled={!trimmedName}
-            style={{ width: "100%", padding: 9, marginBottom: isUnreviewedOverwrite ? 4 : 16,
+            style={{ width: "100%", padding: 9, marginBottom: isUnreviewedOverwrite || savedNotice ? 4 : 16,
                      background: !trimmedName ? C.rule : isUnreviewedOverwrite ? C.brass : C.ink,
                      color: C.card, border: "none", cursor: trimmedName ? "pointer" : "default",
                      font: "600 11px 'Oswald',sans-serif", letterSpacing: ".12em" }}
           >
             {isNameUpdate ? `Update “${trimmedName}”` : "Save current load"}
           </button>
+          {savedNotice && (
+            <div role="status" style={{ marginBottom: 16, font: "600 12px/1.4 'IBM Plex Sans',sans-serif", color: C.steel }}>
+              {savedNotice.updated
+                ? `✓ Updated “${savedNotice.name}”.`
+                : `✓ Saved “${savedNotice.name}”. Find it under “Or open one of your saved loads”.`}
+            </div>
+          )}
           {isUnreviewedOverwrite && (
             <div style={{ marginBottom: 16, font: "500 11px/1.4 'IBM Plex Sans',sans-serif", color: C.brass }}>
               This will overwrite your saved “{trimmedName}” — edit the name to save this as new instead.

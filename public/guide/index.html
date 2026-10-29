@@ -206,36 +206,43 @@
 
   <section id="quickstart">
     <h2>Quick start</h2>
-    <p>The Calculator tab walks the same order every time — pick a load, describe your rifle and
-      target, tell it about the air, then read the chart. Four moves get you a real trajectory:</p>
+    <p>The Calculator tab opens on an example 30-06 load, so you're looking at a real answer before you
+      type anything. To get <em>your</em> answer: pick your ammo, check your zero, then read the
+      sentence at the top of the results. Four moves:</p>
     <div class="steps">
       <div class="step">
         <div class="n">1</div>
         <div><h3>Pick your round</h3><p>Search the catalog by caliber, manufacturer, or bullet name — or
           narrow first with the optional Caliber/Manufacturer filter chips — to pull real muzzle velocity,
           weight, and BC. Or type your own numbers for a handload. A catalog pick locks into one summary
-          line ("172gr @ 2825 fps · G7 0.265") with an Override link if you need to edit it.</p></div>
+          line ("172gr @ 2825 fps · G7 0.265") with an "Edit numbers" link if you need to change it.</p></div>
       </div>
       <div class="step">
         <div class="n">2</div>
-        <div><h3>Set your rig</h3><p>Sight height over bore, zero range, and vitals radius describe
-          <em>your</em> rifle and target — the catalog can't fill these in for you.</p></div>
+        <div><h3>Check your zero</h3><p>Sight height over bore and zero range (both under "The sights," open
+          from the start) describe <em>your</em> rifle — the catalog can't fill these in for you. Your
+          target's vitals radius lives just below, folded until you want it.</p></div>
       </div>
       <div class="step">
         <div class="n">3</div>
-        <div><h3>Read the chart</h3><p>The summary strip and flight-path chart update live: velocity
-          and energy at distance, where it goes subsonic, and how far you can hold dead-on.</p></div>
+        <div><h3>Read the sentence at the top</h3><p>A plain-English line leads the results: "Zeroed at 200 yd, at
+          300 yd your bullet lands 7.4 in (2.4 MOA) below where you aimed… To hit your aim point, hold up
+          2.4 MOA." Pick any distance from its dropdown. The speed, energy, and height tiles under it, the
+          chart, and the table all follow.</p></div>
       </div>
       <div class="step">
         <div class="n">4</div>
         <div><h3>Name and save it</h3><p>The name field suggests one for you (from the catalog pick, or
-          from grains/velocity/BC for a custom load) — keep it or rename it. One save reuses the whole
-          setup in Compare and Optimal Zero, no retyping the same load twice.</p></div>
+          from grains/velocity/BC for a custom load) — keep it or rename it. After you save, a "✓ Saved"
+          line tells you where it went: "Or open one of your saved loads," also used by Compare and
+          Optimal Zero, so you never retype the same load twice.</p></div>
       </div>
     </div>
-    <figure class="shot" style="max-width:420px;">
-      <img src="images/picker-search.png" alt="Calculator's Step 1 load picker: a single search box reading '6.5 creed' with live matching results below it, optional Caliber and Manufacturer filter chips above, and Steps 2 through 6 already folded to one-line summaries.">
-      <figcaption>Step 1 stays open on a first visit, everything below it starts folded. The catalog picker is one search box — type a caliber, manufacturer, or bullet name — with optional filter chips if you want to narrow first.</figcaption>
+    <p>On your very first visit a short "New here?" note repeats that path; tap "Got it" and it
+      doesn't come back.</p>
+    <figure class="shot" style="max-width:340px;">
+      <img src="images/first-visit-form.png" alt="Calculator's input form on a first visit: Step 1 (The load) open with the catalog search box, Caliber and Manufacturer filter chips, a locked 172gr 2825 fps G7 0.265 summary with an Edit numbers link, a suggested load name and Save button; Step 2 (The sights) and Step 4 (The shot) open; The target, The air, The wind, and Spin drift and Coriolis folded to one-line summaries.">
+      <figcaption>What the form looks like on a first visit: "The load," "The sights," and "The shot" start open; "The target," "The air," "The wind," and "Spin drift &amp; Coriolis" start folded to a one-line summary. Click any header to open it; the "Collapse all" / "Expand all" link at the top flips every section at once — real state from the live app, not a mockup.</figcaption>
     </figure>
   </section>
 
@@ -250,6 +257,8 @@
         <p class="muted" style="margin:0;font-size:13.5px;">The main tool — one load, one full trajectory,
           zeroed at a distance you choose.</p>
         <ul>
+          <li>Leads with a plain-English "answer line": where your bullet lands at the distance you pick,
+            and what to hold to hit your aim point — including a left/right hold once wind is in.</li>
           <li>Chart shows drop <em>from your line of sight</em>, not the bore — matches what you'd
             actually see through a scope.</li>
           <li>Chart overlays: Vitals Zero band and Optimal Sight-in are on by default; Leupold BAS is opt-in.</li>
@@ -266,7 +275,7 @@
         <p class="muted" style="margin:0;font-size:13.5px;">Overlays two or more saved loads on one
           chart and one table, so different rounds or rifles actually stack up against each other.</p>
         <ul>
-          <li>Needs at least one saved dataset from Calculator first — or add straight from the catalog.</li>
+          <li>Needs at least one saved load from Calculator first — or add straight from the catalog.</li>
           <li>"Compare at" sets the one distance the table reads out at.</li>
           <li>Draws one Vitals band per distinct radius among the loads you've picked.</li>
         </ul>
@@ -340,8 +349,10 @@
         <p class="muted" style="margin:0;font-size:13.5px;">In-app how-tos, an FAQ, and a direct line
           to send an idea or report something wrong.</p>
         <ul>
-          <li>Every tab links straight to its own section here — "How does {tab} work?"</li>
-          <li>"Suggest an idea" opens a prefilled email — no account or form to fill out.</li>
+          <li>Every tab links straight to its own section here — "How does {tab} work?" (on a phone that
+            first link shortens to "How it works").</li>
+          <li>"Suggest an idea" opens a prefilled email — no account or form to fill out. On a phone it's
+            tucked out of the top link row and lives only here in Help.</li>
         </ul>
         <div class="watch"><b>Watch for</b>This guide covers the same ground in more depth — the in-app
           Help tab is the faster lookup while you're mid-form.</div>
@@ -355,8 +366,8 @@
     <p>Real state pulled straight from the live app — not mockups.</p>
     <div class="shots">
       <figure class="shot">
-        <img src="images/calculator.png" alt="Calculator tab showing a 30-06 Springfield trajectory: summary strip, flight-path chart with the Vitals Zero band and Optimal Sight-in overlays on, and a range table.">
-        <figcaption><b>Calculator</b> — the summary strip, flight-path chart, and range table for one load. Vitals Zero and Optimal Sight-in are on by default, so the chart already shows the vitals band and the "optimal sight-in" readout (241yd zero → 283yd window) alongside this load's own 200yd-zero window (251yd).</figcaption>
+        <img src="images/calculator.png" alt="Calculator results for a 30-06 Springfield load zeroed at 200 yd with a 10 mph wind from 3 o'clock: an answer line reading 'Zeroed at 200 yd, at 300 yd your bullet lands 7.4 in (2.4 MOA) below where you aimed. It also lands 5.9 in (1.9 MOA) to the left of where you aimed. To hit your aim point, hold up 2.4 MOA and right 1.9 MOA', speed, energy, and height tiles for 300 yd, the flight-path chart with the Vitals Zero and Optimal Sight-in overlays on, and a range table with Height and Windage columns.">
+        <figcaption><b>Calculator</b> — the answer line leads: at 300&nbsp;yd, with a 10&nbsp;mph wind from 3&nbsp;o'clock, this load lands 7.4&nbsp;in low and 5.9&nbsp;in left, so you hold up 2.4&nbsp;MOA and right 1.9&nbsp;MOA. The tiles, chart, and table underneath follow the distance you picked. Vitals Zero and Optimal Sight-in are on by default, so the chart already shows the vitals band and the "optimal sight-in" readout (241yd zero → 283yd window) alongside this load's own 200yd-zero window (251yd).</figcaption>
       </figure>
       <figure class="shot">
         <img src="images/compare.png" alt="Compare tab overlaying two 30-06 loads zeroed at 200yd and 300yd, with a table of muzzle velocity, energy, and downrange figures.">
@@ -392,7 +403,7 @@
         <div class="li"><span class="swatch dot"></span><span><strong>Open dot</strong> — a zero
           crossing (near or far).</span></div>
         <div class="li"><span class="swatch dotfill"></span><span><strong>Filled dot</strong> — max
-          ordinate, the highest point above the line of sight.</span></div>
+          ordinate, the highest point above the line of sight (the results tile calls it "Peak height").</span></div>
         <div class="li"><span class="swatch t"></span><span><strong>Brass shading</strong> — transonic
           band, Mach 1.2 down to 1.0, where drag gets unpredictable.</span></div>
         <div class="li"><span class="swatch s"></span><span><strong>Ox shading</strong> — subsonic,
@@ -401,13 +412,19 @@
           the span where impact stays within your vitals radius of point of aim.</span></div>
       </div>
     </div>
-    <p style="margin-top:14px;">The range table underneath lists velocity, energy, and drop at every
-      step distance you set, plus a <strong>windage</strong> column once wind, spin drift, or Coriolis
-      is actually in effect — the footnote below the chart always says which of the three, if any, are
-      on. Turn on the <strong>MOA</strong> / <strong>MIL</strong> columns to
-      get holdover in scope-click units instead of inches. <strong>Print dope chart</strong> opens your
-      browser's print dialog with a clean printable card — pick "Save as PDF" as the destination to
-      keep one in your range bag.</p>
+    <p style="margin-top:14px;">Above the chart, the <strong>answer line</strong> says in one sentence where
+      your bullet lands at the distance you pick and what to hold to hit your aim point — in MOA by
+      default (MIL in Metric, or if only MIL is ticked). On a steep shot (5° or more, up or down) it says
+      those numbers are for a level shot and gives the distance to hold for instead.</p>
+    <p>The range table underneath lists <strong>height</strong>, then a <strong>windage</strong>
+      column once wind, spin drift, or Coriolis is actually in effect — the footnote below the chart
+      always says which of the three, if any, are on — then velocity, energy, time, and Mach at every
+      step distance you set. A legend line under the "Range" heading spells out the signs: a minus height
+      is below where you aimed, and an L or R windage is the side the bullet lands on. Turn on the
+      <strong>MOA</strong> / <strong>MIL</strong> columns to get holdover in scope-click units instead of
+      inches — each appears right beside the height or windage it converts. <strong>Print dope
+      chart</strong> opens your browser's print dialog with a clean printable card — pick "Save as PDF"
+      as the destination to keep one in your range bag.</p>
   </section>
 
   <section id="glossary">
@@ -428,7 +445,11 @@
           <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Zero</a></td><td>The distance where your point of impact crosses your line of sight.
             A trajectory usually has two: a near zero (rising) and a far zero (falling back through).</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Max ordinate</a></td><td>The highest point the bullet reaches above your line of sight —
-            the top of the arc.</td></tr>
+            the top of the arc. The results tile calls it "Peak height."</td></tr>
+          <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Hold / holdover</a></td><td>Aiming off on purpose to cancel drop or wind: "hold up 2.4 MOA and right 1.9 MOA"
+            means aim that far above and to the right of where you want to hit. The answer line at the
+            top of the Calculator's results works it out for you — the opposite direction from where the
+            bullet lands.</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Vitals radius / window</a></td><td>Radius is the half-width of the vital zone you're
             trying to stay inside (smaller for varmints, bigger for elk or moose). The window is how
             far out you can hold dead-on and still land inside it, given your current zero.</td></tr>
@@ -436,15 +457,16 @@
             possible — the ballistics-nerd version of "how far can I just hold center."</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">MOA / MIL</a></td><td>Angular units scopes dial in. 1 MOA ≈ 1.047in per 100yd; 1 MIL =
             3.6in per 100yd. Letting the table show holdover in these instead of raw inches matches
-            what's printed on your turret.</td></tr>
+            what's printed on your turret. The answer line quotes your hold in MOA by default, in MIL
+            if you're in Metric or only MIL is ticked.</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/faq" target="_blank" rel="noopener">Transonic / subsonic</a></td><td>Transonic is the messy zone around Mach 1.2–1.0, where
             drag behavior gets less predictable as the bullet slows through the sound barrier.
             Subsonic is everything past Mach 1.0.</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Station pressure</a></td><td>The actual, un-adjusted air pressure where you're standing
             — not the sea-level-corrected number a weather report usually gives you.</td></tr>
           <tr><td>Shot angle</td><td>Steep uphill or downhill shots carry less effective drop than the
-            slant range suggests — this advisory line converts your slant distance to what it holds
-            like on a flat shot (the "rifleman's rule").</td></tr>
+            slant range suggests. On a steep shot the answer line says its numbers are for a level
+            shot and names the shorter distance to hold for instead (the "rifleman's rule").</td></tr>
           <tr><td><a href="https://ballisticnerd.com/#help/calculator" target="_blank" rel="noopener">Twist rate</a></td><td>How fast your barrel's rifling spins the bullet, e.g. "1 turn in 8in." Needed,
             along with bullet length and diameter, to turn on spin drift — leave any one of the three
             blank and spin drift stays off.</td></tr>
@@ -473,10 +495,18 @@
   <section id="tripups">
     <h2>Where people get tripped up</h2>
     <div class="trip">
-      <div class="t">Sights, Target, Shot, Air, and Wind look empty on your first visit</div>
-      <div class="d">They're not missing, just collapsed — only "The load" starts open, so the form
-        doesn't read as a wall of fields the first time you land on Calculator. Click any header to
-        expand it (or "Expand all" at the top), and the app remembers your choice after that.</div>
+      <div class="t">"The target," "The air," "The wind," and "Spin drift &amp; Coriolis" look empty on your first visit</div>
+      <div class="d">They're not missing, just folded to a one-line summary — "The load," "The sights," and
+        "The shot" start open, since those are the ones almost everyone needs, so the form doesn't read
+        as a wall of fields the first time you land on Calculator. Click any header to open (or fold) a
+        section, and the app remembers your choice on this device after that.</div>
+    </div>
+    <div class="trip">
+      <div class="t">The sentence tells you where the bullet lands — then what to hold, the opposite way</div>
+      <div class="d">"Your bullet lands 7.4 in below where you aimed… hold up 2.4 MOA" is one instruction
+        in two halves: the first half describes the miss, the last sentence is what to dial or hold to
+        fix it. A bullet that lands low or left needs a hold that's high or right. If you only read one
+        part, read the last sentence.</div>
     </div>
     <div class="trip">
       <div class="t">G1 and G7 BCs aren't interchangeable</div>
@@ -497,15 +527,24 @@
         across devices instead.</div>
     </div>
     <div class="trip">
-      <div class="t">Loading a saved dataset doesn't touch your rig</div>
-      <div class="d">A saved dataset carries its own sight height, zero, and conditions from whenever
+      <div class="t">Opening a saved load doesn't touch your rig</div>
+      <div class="d">A saved load carries its own sight height, zero, and conditions from whenever
         you saved it. Your shared "rig" (used by Calculator and Optimal Zero) only changes when you
         explicitly save or reset it.</div>
     </div>
     <div class="trip">
       <div class="t">"Fill from standard atmosphere" doesn't stack</div>
       <div class="d">It sets temperature and pressure directly from the altitude you entered — it
-        doesn't add to whatever you already typed. Enter altitude first, then click it.</div>
+        doesn't add to whatever you already typed in those two fields. In the Calculator, altitude is the first field in
+        "The air": type it, then tap the button.</div>
+    </div>
+    <div class="trip">
+      <div class="t">Typing a different bullet weight doesn't change the BC</div>
+      <div class="d">If you start from a catalog pick and change the bullet weight or drag model but leave
+        the BC alone, the BC is still the original bullet's — so an amber "Heads up" note appears beside
+        it naming the load it came from. Enter your own bullet's BC (it's on the box or the maker's
+        site), or pick your ammo from the catalog instead. Changing only the velocity doesn't trigger
+        the note, since the BC still fits.</div>
     </div>
     <div class="trip">
       <div class="t">Spin drift needs all three of its fields, not just one</div>
@@ -547,7 +586,7 @@
       <summary>Does it support metric?</summary>
       <p>Yes — the Imperial/Metric toggle at the top applies everywhere. Everything is computed
         internally in imperial units and converted only for display and input, so switching back and
-        forth never loses precision.</p>
+        forth never loses precision. In Metric the answer line quotes your hold in MIL rather than MOA.</p>
     </details>
     <details>
       <summary>Where does the estimated powder charge on the Recoil tab come from?</summary>
@@ -594,7 +633,9 @@
     <details>
       <summary>Does the wind field use compass or clock directions?</summary>
       <p>Clock face, relative to you: 12 is straight into your face, 3 is your right cheek, 6 is at
-        your back, 9 is your left cheek. Leave wind speed blank for a no-wind trajectory.</p>
+        your back, 9 is your left cheek. Wind only counts once both a speed and a direction are filled in —
+        enter just one and a note under the fields (and in the footer) says so; leave both blank for a
+        no-wind trajectory.</p>
     </details>
   </section>
 

@@ -262,7 +262,8 @@ export default function Help({ scrollTarget }) {
           Only if you sign in. Without an account, saved loads live only in your browser's local storage —
           nothing is uploaded anywhere, and clearing your browser data or switching devices or browsers means
           starting over. Signing in (optional) syncs your saved loads and your rig to your account so they
-          follow you to other devices.
+          follow you to other devices. Separately, the Calculator remembers the numbers you were last working
+          with on this device (never uploaded) and reopens them next time; &ldquo;Start over&rdquo; clears that.
         </QA>
         <QA q="Does it support metric units?">
           Yes — the Imperial/Metric toggle at the top applies everywhere in the app. Everything is computed

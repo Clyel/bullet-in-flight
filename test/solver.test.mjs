@@ -11,6 +11,7 @@ import { commas } from "../src/formatNumbers.js";
 import { dopeColumnKeys } from "../src/tableColumns.js";
 import { describeShot, answerChoices, pickAnswerRow } from "../src/describeShot.js";
 import { staleBcOrigin } from "../src/staleBc.js";
+import { parseLastForm, serializeLastForm } from "../src/lastForm.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -543,6 +544,28 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   eq("stale BC: a retyped BC clears it", staleBcOrigin({ ...custom, grains: "168", ballisticCoefficient: "0.243" }, origin), null);
   eq("stale BC: a catalog load never fires", staleBcOrigin({ ...custom, cartridge: "308 Win", grains: "168" }, origin), null);
   eq("stale BC: no origin, no notice", staleBcOrigin({ ...custom, grains: "168" }, null), null);
+  // Remembered form: round-trips, and anything unexpected is ignored rather than trusted.
+  const defs = { grains: "172", muzzleVelocity: "2825", cartridge: "30-06 Springfield" };
+  const snap = { form: { grains: "168", muzzleVelocity: "2650", cartridge: "" }, rigTouched: true,
+                 bcOrigin: { bullet: "172gr Speer Impact", grains: "172", bc: "0.265", dragModel: "G7" } };
+  eq("last form: round trip", parseLastForm(serializeLastForm(snap, defs), defs), snap);
+  eq("last form: missing/blank input is null", [parseLastForm(null, defs), parseLastForm("", defs)], [null, null]);
+  eq("last form: corrupt JSON is null", parseLastForm("{not json", defs), null);
+  eq("last form: another version is null", parseLastForm(JSON.stringify({ version: 2, form: {} }), defs), null);
+  eq("last form: unknown fields and non-strings are dropped",
+    parseLastForm(JSON.stringify({ version: 1, form: { grains: "150", muzzleVelocity: 2700, evil: "x" } }), defs).form,
+    { grains: "150" });
+  const enumDefs = { dragModel: "G7", twistDirection: "Right", grains: "172" };
+  eq("last form: an invalid drag model or twist direction is dropped, not trusted",
+    parseLastForm(JSON.stringify({ version: 1, form: { dragModel: "G9", twistDirection: "Up", grains: "150" } }), enumDefs).form,
+    { grains: "150" });
+  eq("last form: valid enum values are kept",
+    parseLastForm(JSON.stringify({ version: 1, form: { dragModel: "G1", twistDirection: "Left" } }), enumDefs).form,
+    { dragModel: "G1", twistDirection: "Left" });
+  eq("last form: a malformed bcOrigin becomes null",
+    parseLastForm(JSON.stringify({ version: 1, form: {}, bcOrigin: { bullet: "x" } }), defs).bcOrigin, null);
+  eq("last form: rigTouched only when exactly true",
+    parseLastForm(JSON.stringify({ version: 1, form: {}, rigTouched: "yes" }), defs).rigTouched, false);
   eq("answer line: MIL when asked", describeShot(row, { system: "imperial", angle: "MIL" }).height,
     "your bullet lands 14.8 in (1.4 MIL) below where you aimed.");
   eq("answer line: metric lengths, same angle", describeShot(row, { system: "metric" }).height,

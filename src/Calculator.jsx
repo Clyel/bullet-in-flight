@@ -401,7 +401,7 @@ export default function Calculator() {
               <AnswerLine choices={choices} row={answerRow} onPick={setAnswerRange} zeroYd={num(v.zeroRangeYd)}
                           shotAngleDeg={num(v.shotAngleDeg)} showMOA={showMOA} showMIL={showMIL} />
               <SummaryStrip solution={solution} row={answerRow} />
-              <InclineNote maxRangeYd={maxRangeYd} shotAngleDeg={num(v.shotAngleDeg)} system={system} />
+              <InclineNote maxRangeYd={answerRow.range} shotAngleDeg={num(v.shotAngleDeg)} system={system} />
               <TrajectoryChart
                 solution={solution} maxRangeYd={maxRangeYd}
                 vitalsRadiusIn={num(v.vitalsRadiusIn)}

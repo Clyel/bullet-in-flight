@@ -130,10 +130,10 @@ export default function Calculator() {
     for (const k of IDENTITY_FIELDS) {
       s[k] = (val) => {
         const cur = vRef.current;
+        if (cur.cartridge) setPickerKey((n) => n + 1);
         if (k === "ballisticCoefficient") {
           setBcOrigin(null);
         } else if (cur.cartridge) {
-          setPickerKey((n) => n + 1);
           setBcOrigin({ bullet: cur.bullet, grains: cur.grains, bc: cur.ballisticCoefficient, dragModel: cur.dragModel });
         }
         setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));

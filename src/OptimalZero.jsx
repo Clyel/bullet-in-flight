@@ -36,7 +36,7 @@ const fromCatalog = (ammo) => ({
 const fromSaved = (load) => ({
   key: `saved:${load.id}`,
   label: load.name,
-  sublabel: "Saved dataset",
+  sublabel: "Saved load",
   muzzleVelocity: num(load.muzzleVelocity),
   ballisticCoefficient: num(load.ballisticCoefficient),
   dragModel: load.dragModel,
@@ -116,7 +116,7 @@ export default function OptimalZero() {
 
         {savedLoads.length > 0 && (
           <>
-            <span style={{ ...label, display: "block", marginBottom: 5 }}>Your saved datasets</span>
+            <span style={{ ...label, display: "block", marginBottom: 5 }}>Your saved loads</span>
             <div style={{ marginBottom: 20 }}>
               {savedLoads.map((l) => (
                 <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8,
@@ -168,7 +168,7 @@ export default function OptimalZero() {
       <div>
         {selected.length === 0 ? (
           <Notice tone={C.brass} title="Nothing to compare yet">
-            Check off a saved dataset or add a round from the catalog — they'll all use the same rig on the left.
+            Check off a saved load or add a round from the catalog — they'll all use the same rig on the left.
           </Notice>
         ) : (
           <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, overflowX: "auto" }}>

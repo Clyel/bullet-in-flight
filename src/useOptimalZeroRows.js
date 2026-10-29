@@ -93,7 +93,7 @@ export function useOptimalZeroRows(selected, rig) {
 
   return selected.map((entry) => {
     if (!parsed.ok) return { entry, error: "Fill in your rig above." };
-    if (!entryHasAmmo(entry)) return { entry, error: "This dataset is missing muzzle velocity or BC." };
+    if (!entryHasAmmo(entry)) return { entry, error: "This saved load is missing muzzle velocity or BC." };
     const r = byKey[entry.key];
     return r ? { entry, ...r } : { entry, pending: true };
   });

@@ -104,7 +104,7 @@ export default function Help({ scrollTarget }) {
           Sight height, vitals radius, and the three air fields are your <strong>rig</strong> — shared with the
           Optimal Zero tab so you set them once. If you change one, a bar appears offering &ldquo;Save as my
           rig&rdquo; (make these the new shared values) or &ldquo;Reset to my rig&rdquo; (pull the saved ones
-          back). Loading a saved dataset brings that dataset's own conditions and doesn't touch your rig.
+          back). Opening a saved load brings that load's own conditions and doesn't touch your rig.
         </P>
         <Sub>Saving, comparing, and printing</Sub>
         <P>
@@ -118,12 +118,12 @@ export default function Help({ scrollTarget }) {
 
       <Section id="compare" title="Compare">
         <P>
-          Overlays two or more of your saved datasets on one chart and one table, so you can see how different
-          loads or rifles actually stack up against each other. Requires at least one saved dataset from the
+          Overlays two or more of your saved loads on one chart and one table, so you can see how different
+          loads or rifles actually stack up against each other. Requires at least one saved load from the
           Calculator tab first.
         </P>
         <P>
-          Check off which saved datasets to compare. &ldquo;Compare at&rdquo; sets the single distance the table
+          Check off which saved loads to compare. &ldquo;Compare at&rdquo; sets the single distance the table
           reads out at — it starts pointed at the shortest selected load's own charted range so nothing shows up
           blank, but you can type any distance you want. If a load's own chart doesn't reach that far, its table
           row says so instead of showing made-up numbers, and its line on the chart simply stops where its own
@@ -147,7 +147,7 @@ export default function Help({ scrollTarget }) {
           rounds, not each round's own saved sight height and zero (which could be from a completely different
           session). This is the same rig as the Calculator tab's, so setting it in either place carries to the
           other; change it here and the same &ldquo;Save as my rig&rdquo; / &ldquo;Reset to my rig&rdquo; bar
-          appears. Add rounds from your saved datasets or the catalog picker; each row shows muzzle velocity and
+          appears. Add rounds from your saved loads or the catalog picker; each row shows muzzle velocity and
           energy, the near zero, the optimal zero, height at 100yd, and the full vitals window (span plus entry/exit
           distances).
         </P>
@@ -259,8 +259,10 @@ export default function Help({ scrollTarget }) {
           always overridable if you know your real charge weight.
         </QA>
         <QA q="Does this app save my data anywhere besides my own browser?">
-          No. Saved datasets live only in your browser's local storage — nothing is uploaded anywhere. Clearing
-          your browser data, or switching devices or browsers, means starting over.
+          Only if you sign in. Without an account, saved loads live only in your browser's local storage —
+          nothing is uploaded anywhere, and clearing your browser data or switching devices or browsers means
+          starting over. Signing in (optional) syncs your saved loads and your rig to your account so they
+          follow you to other devices.
         </QA>
         <QA q="Does it support metric units?">
           Yes — the Imperial/Metric toggle at the top applies everywhere in the app. Everything is computed

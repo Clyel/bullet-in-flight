@@ -153,7 +153,7 @@ export default function Recoil() {
 
         {savedLoads.length > 0 && (
           <>
-            <span style={sub}>Or load a saved dataset</span>
+            <span style={sub}>Or open one of your saved loads</span>
             <select
               value=""
               onChange={(e) => e.target.value && handleLoadSavedDataset(e.target.value)}

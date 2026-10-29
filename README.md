@@ -119,7 +119,7 @@ back unchanged.
 
 - **Wind deflection**, MOA/MIL correction columns (off by default), Imperial/Metric
   unit switching (canonical-imperial internally, converted only at the edges).
-- **Saved Datasets** — name and save a full load snapshot (ammo + rifle + conditions)
+- **Saved loads** — name and save a full load snapshot (ammo + rifle + conditions)
   to `localStorage`; persists across sessions on the same browser/device, does not
   sync across devices.
 - **Compare tab** — overlay several saved loads on one chart plus a single-distance
@@ -136,7 +136,7 @@ back unchanged.
   radius drives reference lines on the charts, a live "how far does this trajectory
   stay in the vitals band at my current zero" readout, an on-demand "what zero
   maximizes that" toggle, and a dedicated tab for comparing the optimal zero across as
-  many catalog rounds or saved datasets as you want against one shared rig.
+  many catalog rounds or saved loads as you want against one shared rig.
 - **Spin drift and Coriolis** — optional, collapsed "Advanced" section on Calculator;
   see How the physics works above.
 - **Recoil tab** — free recoil energy (SAAMI's own formula) across rifle/cartridge

@@ -25,15 +25,15 @@ const stepCanonicalValue = (presetLabel, system) =>
 const SECTION_IDS = ["load", "sights", "target", "shot", "air", "wind", "advanced"];
 const COLLAPSE_KEY = "bullet-in-flight:inputPanel:collapsed";
 
-// A first-ever visitor starts with everything BUT the load collapsed --
-// six fully-expanded sections of mostly-default physics fields (1.5in
-// sight height, 3in vitals, 59F/29.92inHg) was a busy first impression for
-// the one section (the load) anybody actually needs to engage with. Only
-// seeds the very first visit; any later change (including re-expanding
-// everything) persists from then on, same as always. "advanced" (spin
-// drift/Coriolis) is included here too -- most shooters will never touch
-// it, per Jake's own call when this was scoped.
-const DEFAULT_COLLAPSED = ["sights", "target", "shot", "air", "wind", "advanced"];
+// Until someone has toggled a section, the load, the sights (sight height,
+// zero) and the shot (distance out to) are open and the rest are folded.
+// A first-timer test showed that folding the sights and shot hid the two
+// inputs a rifleman knows and the answer depends on -- the one-line
+// summaries didn't read as editable -- while the target, air, wind and
+// spin-drift/Coriolis sections really are fine on their defaults. Applies
+// whenever the collapse key has never been written, not only to a first
+// visit; once a section is toggled, every section stays as it was left.
+const DEFAULT_COLLAPSED = ["target", "air", "wind", "advanced"];
 
 export default function InputPanel({
   v, set, savedLoads, saveName, onSaveNameChange, nameTouched, onSave, onLoadSaved, onEditSaved, onDeleteSaved,
@@ -194,6 +194,7 @@ export default function InputPanel({
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
         <button
           type="button"
+          className="bif-tap-link"
           onClick={() => setAll(anyOpen)}
           style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
                    color: C.steel, textDecoration: "underline",
@@ -222,7 +223,7 @@ export default function InputPanel({
               every first-time visitor, not a real third path. */}
           {savedLoads.length > 0 && (
             <>
-              <span style={sub}>Or load a saved dataset</span>
+              <span style={sub}>Or open one of your saved loads</span>
               <select
                 value=""
                 onChange={(e) => e.target.value && onLoadSaved(e.target.value)}
@@ -243,6 +244,7 @@ export default function InputPanel({
                     <span>{l.name}</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <button
+                        className="bif-tap-link"
                         onClick={() => onEditSaved(l.id)}
                         aria-label={`Edit ${l.name}`}
                         style={{ background: "none", border: "none", cursor: "pointer", padding: 0,
@@ -252,6 +254,7 @@ export default function InputPanel({
                         Edit
                       </button>
                       <button
+                        className="bif-tap-link"
                         onClick={() => onDeleteSaved(l.id)}
                         aria-label={`Delete ${l.name}`}
                         style={{ background: "none", border: "none", cursor: "pointer", color: C.ox,
@@ -276,7 +279,9 @@ export default function InputPanel({
               <div style={{ margin: "5px 0 12px", font: "400 12px/1.5 'IBM Plex Sans',sans-serif", color: C.muted }}>
                 {v.dragModel === "G1"
                   ? "Flat-base reference. Use with a BC published as G1."
-                  : "Boat-tail reference. Use with a BC published as G7."}
+                  : "Boat-tail reference. Use with a BC published as G7."}{" "}
+                Use whichever one your bullet maker lists. It's printed on the box or on the maker's website.
+                Don't have it? Pick your ammo above instead.
               </div>
               {pendingModel && (
                 <div role="alert" style={{ marginBottom: 12, padding: "7px 9px", background: C.card, border: `1px solid ${C.brass}` }}>
@@ -321,11 +326,12 @@ export default function InputPanel({
                 </span>
               </span>
               <button
+                className="bif-tap-link"
                 onClick={onBcOverride}
                 style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer",
                          color: C.steel, textDecoration: "underline", font: "500 11px 'IBM Plex Sans',sans-serif" }}
               >
-                Override
+                Edit numbers
               </button>
             </div>
           )}
@@ -387,7 +393,13 @@ export default function InputPanel({
 
       {section("shot", { n: 4, name: "The shot" }, (
         <>
-          <UnitField label="Distance out to" category="distance" value={v.maxRangeYd} onChange={set.maxRangeYd} />
+          <UnitField
+            label="Distance out to"
+            hint="How far the chart and table run. Your answer line lets you pick any distance up to this."
+            category="distance"
+            value={v.maxRangeYd}
+            onChange={set.maxRangeYd}
+          />
           <Field
             label="Shot angle"
             hint="Angle to the target, uphill or downhill — negative for downhill. Leave at 0 for a level shot."
@@ -408,17 +420,9 @@ export default function InputPanel({
 
       {section("air", { n: 5, name: "The air" }, (
         <>
-          <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
-          <UnitField
-            label="Station pressure"
-            hint="Absolute pressure where you are standing, not sea-level corrected."
-            category="pressure"
-            value={v.pressInHg}
-            onChange={set.pressInHg}
-          />
           <UnitField
             label="Altitude"
-            hint="Only fills the two fields above. It is not applied on top of them."
+            hint="Not sure of your temperature and pressure? Enter your altitude and tap the button. Altitude only fills the two fields below; it is not applied on top of them."
             category="altitude"
             value={v.altitudeFt}
             onChange={set.altitudeFt}
@@ -431,6 +435,14 @@ export default function InputPanel({
           >
             Fill from standard atmosphere
           </button>
+          <UnitField label="Temperature" category="temperature" value={v.tempF} onChange={set.tempF} />
+          <UnitField
+            label="Station pressure"
+            hint="Absolute pressure where you are standing, not sea-level corrected."
+            category="pressure"
+            value={v.pressInHg}
+            onChange={set.pressInHg}
+          />
         </>
       ))}
 

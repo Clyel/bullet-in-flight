@@ -2,7 +2,7 @@ import React from "react";
 import { C, numeric } from "./theme.js";
 import { sampleAt, energyFtLb } from "../ballistics/solver.js";
 import { useUnitFormatters } from "../useUnitFormatters.js";
-import { commas } from "./RangeTable.jsx";
+import { commas } from "../formatNumbers.js";
 
 /** results: [{ id, name, grains, solution }]. atYd: the single distance to compare at (canonical yards). */
 export default function CompareTable({ results, atYd }) {

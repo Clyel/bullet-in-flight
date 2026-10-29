@@ -81,6 +81,14 @@ table { border-collapse: collapse; width: 100%; }
 .bif-wrap { max-width: 1120px; margin: 0 auto; }
 .bif-grid { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
 @media (max-width: 860px) { .bif-grid { grid-template-columns: 1fr; } }
+/* "Jump to results" (InputPanel) only means something once the grid stacks. */
+.bif-jump { display: none; }
+@media (max-width: 860px) { .bif-jump { display: block; } }
+/* Touch screens: controls a thumb has to hit get a 44px target and a readable
+   size (a hunter at the range is not using a mouse). Opt in per control. */
+@media (pointer: coarse) {
+  .bif-tap { min-height: 44px; font-size: 15px !important; }
+}
 /* Grid children default to min-width:auto, so a long native <select> option
    ("300 Remington SA Ultra Mag") sets a content-driven floor no narrower
    than ~507px regardless of viewport -- silently overflowing any phone.
@@ -129,7 +137,8 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 button:focus-visible,
-input:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
+input:focus-visible,
+select:focus-visible { outline: 2px solid var(--c-brass); outline-offset: 2px; }
 
 /* Main tab switcher (App.jsx) only -- Segmented's own per-button inline
    font-size (11px) overflows a 375px viewport by a few px once there are 7

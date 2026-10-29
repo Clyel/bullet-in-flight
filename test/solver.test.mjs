@@ -7,6 +7,9 @@ import { freeRecoilEnergy, estimateChargeWeight } from "../src/ballistics/recoil
 import { millerStability, spinDriftIn } from "../src/ballistics/spinDrift.js";
 import { coriolisWindageIn } from "../src/ballistics/coriolis.js";
 import { bcFromVelocity, bcFromTimeOfFlight } from "../src/ballistics/bcFromChrono.js";
+import { commas } from "../src/formatNumbers.js";
+import { dopeColumnKeys } from "../src/tableColumns.js";
+import { describeShot, answerChoices, pickAnswerRow } from "../src/describeShot.js";
 
 const ref = JSON.parse(readFileSync(new URL("./fixtures/reference.json", import.meta.url)));
 
@@ -459,6 +462,80 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   const fasterThanPossibleOk = fasterThanPossible.ok === false;
   if (!fasterThanPossibleOk) failures++;
   console.log(`${fasterThanPossibleOk ? "pass" : "FAIL"}  bcFromChrono rejects a time of flight faster than physically possible`);
+}
+
+// Display helpers (not physics, so no independent fixtures -- these check
+// the wording/formatting contract directly): the plain-English answer line,
+// the shared table column order, and number formatting that must never print
+// a minus sign in front of zero.
+{
+  const eq = (name, got, want) => {
+    const ok = JSON.stringify(got) === JSON.stringify(want);
+    if (!ok) failures++;
+    console.log(`${ok ? "pass" : "FAIL"}  ${name}${ok ? "" : `  got ${JSON.stringify(got)}  want ${JSON.stringify(want)}`}`);
+  };
+
+  eq("commas never prints -0.0", commas(-0.04, 1), "0.0");
+  eq("commas never prints -0.00", commas(-0.004, 2), "0.00");
+  eq("commas keeps a real negative", commas(-0.06, 1), "-0.1");
+  eq("commas boundary: -0.05 is a real -0.1", commas(-0.05, 1), "-0.1");
+  eq("commas boundary: just under half-step is 0.0", commas(-0.0499, 1), "0.0");
+  eq("commas thousands separator", commas(2626, 0), "2,626");
+  eq("commas large negative", commas(-432, 1), "-432.0");
+
+  eq("table columns lead with range, height, windage",
+    dopeColumnKeys({ showWindage: true, showMOA: false, showMIL: false }),
+    ["range", "height", "windage", "velocity", "energy"]);
+  eq("table columns with MOA+MIL stay next to their base column",
+    dopeColumnKeys({ showWindage: true, showMOA: true, showMIL: true }),
+    ["range", "height", "heightMOA", "heightMIL", "windage", "windageMOA", "windageMIL", "velocity", "energy"]);
+  eq("table columns without windage",
+    dopeColumnKeys({ showWindage: false, showMOA: false, showMIL: false }),
+    ["range", "height", "velocity", "energy"]);
+
+  const row = { range: 300, height: -14.8, windage: -6.3 };
+  eq("answer line: below, left", describeShot(row, { system: "imperial" }), {
+    height: "your bullet lands 14.8 in (4.7 MOA) below where you aimed.",
+    wind: "It also lands 6.3 in (2.0 MOA) to the left of where you aimed.",
+    hold: "To hit your aim point, hold up 4.7 MOA and right 2.0 MOA.",
+  });
+  eq("answer line: above, right", describeShot({ range: 100, height: 2.1, windage: 1.5 }, { system: "imperial" }), {
+    height: "your bullet lands 2.1 in (2.0 MOA) above where you aimed.",
+    wind: "It also lands 1.5 in (1.4 MOA) to the right of where you aimed.",
+    hold: "To hit your aim point, hold down 2.0 MOA and left 1.4 MOA.",
+  });
+  eq("answer line: level at the zero, no sideways push",
+    describeShot({ range: 200, height: -0.01, windage: 0 }, { system: "imperial" }), {
+      height: "your bullet lands level with your aim point.",
+      wind: null,
+      hold: null,
+    });
+  eq("hold: low and left means hold up and right", describeShot(row, { system: "imperial" }).hold,
+    "To hit your aim point, hold up 4.7 MOA and right 2.0 MOA.");
+  eq("hold: high and right means hold down and left",
+    describeShot({ range: 100, height: 2.1, windage: 1.5 }, { system: "imperial" }).hold,
+    "To hit your aim point, hold down 2.0 MOA and left 1.4 MOA.");
+  eq("hold: no windage means a vertical-only hold",
+    describeShot({ range: 300, height: -14.8 }, { system: "imperial" }).hold,
+    "To hit your aim point, hold up 4.7 MOA.");
+  eq("hold: nothing to hold at the zero",
+    describeShot({ range: 200, height: -0.01, windage: 0 }, { system: "imperial" }).hold, null);
+  eq("hold: in mils when asked", describeShot(row, { system: "imperial", angle: "MIL" }).hold,
+    "To hit your aim point, hold up 1.4 MIL and right 0.6 MIL.");
+  eq("answer line: no windage field means no sideways sentence",
+    describeShot({ range: 300, height: -14.8 }, { system: "imperial" }).wind, null);
+  const metricRows = [0, 109.36, 218.72, 328.08, 437.44, 546.8, 546.81].map((range) => ({ range }));
+  eq("answer choices: drop the muzzle row and the near-duplicate final row",
+    answerChoices(metricRows).map((r) => r.range), [109.36, 218.72, 328.08, 437.44, 546.81]);
+  eq("answer choices: normal rows untouched",
+    answerChoices([0, 100, 200, 300].map((range) => ({ range }))).map((r) => r.range), [100, 200, 300]);
+  eq("answer row: defaults to the farthest", pickAnswerRow(answerChoices(metricRows), null).range, 546.81);
+  eq("answer row: honours a picked distance", pickAnswerRow(answerChoices(metricRows), 218.72).range, 218.72);
+  eq("answer row: a stale pick falls back to the farthest", pickAnswerRow(answerChoices(metricRows), 123).range, 546.81);
+  eq("answer line: MIL when asked", describeShot(row, { system: "imperial", angle: "MIL" }).height,
+    "your bullet lands 14.8 in (1.4 MIL) below where you aimed.");
+  eq("answer line: metric lengths, same angle", describeShot(row, { system: "metric" }).height,
+    "your bullet lands 37.6 cm (4.7 MOA) below where you aimed.");
 }
 
 console.log(failures ? `\n${failures} FAILING` : "\nAll checks passed.");

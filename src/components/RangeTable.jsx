@@ -3,13 +3,15 @@ import { C, numeric } from "./theme.js";
 import { inchesToMOA, inchesToMIL } from "../ballistics/angular.js";
 import { useUnits } from "../UnitsContext.jsx";
 import { toDisplay, unitSuffix } from "../units.js";
-
-/** Fixed-decimal formatting with a thousands separator, e.g. -432.0 -> "-432.0", 2626 -> "2,626". */
-export const commas = (n, digits) => n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+import { commas } from "../formatNumbers.js";
+import { dopeColumnKeys } from "../tableColumns.js";
 
 /** Signed value -> "3.1 L" / "3.1 R" / "0.0", matching the windage column's convention. */
 const lr = (value, digits) =>
   Math.abs(value) < 0.5 * 10 ** -digits ? (0).toFixed(digits) : `${commas(Math.abs(value), digits)} ${value < 0 ? "L" : "R"}`;
+
+/** Below-the-line colouring keys off the value as displayed: -0.04 prints "0.0" and must not be tinted as a minus. */
+const isBelow = (inches) => Math.round(inches * 10) / 10 < 0;
 
 /** Undefined at zero range (angular correction isn't meaningful at the muzzle). */
 export const angular = (val, digits) => (val == null ? "—" : commas(val, digits));
@@ -28,11 +30,11 @@ export const COLUMN_DEFS = {
                 fmt: (r, sys) => commas(toDisplay(r.energy, "energy", sys), 0) },
   height:     { head: (sys) => `Height (${unitSuffix("length", sys)})`,
                 fmt: (r, sys) => commas(toDisplay(r.height, "length", sys), 1),
-                color: (r) => (r.height >= 0 ? C.ink : C.steel) },
+                color: (r) => (isBelow(r.height) ? C.steel : C.ink) },
   heightMOA:  { head: () => "Height (MOA)", fmt: (r) => angular(inchesToMOA(r.height, r.range), 2),
-                color: (r) => (r.height >= 0 ? C.ink : C.steel) },
+                color: (r) => (isBelow(r.height) ? C.steel : C.ink) },
   heightMIL:  { head: () => "Height (MIL)", fmt: (r) => angular(inchesToMIL(r.height, r.range), 1),
-                color: (r) => (r.height >= 0 ? C.ink : C.steel) },
+                color: (r) => (isBelow(r.height) ? C.steel : C.ink) },
   windage:    { head: (sys) => `Windage (${unitSuffix("length", sys)})`,
                 fmt: (r, sys) => lr(toDisplay(r.windage, "length", sys), 1) },
   windageMOA: { head: () => "Windage (MOA)", fmt: (r) => (r.range > 0 ? lr(inchesToMOA(r.windage, r.range), 2) : "—") },
@@ -41,22 +43,15 @@ export const COLUMN_DEFS = {
   mach:       { head: () => "Mach", fmt: (r) => r.mach.toFixed(2) },
 };
 
-/**
- * The column set DopeChart.jsx (the printable card) uses — range/velocity/
- * energy/height plus the same conditional MOA/MIL/windage variants as the
- * live table, but never time/mach as columns (mach still drives the
- * transonic-flag footnote there, just isn't printed as its own column).
- */
-export function dopeColumnKeys({ showWindage, showMOA, showMIL }) {
-  return [
-    "range", "velocity", "energy", "height",
-    ...(showMOA ? ["heightMOA"] : []),
-    ...(showMIL ? ["heightMIL"] : []),
-    ...(showWindage ? ["windage"] : []),
-    ...(showWindage && showMOA ? ["windageMOA"] : []),
-    ...(showWindage && showMIL ? ["windageMIL"] : []),
-  ];
-}
+// On a phone the table scrolls sideways; pinning Range keeps every row
+// identifiable. The row shading is translucent, so the pinned cell paints an
+// opaque base first and the shade on top of it.
+const stickyFirst = (base, shade) => ({
+  position: "sticky", left: 0, zIndex: 1,
+  backgroundColor: base,
+  backgroundImage: shade ? `linear-gradient(${shade}, ${shade})` : undefined,
+  boxShadow: `1px 0 0 ${C.rule}`,
+});
 
 export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
   const { system } = useUnits();
@@ -70,6 +65,7 @@ export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
             {keys.map((key, i) => (
               <th key={key} scope="col"
                   style={{ padding: "9px 12px", textAlign: i === 0 ? "left" : "right",
+                           ...(i === 0 ? { position: "sticky", left: 0, zIndex: 2, background: C.ink } : null),
                            font: "600 10px 'Oswald',sans-serif", letterSpacing: ".12em",
                            textTransform: "uppercase", color: C.card, whiteSpace: "nowrap" }}>
                 {COLUMN_DEFS[key].head(system)}
@@ -81,15 +77,10 @@ export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
           {rows.map((r, i) => {
             const subsonic = r.mach < 1.0;
             const transonic = r.mach >= 1.0 && r.mach < 1.2;
-            const bg = subsonic
-              ? "var(--c-shade-subsonic)"
-              : transonic
-              ? "var(--c-shade-transonic)"
-              : i % 2
-              ? C.cardAlt
-              : C.card;
+            const base = i % 2 ? C.cardAlt : C.card;
+            const shade = subsonic ? "var(--c-shade-subsonic)" : transonic ? "var(--c-shade-transonic)" : null;
             return (
-              <tr key={r.range} style={{ background: bg }}>
+              <tr key={r.range} style={{ background: shade ?? base }}>
                 {keys.map((key, ci) => {
                   const col = COLUMN_DEFS[key];
                   const color = key === "mach"
@@ -99,6 +90,7 @@ export default function RangeTable({ rows, showWindage, showMOA, showMIL }) {
                     <td key={key}
                         style={{ ...numeric, padding: "7px 12px",
                                  textAlign: ci === 0 ? "left" : "right",
+                                 ...(ci === 0 ? stickyFirst(base, shade) : null),
                                  fontWeight: ci === 0 ? 600 : key === "mach" && (subsonic || transonic) ? 600 : 400,
                                  color }}>
                       {col.fmt(r, system)}

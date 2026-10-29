@@ -158,7 +158,7 @@ function AppShell() {
 
         {tab !== "Help" && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 16 }}>
-            <HelpLink ariaLabel={`How does ${tab} work?`} onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>
+            <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>
               <span className="bif-long">How does {tab} work?</span>
               <span className="bif-short">How it works</span>
             </HelpLink>
@@ -216,10 +216,9 @@ function TabLoading() {
   );
 }
 
-function HelpLink({ onClick, children, className = "", ariaLabel }) {
+function HelpLink({ onClick, children, className = "" }) {
   return (
     <button
-      aria-label={ariaLabel}
       className={`bif-tap-link ${className}`}
       onClick={onClick}
       style={{ background: "none", border: "none", cursor: "pointer", padding: 0,

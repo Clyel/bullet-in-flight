@@ -158,7 +158,10 @@ function AppShell() {
 
         {tab !== "Help" && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 16 }}>
-            <HelpLink onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>How does {tab} work?</HelpLink>
+            <HelpLink ariaLabel={`How does ${tab} work?`} onClick={() => goToHelp(HELP_SECTION_BY_TAB[tab])}>
+              <span className="bif-long">How does {tab} work?</span>
+              <span className="bif-short">How it works</span>
+            </HelpLink>
             <HelpLink onClick={() => goToHelp("faq")}>FAQ</HelpLink>
             <HelpLink className="bif-hide-phone" onClick={() => goToHelp("submit")}>Suggest an idea</HelpLink>
             {/* Real navigation (a static page at /guide/, not app state), so
@@ -213,9 +216,10 @@ function TabLoading() {
   );
 }
 
-function HelpLink({ onClick, children, className = "" }) {
+function HelpLink({ onClick, children, className = "", ariaLabel }) {
   return (
     <button
+      aria-label={ariaLabel}
       className={`bif-tap-link ${className}`}
       onClick={onClick}
       style={{ background: "none", border: "none", cursor: "pointer", padding: 0,

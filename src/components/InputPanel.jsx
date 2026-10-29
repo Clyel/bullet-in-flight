@@ -318,7 +318,7 @@ export default function InputPanel({
               {staleBc && (
                 <div role="status" style={{ marginTop: 10, padding: "6px 8px", border: `1px solid ${C.brass}`,
                                             background: C.card, font: "500 12px/1.4 'IBM Plex Sans',sans-serif", color: C.ink }}>
-                  Heads up: this BC ({staleBc.bc} {staleBc.dragModel}) still belongs to the {staleBc.bullet}. If your
+                  Heads up: this BC ({staleBc.bc} {staleBc.dragModel}) still belongs to the {staleBc.bullet.replace(/ \(derived BC\)$/, "")}. If your
                   bullet is different, enter its BC — it's on the box or the maker's site.
                 </div>
               )}
@@ -350,7 +350,7 @@ export default function InputPanel({
               Calculator.jsx's suggestion effect) -- still just a starting
               value in a normal editable field, typing over it works exactly
               as it always has. */}
-          <Field label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
+          <Field id="bif-save-name" label="Name this load" inputMode="text" value={saveName} onChange={onSaveNameChange} />
           <SyncStatusHint signedIn={signedIn} noun="saves" />
           <button
             onClick={onSave}

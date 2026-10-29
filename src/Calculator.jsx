@@ -121,7 +121,9 @@ export default function Calculator() {
     for (const k of IDENTITY_FIELDS) {
       s[k] = (val) => {
         const cur = vRef.current;
-        if (cur.cartridge) {
+        if (k === "ballisticCoefficient") {
+          setBcOrigin(null);
+        } else if (cur.cartridge) {
           setBcOrigin({ bullet: cur.bullet, grains: cur.grains, bc: cur.ballisticCoefficient, dragModel: cur.dragModel });
         }
         setState((prev) => ({ ...prev, [k]: val, cartridge: "", bullet: "", manufacturer: "", bcSource: "" }));
@@ -217,7 +219,10 @@ export default function Calculator() {
     return () => window.removeEventListener("afterprint", stopPrinting);
   }, [printing]);
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    // A click from the keyboard reports detail 0; a tap on a phone doesn't, and
+    // shouldn't pop the on-screen keyboard open.
+    const viaKeyboard = e?.detail === 0;
     const trimmed = saveName.trim();
     if (!trimmed) return;
     const updating = savedLoads.some((l) => l.name === trimmed);
@@ -225,6 +230,8 @@ export default function Calculator() {
     if (ok) {
       setSaveName("");
       setSavedNotice({ name: trimmed, updated: updating });
+      // Saving clears the name and disables Save, which was holding focus.
+      if (viaKeyboard) document.getElementById("bif-save-name")?.focus();
     }
   };
   const loadSavedEntry = (id) => {

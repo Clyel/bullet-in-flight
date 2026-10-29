@@ -481,16 +481,31 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   eq("answer line: below, left", describeShot(row, { system: "imperial" }), {
     height: "your bullet lands 14.8 in (4.7 MOA) below where you aimed.",
     wind: "It also lands 6.3 in (2.0 MOA) to the left of where you aimed.",
+    hold: "To hit your aim point, hold up 4.7 MOA and right 2.0 MOA.",
   });
   eq("answer line: above, right", describeShot({ range: 100, height: 2.1, windage: 1.5 }, { system: "imperial" }), {
     height: "your bullet lands 2.1 in (2.0 MOA) above where you aimed.",
     wind: "It also lands 1.5 in (1.4 MOA) to the right of where you aimed.",
+    hold: "To hit your aim point, hold down 2.0 MOA and left 1.4 MOA.",
   });
   eq("answer line: level at the zero, no sideways push",
     describeShot({ range: 200, height: -0.01, windage: 0 }, { system: "imperial" }), {
       height: "your bullet lands level with your aim point.",
       wind: null,
+      hold: null,
     });
+  eq("hold: low and left means hold up and right", describeShot(row, { system: "imperial" }).hold,
+    "To hit your aim point, hold up 4.7 MOA and right 2.0 MOA.");
+  eq("hold: high and right means hold down and left",
+    describeShot({ range: 100, height: 2.1, windage: 1.5 }, { system: "imperial" }).hold,
+    "To hit your aim point, hold down 2.0 MOA and left 1.4 MOA.");
+  eq("hold: no windage means a vertical-only hold",
+    describeShot({ range: 300, height: -14.8 }, { system: "imperial" }).hold,
+    "To hit your aim point, hold up 4.7 MOA.");
+  eq("hold: nothing to hold at the zero",
+    describeShot({ range: 200, height: -0.01, windage: 0 }, { system: "imperial" }).hold, null);
+  eq("hold: in mils when asked", describeShot(row, { system: "imperial", angle: "MIL" }).hold,
+    "To hit your aim point, hold up 1.4 MIL and right 0.6 MIL.");
   eq("answer line: no windage field means no sideways sentence",
     describeShot({ range: 300, height: -14.8 }, { system: "imperial" }).wind, null);
   const metricRows = [0, 109.36, 218.72, 328.08, 437.44, 546.8, 546.81].map((range) => ({ range }));

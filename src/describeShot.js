@@ -43,5 +43,16 @@ export function describeShot(row, { system, angle = "MOA" }) {
     ? null
     : `It also lands ${amount(row.windage)} to the ${w < 0 ? "left" : "right"} of where you aimed.`;
 
-  return { height, wind };
+  // The same miss turned into an instruction: the bullet lands low, so hold
+  // high; it lands left, so hold right. "Hold", not "dial" -- we don't know
+  // whether the shooter's turrets are set up for this zero.
+  const holdPart = (inches, towardIfNegative, towardIfPositive) => {
+    const a = toAngle(Math.abs(inches), row.range);
+    if (a == null || fixed1(a) === "0.0") return null;
+    return `${inches < 0 ? towardIfNegative : towardIfPositive} ${fixed1(a)} ${angle}`;
+  };
+  const holdParts = [holdPart(row.height, "up", "down"), holdPart(row.windage ?? 0, "right", "left")].filter(Boolean);
+  const hold = holdParts.length ? `To hit your aim point, hold ${holdParts.join(" and ")}.` : null;
+
+  return { height, wind, hold };
 }

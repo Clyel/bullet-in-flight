@@ -19,7 +19,7 @@ export default function AnswerLine({ choices, row, onPick, zeroYd, shotAngleDeg,
 
   // Metric shooters think in mils; otherwise MOA unless only MIL is switched on.
   const angle = showMOA ? "MOA" : showMIL || system === "metric" ? "MIL" : "MOA";
-  const { height, wind } = describeShot(row, { system, angle });
+  const { height, wind, hold } = describeShot(row, { system, angle });
 
   // These numbers are for a level shot. Same threshold as the note below the tiles.
   const slope = Math.abs(shotAngleDeg);
@@ -45,10 +45,10 @@ export default function AnswerLine({ choices, row, onPick, zeroYd, shotAngleDeg,
       {" "}
       {height}
       {wind && <> {wind}</>}
-      {inclined && (
+      {inclined ? (
         <> That is for a level shot. At your {slope}&deg; {shotAngleDeg < 0 ? "downhill" : "uphill"} angle,
           hold for about {Math.round(dist(holdYd))} {dSuf} instead (see the table).</>
-      )}
+      ) : hold && <> {hold}</>}
     </div>
   );
 }

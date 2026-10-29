@@ -174,7 +174,7 @@ export default function InputPanel({
   };
 
   return (
-    <div style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16 }}>
+    <div id="bif-inputs" tabIndex={-1} style={{ background: C.card, border: `1.5px solid ${C.rule}`, padding: 16, outline: "none" }}>
       <RigDriftBar drifted={rigDrifted} onSave={onSaveRig} onReset={onResetRig} />
 
       {/* Single-column (phone) layout puts the results below this whole form;

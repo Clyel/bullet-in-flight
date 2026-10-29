@@ -361,7 +361,7 @@ export default function Calculator() {
 
   return (
     <>
-    <IntroStrip onDismiss={() => resultsRef.current?.focus({ preventScroll: true })} />
+    <IntroStrip onDismiss={() => document.getElementById("bif-inputs")?.focus({ preventScroll: true })} />
     <div className="bif-grid">
       <InputPanel
         v={v} set={set}

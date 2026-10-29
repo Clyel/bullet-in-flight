@@ -199,6 +199,22 @@ console.log(`${zeroOk ? "pass" : "FAIL"}  zero crossings   near ${nearZero?.toFi
   console.log(`${tableOk ? "pass" : "FAIL"}  off-grid max range   last row ${lastRow.range.toFixed(2)}yd (want 546.80)  rows ${t.rows.length}`);
 }
 
+// Metric "500 m, every 100 m" arrives as maxRangeYd 546.81 (the field rounds to
+// 2 decimals) with 109.36 yd steps, so the 5th step (546.80) sits 0.01 yd
+// short of the max row. The table must not list that distance twice.
+{
+  const t = solveTrajectory({
+    muzzleVelocity: 2825, ballisticCoefficient: 0.265, dragModel: "G7", grains: 172,
+    sightHeight: 1.5, zeroRangeYd: 200, maxRangeYd: 546.81, tableStepYd: 109.36,
+    tempF: 59, pressInHg: 29.92,
+  });
+  const ranges = t.rows.map((r) => r.range);
+  const dupFree = ranges.every((r, i) => i === 0 || r - ranges[i - 1] > 0.05) && ranges.length === 6 &&
+    Math.abs(t.last.range - 546.81) < 1e-9;
+  if (!dupFree) failures++;
+  console.log(`${dupFree ? "pass" : "FAIL"}  no duplicate final row (546.81 yd max, 109.36 yd step)   rows ${ranges.length}  ${ranges.map((r) => r.toFixed(2)).join(" ")}`);
+}
+
 // heightAtRange (the allocation-free path solveZeroAngle now uses) must be
 // bit-identical to sampling a full integrate() — same integrator, same
 // interpolation. Check across launch angles and ranges, including a range

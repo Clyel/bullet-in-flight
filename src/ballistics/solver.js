@@ -268,6 +268,9 @@ export function sightLineCrossings(path) {
   return hits;
 }
 
+// 0.05 yd is under 2 inches -- far finer than any distance a shooter reads off a table.
+const ROW_MERGE_YD = 0.05;
+
 export const energyFtLb = (grains, fps) => (grains * fps * fps) / 450437;
 
 /**
@@ -303,7 +306,11 @@ export function solveTrajectory(input) {
       mach: p.mach,
     };
   };
-  for (let d = 0; d < maxRangeYd - 1e-6; d += step) rows.push(rowAt(d));
+  // A step row within ROW_MERGE_YD of the max is the same row as the final
+  // one (Metric: "500 m, every 100 m" reaches the UI as 546.81 yd of range and
+  // 109.36 yd steps, whose 5th step is 546.80) -- skip it so the table doesn't
+  // list the same distance twice.
+  for (let d = 0; d < maxRangeYd - ROW_MERGE_YD; d += step) rows.push(rowAt(d));
   // Always land the final row exactly on the requested max range, even when
   // it isn't a whole number of steps out — which it never is in metric (the
   // "table every" presets convert to 27.34 / 54.68 / 109.36 canonical yd)
